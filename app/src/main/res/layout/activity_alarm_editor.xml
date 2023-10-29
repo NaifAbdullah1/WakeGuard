@@ -38,7 +38,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1" />
 
-        <ImageButton
+        <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/datePickBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -48,6 +48,127 @@
             android:onClick="openDatePicker"
             android:padding="5dp"
             android:src="@drawable/ic_calendar" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout">
+
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <androidx.appcompat.widget.AppCompatToggleButton
+            android:id="@+id/sundayBtn"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_weight="0"
+            android:background="@drawable/day_toggle"
+            android:onClick="setRepeatingDay"
+            android:textOff="Su"
+            android:textOn="Su" />
+
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <androidx.appcompat.widget.AppCompatToggleButton
+            android:id="@+id/mondayBtn"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_weight="0"
+            android:background="@drawable/day_toggle"
+            android:onClick="setRepeatingDay"
+            android:textOff="M"
+            android:textOn="M" />
+
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <androidx.appcompat.widget.AppCompatToggleButton
+            android:id="@+id/tuesdayBtn"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_weight="0"
+            android:background="@drawable/day_toggle"
+            android:onClick="setRepeatingDay"
+            android:textOff="Tu"
+            android:textOn="Tu" />
+
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <androidx.appcompat.widget.AppCompatToggleButton
+            android:id="@+id/wednesdayBtn"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_weight="0"
+            android:background="@drawable/day_toggle"
+            android:onClick="setRepeatingDay"
+            android:textOff="W"
+            android:textOn="W" />
+
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <androidx.appcompat.widget.AppCompatToggleButton
+            android:id="@+id/thursdayBtn"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_weight="0"
+            android:background="@drawable/day_toggle"
+            android:onClick="setRepeatingDay"
+            android:textOff="Tr"
+            android:textOn="Tr" />
+
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <androidx.appcompat.widget.AppCompatToggleButton
+            android:id="@+id/fridayBtn"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_weight="0"
+            android:background="@drawable/day_toggle"
+            android:onClick="setRepeatingDay"
+            android:textOff="F"
+            android:textOn="F" />
+
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <androidx.appcompat.widget.AppCompatToggleButton
+            android:id="@+id/saturdayBtn"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_weight="0"
+            android:background="@drawable/day_toggle"
+            android:onClick="setRepeatingDay"
+            android:textOff="Sa"
+            android:textOn="Sa" />
+
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

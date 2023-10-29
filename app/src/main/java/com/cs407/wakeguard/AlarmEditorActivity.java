@@ -16,6 +16,7 @@ import android.view.View;
 import android.widget.DatePicker;
 import android.widget.TextView;
 import android.widget.TimePicker;
+import android.widget.ToggleButton;
 
 public class AlarmEditorActivity extends AppCompatActivity {
     TimePicker picker;
@@ -48,6 +49,9 @@ public class AlarmEditorActivity extends AppCompatActivity {
         year = intent.getIntExtra("year", c.get(Calendar.YEAR));
         month = intent.getIntExtra("month", c.get(Calendar.MONTH));
         dayOfMonth = intent.getIntExtra("dayOfMonth", c.get(Calendar.DAY_OF_MONTH));
+
+        // TODO Initialize specific/repeating date(s) in SharedPreferences/database (if not already initialized/passed in)
+
         selectedDateText = (TextView) findViewById(R.id.dateText);
         String dateStr = DateFormat.getDateInstance(DateFormat.FULL).format(c.getTime());
         if((year == c.get(Calendar.YEAR)) &&
@@ -90,6 +94,9 @@ public class AlarmEditorActivity extends AppCompatActivity {
                         month = m;
                         dayOfMonth = dom;
                         String dateStr = DateFormat.getDateInstance(DateFormat.FULL).format(tempCal.getTime());
+
+                        // TODO Set SharedPreferences/database alarm date (overwrite repeating days in SharedPreferences)
+
                         if(today) {
                             selectedDateText.setText("Today - " + dateStr);
                         } else {
@@ -107,5 +114,31 @@ public class AlarmEditorActivity extends AppCompatActivity {
 
         // Show DatePickerDialog
         dpDialog.show();
+    }
+
+    public void setRepeatingDay(View v) {
+        SharedPreferences sp = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
+
+        if(v.getId() == R.id.sundayBtn) {
+            sp.edit().putBoolean("repeatSunday", ((ToggleButton)v).isChecked()).apply(); // TODO Add to/update database instead
+        } else if(v.getId() == R.id.mondayBtn) {
+            sp.edit().putBoolean("repeatMonday", ((ToggleButton)v).isChecked()).apply(); // TODO Add to/update database instead
+        } else if(v.getId() == R.id.tuesdayBtn) {
+            sp.edit().putBoolean("repeatTuesday", ((ToggleButton)v).isChecked()).apply(); // TODO Add to/update database instead
+        } else if(v.getId() == R.id.wednesdayBtn) {
+            sp.edit().putBoolean("repeatWednesday", ((ToggleButton)v).isChecked()).apply(); // TODO Add to/update database instead
+        } else if(v.getId() == R.id.thursdayBtn) {
+            sp.edit().putBoolean("repeatThursday", ((ToggleButton)v).isChecked()).apply(); // TODO Add to/update database instead
+        } else if(v.getId() == R.id.fridayBtn) {
+            sp.edit().putBoolean("repeatFriday", ((ToggleButton)v).isChecked()).apply(); // TODO Add to/update database instead
+        } else if(v.getId() == R.id.saturdayBtn) {
+            sp.edit().putBoolean("repeatSaturday", ((ToggleButton)v).isChecked()).apply(); // TODO Add to/update database instead
+        } else {
+            return;
+        }
+
+        // TODO If repeating on one or more days,
+        //        - Remove specific alarm date in SharedPreferences/database
+        //        - Change TextView text to call out repeated days or go back to current day/tomorrow (based on time) if this action disabled the last repeating day
     }
 }

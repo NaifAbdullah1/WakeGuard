@@ -28,23 +28,26 @@
         <TextView
             android:id="@+id/dateText"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_marginLeft="10dp"
-            android:layout_weight="1" />
+            android:layout_weight="1"
+            android:gravity="center_vertical" />
 
         <Space
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1" />
 
-        <Button
+        <ImageButton
             android:id="@+id/datePickBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginRight="10dp"
-            android:layout_weight="1"
+            android:layout_weight="0"
+            android:background="#00FFFFFF"
             android:onClick="openDatePicker"
-            android:text="Button" />
+            android:padding="5dp"
+            android:src="@drawable/ic_calendar" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,6 +1,7 @@
 package com.cs407.wakeguard;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 
 import android.app.DatePickerDialog;
 import android.content.Context;
@@ -8,18 +9,24 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.icu.text.DateFormat;
 import android.icu.util.Calendar;
-import android.media.MediaPlayer;
-import android.media.RingtoneManager;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.DatePicker;
+import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.ToggleButton;
 
 
 public class AlarmEditorActivity extends AppCompatActivity {
+    // Switch for enabling/disabling vibration
+    SwitchCompat vibrationSwitch;
+    // Switch for enabling/disabling motion monitoring
+    SwitchCompat motionMonitoringSwitch;
+    // EditText for alarm name
+    EditText alarmNameText;
     TimePicker tPicker;
     // TextView showing selected alarm date or repeating days
     TextView selectedDateText;
@@ -39,18 +46,14 @@ public class AlarmEditorActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_alarm_editor);
 
+        // Initialize components that don't require extra setup/modification
+        vibrationSwitch = (SwitchCompat) findViewById(R.id.vibrationSwitch);
+        motionMonitoringSwitch = (SwitchCompat) findViewById(R.id.motionMonitorSwitch);
+        alarmNameText = (EditText) findViewById(R.id.alarmNameText);
+
         // Get 24-hour mode from SharedPreferences. Use it below to set time picker 24 hour mode
         SharedPreferences sp = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
         Boolean mode24Hr = sp.getBoolean("24hourMode", false);
-
-
-        // TODO Test alarm tone
-        //Uri ringtoneUri  = RingtoneManager.getActualDefaultRingtoneUri(getApplicationContext(), RingtoneManager.TYPE_NOTIFICATION);
-        //MediaPlayer mp = MediaPlayer.create(getApplicationContext(), ringtoneUri);
-        //mp.start();
-        // TODO Ringtone version instead of MediaPlayer (Don't use this one, but maybe it'd be useful for notification and/or alarm)
-        //Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), ringtoneUri);
-        //r.play();
 
         Intent intent = getIntent();
 
@@ -134,6 +137,25 @@ public class AlarmEditorActivity extends AppCompatActivity {
                 }
             }
         });
+
+        // Spinner for selecting the tone of the alarm
+        Spinner alarmToneSpinner = (Spinner) findViewById(R.id.alarmToneSpinner);
+        // Create an ArrayAdapter with the default alarm tones
+        String[] defaultAlarmTones = {"Default", "None"}; // TODO
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, defaultAlarmTones); // TODO Use 'this' instead of getApplicationContext()?
+        // TODO Populate entries based off available alarm tone options
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        alarmToneSpinner.setAdapter(adapter);
+
+        // TODO Set listener for item clicked
+
+        // TODO Test alarm tone. Can use this to play tone when an item is selected
+        //Uri ringtoneUri  = RingtoneManager.getActualDefaultRingtoneUri(getApplicationContext(), RingtoneManager.TYPE_NOTIFICATION);
+        //MediaPlayer mp = MediaPlayer.create(getApplicationContext(), ringtoneUri);
+        //mp.start();
+        // TODO Ringtone version instead of MediaPlayer (Don't use this one, but maybe it'd be useful for notification and/or alarm)
+        //Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), ringtoneUri);
+        //r.play();
     }
 
     private String getRepeatingDaysString() {
@@ -300,5 +322,16 @@ public class AlarmEditorActivity extends AppCompatActivity {
                 selectedDateText.setText(DateFormat.getDateInstance(DateFormat.FULL).format(c.getTime()));
             }
         }
+    }
+
+    public void saveAlarm(View v) {
+        // TODO Save alarm settings in database
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
+    }
+
+    public void discardChanges(View v) {
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
     }
 }

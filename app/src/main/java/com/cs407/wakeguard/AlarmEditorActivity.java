@@ -51,16 +51,19 @@ public class AlarmEditorActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_alarm_editor);
 
-        // Initialize components that don't require extra setup/modification
-        vibrationSwitch = (SwitchCompat) findViewById(R.id.vibrationSwitch);
-        motionMonitoringSwitch = (SwitchCompat) findViewById(R.id.motionMonitorSwitch);
-        alarmNameText = (EditText) findViewById(R.id.alarmNameText);
-
         // Get 24-hour mode from SharedPreferences. Use it below to set time picker 24 hour mode
         SharedPreferences sp = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
         Boolean mode24Hr = sp.getBoolean("24hourMode", false);
 
         Intent intent = getIntent();
+
+        // Initialize components with little setup
+        vibrationSwitch = (SwitchCompat) findViewById(R.id.vibrationSwitch);
+        vibrationSwitch.setChecked(intent.getBooleanExtra("vibration", true));
+        motionMonitoringSwitch = (SwitchCompat) findViewById(R.id.motionMonitorSwitch);
+        motionMonitoringSwitch.setChecked(intent.getBooleanExtra("motionMonitoring", true));
+        alarmNameText = (EditText) findViewById(R.id.alarmNameText);
+        alarmNameText.setText(intent.getStringExtra("alarmName"));
 
         // Set time picker to show 6am or the existing alarm's time
         tPicker = (TimePicker) findViewById(R.id.timePicker);
@@ -153,6 +156,8 @@ public class AlarmEditorActivity extends AppCompatActivity {
         String[] defaultAlarmTones = {"Default", "None"}; // TODO
         ArrayAdapter<String> adapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, defaultAlarmTones); // TODO Use 'this' instead of getApplicationContext()?
         // TODO Populate entries based off available alarm tone options
+
+        // TODO Set initial tone to existing alarm's tone or the default
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         alarmToneSpinner.setAdapter(adapter);
 

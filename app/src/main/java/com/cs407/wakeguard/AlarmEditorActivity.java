@@ -36,6 +36,11 @@ public class AlarmEditorActivity extends AppCompatActivity {
     private Calendar dpDate;
     // Actual alarm date
     int year, month, dayOfMonth;
+    // Constants for Calendar fields
+    private final int YEAR = Calendar.YEAR,
+                      DAY_OF_YEAR = Calendar.DAY_OF_YEAR,
+                      MONTH = Calendar.MONTH,
+                      DAY_OF_MONTH = Calendar.DAY_OF_MONTH;
     // Strings for selectedDateText when repeating on one or more days
     private final String[] dayOfWeekStrings = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
     // Days on which the alarm repeats: Sun    Mon    Tue    Wed    Thu    Fri    Sat
@@ -94,24 +99,24 @@ public class AlarmEditorActivity extends AppCompatActivity {
             // Set DatePicker date against current alarm date or today
             // Setting to today allows for cycling between today and tomorrow using TimePicker initially
             dpDate = Calendar.getInstance();
-            dpDate.set(Calendar.YEAR, intent.getIntExtra("year", dpDate.get(Calendar.YEAR)));
-            dpDate.set(Calendar.MONTH, intent.getIntExtra("month", dpDate.get(Calendar.MONTH)));
-            dpDate.set(Calendar.DAY_OF_MONTH, intent.getIntExtra("dayOfMonth", dpDate.get(Calendar.DAY_OF_MONTH)));
+            dpDate.set(YEAR, intent.getIntExtra("year", dpDate.get(YEAR)));
+            dpDate.set(MONTH, intent.getIntExtra("month", dpDate.get(MONTH)));
+            dpDate.set(DAY_OF_MONTH, intent.getIntExtra("dayOfMonth", dpDate.get(DAY_OF_MONTH)));
 
             // Get a valid date using the DatePicker initial date (existing alarm's date or today)
             // and the TimePicker's initial time
             // This ensures a valid initial alarm date given the initial time
-            Calendar c = getValidDate(dpDate.get(Calendar.YEAR), dpDate.get(Calendar.MONTH), dpDate.get(Calendar.DAY_OF_MONTH));
-            year = c.get(Calendar.YEAR);
-            month = c.get(Calendar.MONTH);
-            dayOfMonth = c.get(Calendar.DAY_OF_MONTH);
+            Calendar c = getValidDate(dpDate.get(YEAR), dpDate.get(MONTH), dpDate.get(DAY_OF_MONTH));
+            year = c.get(YEAR);
+            month = c.get(MONTH);
+            dayOfMonth = c.get(DAY_OF_MONTH);
 
             // Set dateText according to the initial date
             Calendar today = Calendar.getInstance();
             String dateStr = DateFormat.getDateInstance(DateFormat.FULL).format(c.getTime());
-            if((year == today.get(Calendar.YEAR)) &&
-               (month == today.get(Calendar.MONTH)) &&
-               (dayOfMonth == today.get(Calendar.DAY_OF_MONTH))) {
+            if((year == today.get(YEAR)) &&
+               (month == today.get(MONTH)) &&
+               (dayOfMonth == today.get(DAY_OF_MONTH))) {
                 selectedDateText.setText("Today - " + dateStr);
             } else {
                 selectedDateText.setText(dateStr);
@@ -126,10 +131,10 @@ public class AlarmEditorActivity extends AppCompatActivity {
                 // Check that there are no repeating days and that DatePicker selected date is today
                 if(!repeating && dpDate.compareTo(c) <= 0) {
                     // Get valid date (today or tomorrow) according to the current time and chosen alarm time
-                    c = getValidDate(dpDate.get(Calendar.YEAR), dpDate.get(Calendar.MONTH), dpDate.get(Calendar.DAY_OF_MONTH));
-                    year = c.get(Calendar.YEAR);
-                    month = c.get(Calendar.MONTH);
-                    dayOfMonth = c.get(Calendar.DAY_OF_MONTH);
+                    c = getValidDate(dpDate.get(YEAR), dpDate.get(MONTH), dpDate.get(DAY_OF_MONTH));
+                    year = c.get(YEAR);
+                    month = c.get(MONTH);
+                    dayOfMonth = c.get(DAY_OF_MONTH);
                     // Check if returned Calendar points to today
                     if(c.compareTo(Calendar.getInstance()) <= 0) {
                         // Setting alarm for today
@@ -187,31 +192,31 @@ public class AlarmEditorActivity extends AppCompatActivity {
     private Calendar getValidDate(int y, int m, int dom) {
         Calendar c = Calendar.getInstance();
 
-        if((y == c.get(Calendar.YEAR)) &&
-           (m == c.get(Calendar.MONTH)) &&
-           (dom == c.get(Calendar.DAY_OF_MONTH))) {
+        if((y == c.get(YEAR)) &&
+           (m == c.get(MONTH)) &&
+           (dom == c.get(DAY_OF_MONTH))) {
             // Passed date is today
             final int actualTimeOfDay = c.get(Calendar.HOUR_OF_DAY) * 60 + c.get(Calendar.MINUTE);
             final int selectedTimeOfDay = tPicker.getHour() * 60 + tPicker.getMinute();
 
-            c.set(Calendar.YEAR, y);
-            c.set(Calendar.MONTH, m);
-            c.set(Calendar.DAY_OF_MONTH, dom);
+            c.set(YEAR, y);
+            c.set(MONTH, m);
+            c.set(DAY_OF_MONTH, dom);
 
             // Only allow the date to be set for the current day if the selected alarm
             // time is less than the actual time
             if(actualTimeOfDay >= selectedTimeOfDay) {
                 // Change date to tomorrow
-                c.roll(Calendar.DAY_OF_YEAR, true);
+                c.roll(DAY_OF_YEAR, true);
                 // Handle moving to a new year (other fields are handled correctly)
-                if((c.get(Calendar.MONTH) == 0) && (c.get(Calendar.DAY_OF_MONTH) == 1)) {
-                    c.roll(Calendar.YEAR, true);
+                if((c.get(MONTH) == 0) && (c.get(DAY_OF_MONTH) == 1)) {
+                    c.roll(YEAR, true);
                 }
             }
         } else {
-            c.set(Calendar.YEAR, y);
-            c.set(Calendar.MONTH, m);
-            c.set(Calendar.DAY_OF_MONTH, dom);
+            c.set(YEAR, y);
+            c.set(MONTH, m);
+            c.set(DAY_OF_MONTH, dom);
         }
 
         return c;
@@ -219,10 +224,10 @@ public class AlarmEditorActivity extends AppCompatActivity {
 
     public void openDatePicker(View v) {
         // Validate previously chosen date date before creating DatePickerDialog
-        Calendar c = getValidDate(dpDate.get(Calendar.YEAR), dpDate.get(Calendar.MONTH), dpDate.get(Calendar.DAY_OF_MONTH));
-        year = c.get(Calendar.YEAR);
-        month = c.get(Calendar.MONTH);
-        dayOfMonth = c.get(Calendar.DAY_OF_MONTH);
+        Calendar c = getValidDate(dpDate.get(YEAR), dpDate.get(MONTH), dpDate.get(DAY_OF_MONTH));
+        year = c.get(YEAR);
+        month = c.get(MONTH);
+        dayOfMonth = c.get(DAY_OF_MONTH);
 
         // If time has skewed enough to change the valid date to tomorrow, update dateText
         if(!repeating && (c.compareTo(Calendar.getInstance()) > 0)) {
@@ -232,21 +237,21 @@ public class AlarmEditorActivity extends AppCompatActivity {
         // Create DatePickerDialog
         DatePickerDialog dpDialog = new DatePickerDialog(
                 this,
-                0, // TODO See if we want to use a different theme
+                0,
                 new DatePickerDialog.OnDateSetListener() {
                     @Override
                     public void onDateSet(DatePicker dp, int y, int m, int dom) {
                         // Set DatePicker date to actually selected date
                         dpDate = Calendar.getInstance();
-                        dpDate.set(Calendar.YEAR, y);
-                        dpDate.set(Calendar.MONTH, m);
-                        dpDate.set(Calendar.DAY_OF_MONTH, dom);
+                        dpDate.set(YEAR, y);
+                        dpDate.set(MONTH, m);
+                        dpDate.set(DAY_OF_MONTH, dom);
                         // Check date according to selected alarm time
                         Calendar c = getValidDate(y, m, dom);
 
-                        year = c.get(Calendar.YEAR);
-                        month = c.get(Calendar.MONTH);
-                        dayOfMonth = c.get(Calendar.DAY_OF_MONTH);
+                        year = c.get(YEAR);
+                        month = c.get(MONTH);
+                        dayOfMonth = c.get(DAY_OF_MONTH);
                         // Check if returned Calendar points to today
                         if(c.compareTo(Calendar.getInstance()) <= 0) {
                             // Setting alarm for today
@@ -313,10 +318,10 @@ public class AlarmEditorActivity extends AppCompatActivity {
         // Reset date to today (or tomorrow if alarm is set too early for today)
         // This is to reset the DatePicker selection
         dpDate = Calendar.getInstance();
-        Calendar c = getValidDate(dpDate.get(Calendar.YEAR), dpDate.get(Calendar.MONTH), dpDate.get(Calendar.DAY_OF_MONTH));
-        year = c.get(Calendar.YEAR);
-        month = c.get(Calendar.MONTH);
-        dayOfMonth = c.get(Calendar.DAY_OF_MONTH);
+        Calendar c = getValidDate(dpDate.get(YEAR), dpDate.get(MONTH), dpDate.get(DAY_OF_MONTH));
+        year = c.get(YEAR);
+        month = c.get(MONTH);
+        dayOfMonth = c.get(DAY_OF_MONTH);
         if(repeating) {
             // Set dateText to repeating days
             selectedDateText.setText(getRepeatingDaysString());
@@ -334,6 +339,8 @@ public class AlarmEditorActivity extends AppCompatActivity {
 
     public void saveAlarm(View v) {
         // TODO Save alarm settings in database
+        //      Account for other user settings in SharedPreferences
+        //      Validate alarm date/time to ensure passing time does not result in saving an alarm set to go off before the current date/time
         Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent);
     }

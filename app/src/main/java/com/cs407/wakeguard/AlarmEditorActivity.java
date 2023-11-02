@@ -90,24 +90,28 @@ public class AlarmEditorActivity extends AppCompatActivity {
             ((ToggleButton)findViewById(R.id.fridayBtn)).setChecked(repeatingDays[5]);
             ((ToggleButton)findViewById(R.id.saturdayBtn)).setChecked(repeatingDays[6]);
         } else {
-            // Not repeating any days. Get the existing alarm's/current year, month, and day of month
-            // and set dateText accordingly
-            Calendar c = Calendar.getInstance();
-            year = intent.getIntExtra("year", c.get(Calendar.YEAR));
-            month = intent.getIntExtra("month", c.get(Calendar.MONTH));
-            dayOfMonth = intent.getIntExtra("dayOfMonth", c.get(Calendar.DAY_OF_MONTH));
-            // Set DatePicker date against current alarm date
-            // Allows for cycling between today and tomorrow using TimePicker initially
+            // Not repeating any days
+            // Set DatePicker date against current alarm date or today
+            // Setting to today allows for cycling between today and tomorrow using TimePicker initially
             dpDate = Calendar.getInstance();
-            dpDate.set(Calendar.YEAR, year);
-            dpDate.set(Calendar.MONTH, month);
-            dpDate.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-            // Validate the displayed/used date for the alarm
-            c = getValidDate(year, month, dayOfMonth);
+            dpDate.set(Calendar.YEAR, intent.getIntExtra("year", dpDate.get(Calendar.YEAR)));
+            dpDate.set(Calendar.MONTH, intent.getIntExtra("month", dpDate.get(Calendar.MONTH)));
+            dpDate.set(Calendar.DAY_OF_MONTH, intent.getIntExtra("dayOfMonth", dpDate.get(Calendar.DAY_OF_MONTH)));
+
+            // Get a valid date using the DatePicker initial date (existing alarm's date or today)
+            // and the TimePicker's initial time
+            // This ensures a valid initial alarm date given the initial time
+            Calendar c = getValidDate(dpDate.get(Calendar.YEAR), dpDate.get(Calendar.MONTH), dpDate.get(Calendar.DAY_OF_MONTH));
+            year = c.get(Calendar.YEAR);
+            month = c.get(Calendar.MONTH);
+            dayOfMonth = c.get(Calendar.DAY_OF_MONTH);
+
+            // Set dateText according to the initial date
+            Calendar today = Calendar.getInstance();
             String dateStr = DateFormat.getDateInstance(DateFormat.FULL).format(c.getTime());
-            if((year == c.get(Calendar.YEAR)) &&
-               (month == c.get(Calendar.MONTH)) &&
-               (dayOfMonth == c.get(Calendar.DAY_OF_MONTH))) {
+            if((year == today.get(Calendar.YEAR)) &&
+               (month == today.get(Calendar.MONTH)) &&
+               (dayOfMonth == today.get(Calendar.DAY_OF_MONTH))) {
                 selectedDateText.setText("Today - " + dateStr);
             } else {
                 selectedDateText.setText(dateStr);
@@ -198,7 +202,11 @@ public class AlarmEditorActivity extends AppCompatActivity {
             // time is less than the actual time
             if(actualTimeOfDay >= selectedTimeOfDay) {
                 // Change date to tomorrow
-                c.roll(Calendar.DAY_OF_YEAR, true); // TODO Does this roll properly, or do I have to update all other fields?
+                c.roll(Calendar.DAY_OF_YEAR, true);
+                // Handle moving to a new year (other fields are handled correctly)
+                if((c.get(Calendar.MONTH) == 0) && (c.get(Calendar.DAY_OF_MONTH) == 1)) {
+                    c.roll(Calendar.YEAR, true);
+                }
             }
         } else {
             c.set(Calendar.YEAR, y);

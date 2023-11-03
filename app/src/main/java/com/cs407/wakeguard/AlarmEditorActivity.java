@@ -346,12 +346,12 @@ public class AlarmEditorActivity extends AppCompatActivity {
         // TODO Save alarm settings in database
         //      Account for other user settings in SharedPreferences
         //      Validate alarm date/time to ensure passing time does not result in saving an alarm set to go off before the current date/time
-        Intent intent = new Intent(this, MainActivity.class);
+        Intent intent = new Intent(this, DashboardActivity.class);
         startActivity(intent);
     }
 
     public void discardChanges(View v) {
-        Intent intent = new Intent(this, MainActivity.class);
+        Intent intent = new Intent(this, DashboardActivity.class);
         startActivity(intent);
     }
 }

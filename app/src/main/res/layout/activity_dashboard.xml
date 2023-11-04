@@ -8,15 +8,41 @@
 
     <com.arbelkilani.clock.Clock
         android:id="@+id/dashboardClock"
-        android:layout_width="346dp"
-        android:layout_height="338dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="28dp"
+        android:layout_marginEnd="28dp"
+        android:layout_marginBottom="11dp"
         app:clock_type="numeric"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/createdAlarmsRecycerView"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.493"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0"
-        app:numeric_format="hour_12" />
+        app:numeric_format="hour_12"
+        app:numeric_show_seconds="true" />
+
+    <TextView
+        android:id="@+id/upcomingAlarmsTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="240dp"
+        android:layout_marginBottom="106dp"
+        android:text="No upcoming alarms"
+        app:layout_constraintBottom_toTopOf="@+id/createdAlarmsRecycerView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/createdAlarmsRecycerView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="1dp"
+        android:layout_marginEnd="1dp"
+        android:layout_marginBottom="46dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/upcomingAlarmsTextView" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

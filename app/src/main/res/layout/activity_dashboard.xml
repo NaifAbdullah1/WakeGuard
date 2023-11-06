@@ -7,5 +7,82 @@
     tools:context=".DashboardActivity">
 
 
+    <TextView
+        android:id="@+id/timeText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="77dp"
+        android:text="3:44 PM"
+        android:textSize="60sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/nextActiveAlarmText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="174dp"
+        android:layout_marginBottom="458dp"
+        android:text="Next alarm in 15 hours and 45 minutes"
+        android:textSize="17sp"
+        app:layout_constraintBottom_toTopOf="@+id/plusIconView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/activeAlarmTimeAndDateText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="211dp"
+        android:layout_marginBottom="45dp"
+        android:text="Sat, Oct 14, 7:30 AM"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <LinearLayout
+        android:layout_width="345dp"
+        android:layout_height="398dp"
+        android:orientation="vertical"
+        tools:layout_editor_absoluteX="28dp"
+        tools:layout_editor_absoluteY="251dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginTop="250dp">
+
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/fragmentContainerView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:name="com.cs407.wakeguard.CreatedAlarmFragment"/>
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/settingsIconView"
+        android:layout_width="53dp"
+        android:layout_height="51dp"
+        android:layout_marginStart="19dp"
+        android:layout_marginEnd="266dp"
+        android:layout_marginBottom="18dp"
+        android:src="@drawable/settings_icon"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/plusIconView"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <ImageView
+        android:id="@+id/plusIconView"
+        android:layout_width="53dp"
+        android:layout_height="0dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="11dp"
+        android:src="@drawable/plus_icon"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/settingsIconView"
+        app:layout_constraintTop_toBottomOf="@+id/nextActiveAlarmText"
+        app:layout_constraintVertical_bias="1.0" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

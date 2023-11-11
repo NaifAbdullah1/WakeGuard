@@ -1,5 +1,6 @@
 package com.cs407.wakeguard;
 
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -72,6 +73,26 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
                         AlarmCard alarm = alarmList.get(position);
                         alarm.setActive(isChecked);
                         // TODO: UPDATE THE DATABASE HERE TO INDICATE THAT THIS ALARM IS NOW INACTIVE
+                    }
+                }
+            });
+
+            // Setting an onClickListener for every alarm card in RecyclerView
+            view.setOnClickListener(new View.OnClickListener(){
+                @Override
+                public void onClick(View v){
+                    // Getting the index of the clicked alarm card
+                    int clickedAlarmIndex = getAdapterPosition();
+
+                    // Ensuring that a valid alarm was clicked before proceeding
+                    if (clickedAlarmIndex != RecyclerView.NO_POSITION){
+                        // Getting the specific alarm card using the index
+                        AlarmCard clickedAlarmCard = alarmList.get(clickedAlarmIndex);
+                        // Using an intent to go to the alarm editor screen
+                        Intent editAlarmIntent = new Intent(v.getContext(), AlarmEditorActivity.class);
+                        // TODO: YOU WILL NEED TO PASS THE INFO, (MAYBE THE ALARM ID) TO THE INTENT SO THAT THE CORRESPONDING ALARM INFO STORED IN THE DB IS RETREIVED.
+
+                        v.getContext().startActivity(editAlarmIntent);
                     }
                 }
             });

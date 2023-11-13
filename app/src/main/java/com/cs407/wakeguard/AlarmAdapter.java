@@ -105,14 +105,13 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
                     // Ensuring that a valid alarm was clicked before proceeding
                     if (clickedAlarmIndex != RecyclerView.NO_POSITION){
                         DashboardActivity activity = (DashboardActivity) v.getContext();
+                        AlarmCard clickedAlarmCard = alarmList.get(clickedAlarmIndex);
                         if (activity.isSelectionModeActive()){
                             // Toggle checkboxes
-                            AlarmCard clickedAlarmCard = alarmList.get(clickedAlarmIndex);
                             clickedAlarmCard.setSelected(!clickedAlarmCard.isSelected());
                             notifyItemChanged(clickedAlarmIndex); // updating just the alarm card that had its checkbox ticked.
                         } else{
                             // Getting the specific alarm card using the index
-                            AlarmCard clickedAlarmCard = alarmList.get(clickedAlarmIndex);
                             // Using an intent to go to the alarm editor screen
                             Intent editAlarmIntent = new Intent(v.getContext(), AlarmEditorActivity.class);
                             // TODO: YOU WILL NEED TO PASS THE INFO, (MAYBE THE ALARM ID) TO THE INTENT SO THAT THE CORRESPONDING ALARM INFO STORED IN THE DB IS RETREIVED.

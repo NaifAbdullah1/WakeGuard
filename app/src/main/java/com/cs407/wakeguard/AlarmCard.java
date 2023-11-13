@@ -16,6 +16,9 @@ public class AlarmCard {
     // If an alarm is active (true) it means it will go off when the time comes
     private boolean active;
 
+    // Is the alarm selected for deletion/turning it off?
+    private boolean isSelected = false;
+
     public AlarmCard(String time, String title, boolean active) {
         this.time = time;
         this.title = title;
@@ -44,5 +47,13 @@ public class AlarmCard {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public boolean isSelected() {
+        return isSelected;
+    }
+
+    public void setSelected(boolean selected) {
+        isSelected = selected;
     }
 }

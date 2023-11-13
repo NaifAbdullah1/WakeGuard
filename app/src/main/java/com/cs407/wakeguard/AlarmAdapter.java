@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.TextView;
 
@@ -23,6 +24,9 @@ import java.util.List;
 public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHolder> {
     private List<AlarmCard> alarmList;
 
+    // SelectionMode is when the checkboxes are visible next to every alarm card
+    private boolean isSelectionMode = false;
+
     public AlarmAdapter(List<AlarmCard> alarmList) {
         this.alarmList = alarmList;
     }
@@ -41,6 +45,9 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
         holder.alarmTitleTextView.setText(alarm.getTitle());
         holder.alarmSwitchActive.setChecked(alarm.isActive());
         // Bind other views in the card
+
+        holder.alarmCheckBox.setVisibility(isSelectionMode ? View.VISIBLE : View.GONE);
+        holder.alarmCheckBox.setChecked(alarm.isSelected());
     }
 
     @Override
@@ -48,16 +55,24 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
         return alarmList.size();
     }
 
+    // Method to set selection mode
+    public void setSelectionMode(boolean isSelectionMode) {
+        this.isSelectionMode = isSelectionMode;
+    }
+
     class AlarmViewHolder extends RecyclerView.ViewHolder{
         TextView alarmTimeTextView;
         TextView alarmTitleTextView;
         SwitchMaterial alarmSwitchActive;
+        CheckBox alarmCheckBox;
 
         AlarmViewHolder(View view){
             super(view);
             alarmTimeTextView=view.findViewById(R.id.alarmTimeTextView);
             alarmTitleTextView=view.findViewById(R.id.alarmTitleTextView);
             alarmSwitchActive=view.findViewById(R.id.alarmSwitch);
+            alarmCheckBox = view.findViewById(R.id.alarmCheckBox);
+
             alarmSwitchActive.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -77,26 +92,61 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
                 }
             });
 
-            // Setting an onClickListener for every alarm card in RecyclerView
+            /* Setting an onClickListener for every alarm card in RecyclerView. This listener
+            * runs when the user taps an alarm card
+            * The "view" here is the alarm card, each alarm card is a "view"*/
             view.setOnClickListener(new View.OnClickListener(){
                 @Override
                 public void onClick(View v){
+
                     // Getting the index of the clicked alarm card
                     int clickedAlarmIndex = getAdapterPosition();
 
                     // Ensuring that a valid alarm was clicked before proceeding
                     if (clickedAlarmIndex != RecyclerView.NO_POSITION){
-                        // Getting the specific alarm card using the index
-                        AlarmCard clickedAlarmCard = alarmList.get(clickedAlarmIndex);
-                        // Using an intent to go to the alarm editor screen
-                        Intent editAlarmIntent = new Intent(v.getContext(), AlarmEditorActivity.class);
-                        // TODO: YOU WILL NEED TO PASS THE INFO, (MAYBE THE ALARM ID) TO THE INTENT SO THAT THE CORRESPONDING ALARM INFO STORED IN THE DB IS RETREIVED.
+                        DashboardActivity activity = (DashboardActivity) v.getContext();
+                        if (activity.isSelectionModeActive()){
+                            // Toggle checkboxes
+                            AlarmCard clickedAlarmCard = alarmList.get(clickedAlarmIndex);
+                            clickedAlarmCard.setSelected(!clickedAlarmCard.isSelected());
+                            notifyItemChanged(clickedAlarmIndex); // updating just the alarm card that had its checkbox ticked.
+                        } else{
+                            // Getting the specific alarm card using the index
+                            AlarmCard clickedAlarmCard = alarmList.get(clickedAlarmIndex);
+                            // Using an intent to go to the alarm editor screen
+                            Intent editAlarmIntent = new Intent(v.getContext(), AlarmEditorActivity.class);
+                            // TODO: YOU WILL NEED TO PASS THE INFO, (MAYBE THE ALARM ID) TO THE INTENT SO THAT THE CORRESPONDING ALARM INFO STORED IN THE DB IS RETREIVED.
 
-                        v.getContext().startActivity(editAlarmIntent);
+                            v.getContext().startActivity(editAlarmIntent);
+                        }
+                    }
+                }
+            });
+
+            /**
+             * Enters selection mode when the user long presses any of the alarm cards
+             */
+            view.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    DashboardActivity activity = (DashboardActivity) v.getContext();
+                    if (!activity.isSelectionModeActive()) {
+                        activity.enterSelectionMode();
+                    }
+                    return true;
+                }
+            });
+
+            alarmCheckBox.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    int position = getAdapterPosition();
+                    if (position != RecyclerView.NO_POSITION) {
+                        AlarmCard alarm = alarmList.get(position);
+                        alarm.setSelected(alarmCheckBox.isChecked());
                     }
                 }
             });
         }
     }
-
 }

@@ -4,8 +4,68 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/parentLayout"
     tools:context=".DashboardActivity">
 
+    <com.arbelkilani.clock.Clock
+        android:id="@+id/dashboardClock"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="34dp"
+        android:layout_marginEnd="34dp"
+        app:clock_type="numeric"
+        app:layout_constraintBottom_toTopOf="@+id/settingsButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:numeric_format="hour_12"
+        app:numeric_show_seconds="true" />
+
+    <TextView
+        android:id="@+id/upcomingAlarmsTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="240dp"
+        android:layout_marginBottom="159dp"
+        android:text="No upcoming alarms"
+        app:layout_constraintBottom_toTopOf="@+id/createdAlarmsRecycerView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/createdAlarmsRecycerView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="1dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/upcomingAlarmsTextView" />
+
+    <androidx.appcompat.widget.AppCompatImageButton
+        android:id="@+id/addAlarmButton"
+        android:layout_width="55dp"
+        android:layout_height="55dp"
+        android:layout_marginEnd="16dp"
+        android:background="#00FFFFFF"
+        android:src="@drawable/ic_add"
+        app:layout_constraintBottom_toTopOf="@+id/createdAlarmsRecycerView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/settingsButton"
+        app:layout_constraintTop_toBottomOf="@+id/dashboardClock" />
+
+    <androidx.appcompat.widget.AppCompatImageButton
+        android:id="@+id/settingsButton"
+        android:layout_width="55dp"
+        android:layout_height="55dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="290dp"
+        android:background="#00FFFFFF"
+        android:src="@drawable/ic_settings"
+        app:layout_constraintBottom_toTopOf="@+id/createdAlarmsRecycerView"
+        app:layout_constraintEnd_toStartOf="@+id/addAlarmButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/dashboardClock" />
 </androidx.constraintlayout.widget.ConstraintLayout>

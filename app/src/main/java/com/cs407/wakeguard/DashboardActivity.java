@@ -20,6 +20,7 @@ import com.arbelkilani.clock.enumeration.ClockType;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.PrimitiveIterator;
 
 
 /**
@@ -55,58 +56,36 @@ public class DashboardActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dashboard);
 
+        // ############### VARIABLE INITIALIZATION GOES HERE #########################
         // Exiting selection mode when the user clicks anywhere except an alarm card
         ConstraintLayout parentLayout = findViewById(R.id.parentLayout);
+        // Initializing the settingsButton so that its functions (such as showDeleteIcon) work
+        settingsButton = findViewById(R.id.settingsButton);
+        addAlarmButton = findViewById(R.id.addAlarmButton);
+        recyclerView = findViewById(R.id.createdAlarmsRecycerView);
+        // Getting the object representing the dashboard's clock
+        Clock dashboardClock = findViewById(R.id.dashboardClock);
+        // Initializing the list of created alarms + the adapter
+        alarmList = new ArrayList<>();
+        adapter = new AlarmAdapter(alarmList);
+        /*Layout managers are needed because they help us define what gets
+         * displayed on the RecyclerView (which displays the alarm cards) and how to arrange
+         * the items. It also determines other functions like scroll direction etc..*/
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager((getApplicationContext()));
+
+        //_______________________________________________________________________________________
+
+        // ################## LISTENERS GO HERE #######################################
         parentLayout.setOnTouchListener(new View.OnTouchListener(){
             @Override
             public boolean onTouch(View v, MotionEvent event){
                 if(isSelectionModeActive()){
                     exitSelectionMode();
-
-                    // De-selecting all alarms
-                    for (AlarmCard alarm : alarmList) {
-                        alarm.setSelected(false);
-                    }
                     return true; // consuming the touch event
                 }
                 return false; // Do not consume the event, let it propagate
             }
         });
-
-        // Initializing the settingsButton so that its functions (such as showDeleteIcon) work
-        settingsButton = findViewById(R.id.settingsButton);
-        addAlarmButton = findViewById(R.id.addAlarmButton);
-
-        recyclerView = findViewById(R.id.createdAlarmsRecycerView);
-        // Initializing the list of created alarms + the adapter
-        alarmList = new ArrayList<>();
-        adapter = new AlarmAdapter(alarmList);
-
-        /*Layout managers are needed because they help us define what gets
-        * displayed on the RecyclerView (which displays the alarm cards) and how to arrange
-        * the items. It also determines other functions like scroll direction etc..*/
-        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager((getApplicationContext()));
-        recyclerView.setLayoutManager(layoutManager);
-
-        /*An ItemAnimator handles animations for item views when changes such
-        * as items being added, removed, or moved occur (Within the RecyclerView)
-        * Specifically, the DefaultItemAnimator provides default animations for
-        * common item changes. For example, when you insert a new item into
-        * the RecyclerView, it will animate in from offscreen. When you remove an
-        * item, the DefaultItemAnimator will animate its disappearance.*/
-        recyclerView.setItemAnimator(new DefaultItemAnimator());
-        recyclerView.setAdapter(adapter);
-
-        // Getting the object representing the dashboard's clock
-        Clock dashboardClock = findViewById(R.id.dashboardClock);
-
-        // Setting the clock type to numeric (instead of analog)
-        dashboardClock.setClockType(ClockType.numeric);
-
-        /*Removing padding all around the clock so that if there's
-        * anything close to the clock, it would be clickable */
-        dashboardClock.setPadding(0, 0, 0, 0);
-
 
         /* Creating a listening for adding alarms button (the "+" button).
         This will take us to the alarm editor page to create a new alarm*/
@@ -118,16 +97,39 @@ public class DashboardActivity extends AppCompatActivity {
             }
         });
 
+        // TODO: ADD THE SETTINGS' OnClickListener HERE
+        //_______________________________________________________________________________________
+
+        //// ################## OBJECTS' SETTINGS GO HERE #######################################
+
+        /*An ItemAnimator handles animations for item views when changes such
+        * as items being added, removed, or moved occur (Within the RecyclerView)
+        * Specifically, the DefaultItemAnimator provides default animations for
+        * common item changes. For example, when you insert a new item into
+        * the RecyclerView, it will animate in from offscreen. When you remove an
+        * item, the DefaultItemAnimator will animate its disappearance.*/
+        recyclerView.setItemAnimator(new DefaultItemAnimator());
+        recyclerView.setAdapter(adapter);
+        recyclerView.setLayoutManager(layoutManager);
+
+        // Setting the clock type to numeric (instead of analog)
+        dashboardClock.setClockType(ClockType.numeric);
+        /*Removing padding all around the clock so that if there's
+        * anything close to the clock, it would be clickable */
+        dashboardClock.setPadding(0, 0, 0, 0);
+        //_______________________________________________________________________________________
+
+
         TextView upcomingAlarmsTextView = findViewById(R.id.upcomingAlarmsTextView);
         // TODO: Add code to change this text view such that if there's >= 1 upcoming active alarm, the TextView should change as per the wireframe
 
 
         //TODO: For testing only
         alarmList.add(new AlarmCard("10:00 AM", "Gym", false));
-        //alarmList.add(new AlarmCard("1:00 AM", "Nap", true));
-        //alarmList.add(new AlarmCard("2:00 AM", "Extra Pump", false));
-        //alarmList.add(new AlarmCard("3:00 PM", "Gym Again", true));
-        //alarmList.add(new AlarmCard("11:00 AM", "Class", true));
+        alarmList.add(new AlarmCard("1:00 AM", "Nap", true));
+        alarmList.add(new AlarmCard("2:00 AM", "Extra Pump", false));
+        alarmList.add(new AlarmCard("3:00 PM", "Gym Again", true));
+        alarmList.add(new AlarmCard("11:00 AM", "Class", true));
 
         // Tells the adapted to update the content of the list in the UI
         adapter.notifyDataSetChanged();
@@ -193,6 +195,8 @@ public class DashboardActivity extends AppCompatActivity {
                 startActivity(addNewAlarmIntent);
             }
         });
+
+        deselectAllAlarms();
     }
 
     /**
@@ -246,6 +250,15 @@ public class DashboardActivity extends AppCompatActivity {
             }
         }
         adapter.notifyDataSetChanged();
+    }
+
+    /**
+     * Un-ticks the checkboxes of every alarm
+     */
+    private void deselectAllAlarms(){
+        for (AlarmCard alarm : alarmList) {
+            alarm.setSelected(false);
+        }
     }
 
 }

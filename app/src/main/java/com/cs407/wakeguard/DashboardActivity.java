@@ -1,5 +1,6 @@
 package com.cs407.wakeguard;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -27,7 +28,9 @@ import java.util.PrimitiveIterator;
  * Dashboard's clock: https://github.com/arbelkilani/Clock-view
  *
  * NATHAN'S TODO:
- * 1-
+ * 1- When there are no alarms created, have a TextView in the place of the recycler stating that
+ * there are no created alarms (or even keep it empty)
+ *
  * 2-
  */
 public class DashboardActivity extends AppCompatActivity {
@@ -51,6 +54,9 @@ public class DashboardActivity extends AppCompatActivity {
 
     private AppCompatImageButton addAlarmButton;
 
+    // TODO: MAKE SURE YOU UNDERSTAND WHAT THIS DOES
+    private static final int NEW_ALARM_REQUEST_CODE = 1;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -65,17 +71,21 @@ public class DashboardActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.createdAlarmsRecycerView);
         // Getting the object representing the dashboard's clock
         Clock dashboardClock = findViewById(R.id.dashboardClock);
-        // Initializing the list of created alarms + the adapter
-        alarmList = new ArrayList<>();
-        adapter = new AlarmAdapter(alarmList);
+
         /*Layout managers are needed because they help us define what gets
          * displayed on the RecyclerView (which displays the alarm cards) and how to arrange
          * the items. It also determines other functions like scroll direction etc..*/
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager((getApplicationContext()));
-
+        DBHelper dbHelper = new DBHelper(this);
+        // Initializing the list of created alarms + the adapter
+        alarmList = dbHelper.getAllAlarms();
+        adapter = new AlarmAdapter(alarmList);
+        adapter.notifyDataSetChanged();
         //_______________________________________________________________________________________
 
+
         // ################## LISTENERS GO HERE #######################################
+
         parentLayout.setOnTouchListener(new View.OnTouchListener(){
             @Override
             public boolean onTouch(View v, MotionEvent event){
@@ -93,12 +103,15 @@ public class DashboardActivity extends AppCompatActivity {
             @Override
             public void onClick(View v){
                 Intent addNewAlarmIntent = new Intent(DashboardActivity.this, AlarmEditorActivity.class);
+                //startActivity(addNewAlarmIntent, NEW_ALARM_REQUEST_CODE);
                 startActivity(addNewAlarmIntent);
             }
         });
 
         // TODO: ADD THE SETTINGS' OnClickListener HERE
+
         //_______________________________________________________________________________________
+
 
         //// ################## OBJECTS' SETTINGS GO HERE #######################################
 
@@ -121,19 +134,56 @@ public class DashboardActivity extends AppCompatActivity {
 
 
         TextView upcomingAlarmsTextView = findViewById(R.id.upcomingAlarmsTextView);
-        // TODO: Add code to change this text view such that if there's >= 1 upcoming active alarm, the TextView should change as per the wireframe
+        // TODO: Add code to change this textview such that if there's >= 1 upcoming active alarm, the TextView should change as per the wireframe
 
-
-        //TODO: For testing only
-        alarmList.add(new AlarmCard("10:00 AM", "Gym", false));
-        alarmList.add(new AlarmCard("1:00 AM", "Nap", true));
-        alarmList.add(new AlarmCard("2:00 AM", "Extra Pump", false));
-        alarmList.add(new AlarmCard("3:00 PM", "Gym Again", true));
-        alarmList.add(new AlarmCard("11:00 AM", "Class", true));
-
+        /*
+        alarmList.add(new AlarmCard("10:00 AM", new String [] {"monday", "tuesday"},"Gym", "default",false, false, false));
+        alarmList.add(new AlarmCard("1:00 AM", new String [] {"tuesday"},"Nap", "default",true, false, false));
+        alarmList.add(new AlarmCard("2:00 PM", new String [] {"saturday"},"Extra Pump", "default",false, true, false));
+        alarmList.add(new AlarmCard("4:00 PM", new String [] {},"Gym Again", "default",false, true, false));
+        alarmList.add(new AlarmCard("4:00 PM", new String [] {"monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"},"Class", "default",false, true, false));
+        */
+        //AlarmCard newAlarmTest = new AlarmCard("10:00 AM", new String [] {"monday", "tuesday"},"Gym", "default",false, false, false);
+        //dbHelper.addAlarm(newAlarmTest);
+        //adapter.addAlarm(newAlarmTest);
         // Tells the adapted to update the content of the list in the UI
-        adapter.notifyDataSetChanged();
+        //adapter.notifyDataSetChanged();
 
+    }
+
+    /**
+     * When AlarmEditorActivity finishes, this function will be called. This is where
+     * we receive alarm data from the AlarmEditorActivity
+     * TODO: QUESTION: if an activity starts another activity using intents, does the starting activity (in this case, DashboardActivity.java by default calls onActivityResult() always? Try to understand the control-flow here.
+     */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data){
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == NEW_ALARM_REQUEST_CODE && resultCode == RESULT_OK && data != null){
+            /* Unpacking the data we got from the Intent (which started the
+             AlarmEditorActivity. We're retrieving the new alarm data*/
+            String time = data.getStringExtra("time");
+            String daysActive = data.getStringExtra("daysActive");
+            String title = data.getStringExtra("title");
+            String alarmTone = data.getStringExtra("alarmTone");
+            boolean isVibrationOn = data.getBooleanExtra("isVibrationOn", true);
+            boolean isMotionMonitoringOn = data.getBooleanExtra("isMotionMonitoringOn", true);
+            boolean isActive = data.getBooleanExtra("isActive", true);
+
+            AlarmCard newAlarmCard = new AlarmCard(time, daysActive,
+                    title, alarmTone, isVibrationOn, isMotionMonitoringOn, isActive);
+
+            // Next 2 lines: Saving alarm to DB
+            DBHelper dbHelper = new DBHelper(this);
+            dbHelper.addAlarm(newAlarmCard);
+
+            /* Next 3 lines: Updating recyclerView by adding it to the local copy
+            of alarms and notifying the recyclerView */
+            alarmList.add(newAlarmCard);
+            adapter.setAlarms(alarmList); // Update the adapter's data
+            adapter.notifyDataSetChanged();
+        }
     }
 
     /**
@@ -154,7 +204,6 @@ public class DashboardActivity extends AppCompatActivity {
                 exitSelectionMode();
             }
         });
-
 
         addAlarmButton.setImageResource(R.drawable.ic_volume_off);
         addAlarmButton.setOnClickListener(new View.OnClickListener(){

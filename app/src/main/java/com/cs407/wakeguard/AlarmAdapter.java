@@ -31,6 +31,15 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
         this.alarmList = alarmList;
     }
 
+    public void addAlarm(AlarmCard alarmCard){
+        alarmList.add(alarmCard);
+        notifyItemInserted(alarmList.size() - 1);
+    }
+
+    public void setAlarms(List<AlarmCard> alarmList) {
+        this.alarmList = alarmList;
+    }
+
     @Override
     public AlarmViewHolder onCreateViewHolder(ViewGroup parent, int viewType){
         View itemView = LayoutInflater.from(parent.getContext())

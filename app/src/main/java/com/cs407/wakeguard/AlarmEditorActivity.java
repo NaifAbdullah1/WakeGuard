@@ -10,6 +10,7 @@ import android.content.SharedPreferences;
 import android.icu.text.DateFormat;
 import android.icu.util.Calendar;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.DatePicker;
@@ -21,6 +22,10 @@ import android.widget.ToggleButton;
 
 
 public class AlarmEditorActivity extends AppCompatActivity {
+    // This field indicates whether we're opening this activity for editing an alarm or creating a new one
+    // True = we're editing an existing alarm, False = we're creating a new alarm
+    private boolean isEditingAlarm = false;
+
     // Switch for enabling/disabling vibration
     SwitchCompat vibrationSwitch;
     // Switch for enabling/disabling motion monitoring
@@ -50,6 +55,11 @@ public class AlarmEditorActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_alarm_editor);
+
+        if (getIntent().hasExtra("alarmId")){
+            isEditingAlarm = true;
+            int alarmId = getIntent().getIntExtra("alarmId", -1);
+        }
 
         // Get 24-hour mode from SharedPreferences. Use it below to set time picker 24 hour mode
         SharedPreferences sp = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
@@ -292,6 +302,10 @@ public class AlarmEditorActivity extends AppCompatActivity {
         dpDialog.show();
     }
 
+    /**
+     * An onClick function that runs whenever any of the week buttons are clicked.
+     * @param v
+     */
     public void setRepeatingDay(View v) {
         if(v.getId() == R.id.sundayBtn) {
             repeatingDays[0] = ((ToggleButton)v).isChecked();
@@ -345,13 +359,63 @@ public class AlarmEditorActivity extends AppCompatActivity {
     public void saveAlarm(View v) {
         // TODO Save alarm settings in database
         //      Account for other user settings in SharedPreferences
-        //      Validate alarm date/time to ensure passing time does not result in saving an alarm set to go off before the current date/time
-        Intent intent = new Intent(this, DashboardActivity.class);
-        startActivity(intent);
+        //TODO: Validating alarm date/time to ensure passing time does not result in saving an alarm set to go off before the current date/time
+
+        // Getting the values of the newly-created alarm to send to DB
+        String time = tPicker.getHour() + ":" + tPicker.getMinute();
+        String daysActive = toDaysActiveString();
+        String title = alarmNameText.getText().toString();
+        String alarmTone = "Default";
+        SwitchCompat vSwitch = findViewById(R.id.vibrationSwitch);
+        boolean vibrationSwitch = vSwitch.isChecked();
+        SwitchCompat mSwitch = findViewById(R.id.motionMonitorSwitch);
+        boolean motionMonitoringSwitch = mSwitch.isChecked();
+
+        // Saving the data to the DB
+        DBHelper dbHelper = new DBHelper(this);
+        AlarmCard alarmCard = new AlarmCard(time, daysActive, title, alarmTone, vibrationSwitch, motionMonitoringSwitch, true);
+        Log.i("D", alarmCard.toString());
+        dbHelper.addAlarm(alarmCard);
+
+        // Creating an intent to go back to dashboard and send the alarm data.
+        //Intent intent = new Intent(this, DashboardActivity.class);
+        //startActivity(intent);
+
+        Intent returnIntent = new Intent();
+        returnIntent.putExtra("time", time);
+        returnIntent.putExtra("daysActive", daysActive);
+        returnIntent.putExtra("title", title);
+        returnIntent.putExtra("alarmTone", alarmTone);
+        returnIntent.putExtra("vibrationSwitch", vibrationSwitch);
+        returnIntent.putExtra("motionMonitoringSwitch", motionMonitoringSwitch);
+
+        // Setting result and finishing activity
+        setResult(RESULT_OK, returnIntent);
+        finish();
     }
 
     public void discardChanges(View v) {
         Intent intent = new Intent(this, DashboardActivity.class);
         startActivity(intent);
+    }
+
+    public String toDaysActiveString(){
+        String days = "";
+        if (repeatingDays[0])
+            days += "Mo,";
+        if (repeatingDays[1])
+            days += "Tu,";
+        if (repeatingDays[2])
+            days += "We,";
+        if (repeatingDays[3])
+            days += "Th,";
+        if (repeatingDays[4])
+            days += "Fr,";
+        if (repeatingDays[5])
+            days += "Sa,";
+        if (repeatingDays[6])
+            days += "Su";
+
+        return days;
     }
 }

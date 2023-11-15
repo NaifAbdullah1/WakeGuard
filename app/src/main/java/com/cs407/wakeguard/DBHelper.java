@@ -49,7 +49,6 @@ public class DBHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues values = new ContentValues();
-        //values.put("alarmId", alarmID++);
         values.put("time", alarmCard.getTime());
         values.put("daysActive", String.join(", ", alarmCard.getDaysActive()));
         values.put("title", alarmCard.getTitle());
@@ -66,6 +65,29 @@ public class DBHelper extends SQLiteOpenHelper {
         db.close();
     }
 
+    public void deleteAlarm(int alarmID){
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        // Defining the query's WHERE clause (the row to delete)
+        String whereClause = "id=?";
+
+        // Defining the WHERE arguments (values to bind to the WHERE clause, what goes in the spot of the ? mark)
+        String [] whereArgs = new String[]{String.valueOf(alarmID)};
+
+        // Performing the DELETE operation
+        int deletedRows = db.delete("alarms", whereClause, whereArgs);
+
+        // Logging results
+        if (deletedRows > 0)
+            Log.i("DBHelper", "Deleted " + deletedRows + " row(s) with ID: " + alarmID);
+        else
+            Log.i("DBHelper", "No rows deleted.");
+
+        //Closing DB connection.
+        db.close();
+
+    }
+
     public List<AlarmCard> getAllAlarms() {
         List<AlarmCard> alarmList = new ArrayList<>();
         String selectQuery = "SELECT * FROM alarms";
@@ -74,6 +96,7 @@ public class DBHelper extends SQLiteOpenHelper {
         Cursor cursor = db.rawQuery(selectQuery, null);
 
         if (cursor.moveToFirst()){
+            int idIndex = cursor.getColumnIndex("id");
             int timeIndex = cursor.getColumnIndex("time");
             int daysActiveIndex = cursor.getColumnIndex("daysActive");
             int titleIndex = cursor.getColumnIndex("title");
@@ -82,11 +105,12 @@ public class DBHelper extends SQLiteOpenHelper {
             int isMotionMonitoringOnIndex = cursor.getColumnIndex("isMotionMonitoringOn");
             int isActiveIndex = cursor.getColumnIndex("isActive");
 
-            if (timeIndex != -1 && daysActiveIndex != -1 && titleIndex != -1 &&
+            if (idIndex != -1 && timeIndex != -1 && daysActiveIndex != -1 && titleIndex != -1 &&
                     alarmToneNameIndex != -1 && isVibrationOnIndex != -1 &&
                     isMotionMonitoringOnIndex != -1 && isActiveIndex != -1) {
                 do {
                     AlarmCard alarmCard = new AlarmCard(
+                            cursor.getInt(idIndex),
                             cursor.getString(timeIndex),
                             cursor.getString(daysActiveIndex),
                             cursor.getString(titleIndex),
@@ -114,6 +138,7 @@ public class DBHelper extends SQLiteOpenHelper {
         Cursor cursor = db.rawQuery(selectQuery, null);
 
         if (cursor.moveToFirst()) {
+            int idIndex = cursor.getColumnIndex("id");
             int timeIndex = cursor.getColumnIndex("time");
             int daysActiveIndex = cursor.getColumnIndex("daysActive");
             int titleIndex = cursor.getColumnIndex("title");
@@ -122,12 +147,13 @@ public class DBHelper extends SQLiteOpenHelper {
             int isMotionMonitoringOnIndex = cursor.getColumnIndex("isMotionMonitoringOn");
             int isActiveIndex = cursor.getColumnIndex("isActive");
 
-            if (timeIndex != -1 && daysActiveIndex != -1 && titleIndex != -1 &&
+            if (idIndex != -1 && timeIndex != -1 && daysActiveIndex != -1 && titleIndex != -1 &&
                     alarmToneNameIndex != -1 && isVibrationOnIndex != -1 &&
                     isMotionMonitoringOnIndex != -1 && isActiveIndex != -1) {
                 do {
-                    String alarmData = String.format("Time: %s, Days Active: %s, Title: %s, Alarm Tone Name: %s, " +
-                                    "Is Vibration On: %s, Is Motion Monitoring On: %s, Is Active: %s",
+                    String alarmData = String.format("id: %d\n Time: %s,\n Days Active: %s,\n Title: %s,\n Alarm Tone Name: %s,\n " +
+                                    "Is Vibration On: %s,\n Is Motion Monitoring On: %s,\n Is Active: %s\n\n\n",
+                            cursor.getInt(idIndex),
                             cursor.getString(timeIndex),
                             cursor.getString(daysActiveIndex),
                             cursor.getString(titleIndex),

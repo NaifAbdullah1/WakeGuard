@@ -377,10 +377,6 @@ public class AlarmEditorActivity extends AppCompatActivity {
         Log.i("D", alarmCard.toString());
         dbHelper.addAlarm(alarmCard);
 
-        // Creating an intent to go back to dashboard and send the alarm data.
-        //Intent intent = new Intent(this, DashboardActivity.class);
-        //startActivity(intent);
-
         Intent returnIntent = new Intent();
         returnIntent.putExtra("time", time);
         returnIntent.putExtra("daysActive", daysActive);
@@ -392,6 +388,10 @@ public class AlarmEditorActivity extends AppCompatActivity {
         // Setting result and finishing activity
         setResult(RESULT_OK, returnIntent);
         finish();
+
+        // Creating an intent to go back to dashboard and send the alarm data.
+        //Intent intent = new Intent(this, DashboardActivity.class);
+        //startActivity(intent);
     }
 
     public void discardChanges(View v) {

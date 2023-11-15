@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
@@ -136,19 +137,20 @@ public class DashboardActivity extends AppCompatActivity {
         TextView upcomingAlarmsTextView = findViewById(R.id.upcomingAlarmsTextView);
         // TODO: Add code to change this textview such that if there's >= 1 upcoming active alarm, the TextView should change as per the wireframe
 
-        /*
-        alarmList.add(new AlarmCard("10:00 AM", new String [] {"monday", "tuesday"},"Gym", "default",false, false, false));
-        alarmList.add(new AlarmCard("1:00 AM", new String [] {"tuesday"},"Nap", "default",true, false, false));
-        alarmList.add(new AlarmCard("2:00 PM", new String [] {"saturday"},"Extra Pump", "default",false, true, false));
-        alarmList.add(new AlarmCard("4:00 PM", new String [] {},"Gym Again", "default",false, true, false));
-        alarmList.add(new AlarmCard("4:00 PM", new String [] {"monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"},"Class", "default",false, true, false));
-        */
-        //AlarmCard newAlarmTest = new AlarmCard("10:00 AM", new String [] {"monday", "tuesday"},"Gym", "default",false, false, false);
-        //dbHelper.addAlarm(newAlarmTest);
-        //adapter.addAlarm(newAlarmTest);
-        // Tells the adapted to update the content of the list in the UI
-        //adapter.notifyDataSetChanged();
 
+    }
+
+    @Override
+    protected void onResume(){
+        super.onResume();
+        refreshAlarmsList();
+    }
+
+    public void refreshAlarmsList(){
+        DBHelper dbHelper = new DBHelper(this);
+        alarmList.clear();
+        alarmList.addAll(dbHelper.getAllAlarms());
+        adapter.notifyDataSetChanged();
     }
 
     /**
@@ -260,15 +262,19 @@ public class DashboardActivity extends AppCompatActivity {
      */
     private void deleteSelectedAlarms(){
         // Loop through all the created alarms and delete the ones where isSelected = true
-
         Iterator<AlarmCard> alaramIterator = alarmList.iterator();
-
+        DBHelper dbHelper = new DBHelper(this);
         int numOfDeletedAlarms = 0;
 
         while (alaramIterator.hasNext()){
-            if (alaramIterator.next().isSelected()){
+            AlarmCard alarmToDelete = alaramIterator.next();
+            if (alarmToDelete.isSelected()){
+                // Deleting the row from the recycler view
                 alaramIterator.remove();
                 numOfDeletedAlarms++;
+
+                // Deleting the row from the DB
+                dbHelper.deleteAlarm(alarmToDelete.getId());
             }
         }
 

@@ -27,8 +27,11 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
     // SelectionMode is when the checkboxes are visible next to every alarm card
     private boolean isSelectionMode = false;
 
-    public AlarmAdapter(List<AlarmCard> alarmList) {
+    private DBHelper dbHelper;
+
+    public AlarmAdapter(List<AlarmCard> alarmList, DBHelper dbHelper) {
         this.alarmList = alarmList;
+        this.dbHelper = dbHelper;
     }
 
     public void setAlarms(List<AlarmCard> alarmList) {
@@ -90,7 +93,7 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
                         AlarmCard alarm = alarmList.get(position);
                         alarm.setActive(isChecked);
                         // TODO: UPDATE THE DATABASE HERE TO INDICATE THAT THIS ALARM IS NOW INACTIVE
-
+                        dbHelper.toggleAlarm(alarm.getId(), alarm.isActive());
                     }
                 }
             });

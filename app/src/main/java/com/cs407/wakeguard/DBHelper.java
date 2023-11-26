@@ -18,8 +18,27 @@ public class DBHelper extends SQLiteOpenHelper {
 
     private static int alarmID = 1;
 
+    private static DBHelper instance;
 
-    public DBHelper(Context context) {
+    /**
+     * This helps us in making this class use a singleton pattern.
+     *
+     * @param context
+     * @return
+     */
+    public static synchronized DBHelper getInstance(Context context){
+        if (instance == null){
+            instance = new DBHelper(context.getApplicationContext());
+        }
+        return instance;
+    }
+
+    /**
+     * Private constructor to prevent direct instantiation
+     *
+     * @param context
+     */
+    private DBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
@@ -86,6 +105,31 @@ public class DBHelper extends SQLiteOpenHelper {
         //Closing DB connection.
         db.close();
 
+    }
+
+    public void updateAlarm(int alarmID){
+
+    }
+
+    public void toggleAlarm(int alarmID, boolean isActive){
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+
+        values.put("isActive", isActive ? 1 : 0); // SQLite uses 1 for true and 0 for false
+
+        // Defining the WHERE clause to specify which row (i.e., alarm) to update
+        String whereClause = "id=?";
+
+        // The WHERE argument
+        String[] whereArgs = new String[]{String.valueOf(alarmID)};
+
+        // Performing the Update
+
+        db.update("alarms", values, whereClause, whereArgs);
+
+        // Closing connection to DB
+        db.close();
     }
 
     public List<AlarmCard> getAllAlarms() {

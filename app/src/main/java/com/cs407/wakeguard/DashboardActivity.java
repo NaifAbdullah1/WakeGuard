@@ -68,6 +68,8 @@ public class DashboardActivity extends AppCompatActivity {
     // TODO: MAKE SURE YOU UNDERSTAND WHAT THIS DOES
     private static final int NEW_ALARM_REQUEST_CODE = 1;
 
+    private DBHelper dbHelper;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -87,10 +89,10 @@ public class DashboardActivity extends AppCompatActivity {
          * displayed on the RecyclerView (which displays the alarm cards) and how to arrange
          * the items. It also determines other functions like scroll direction etc..*/
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager((getApplicationContext()));
-        DBHelper dbHelper = new DBHelper(this);
+        dbHelper = DBHelper.getInstance(this);
         // Initializing the list of created alarms + the adapter
         alarmList = dbHelper.getAllAlarms();
-        adapter = new AlarmAdapter(alarmList);
+        adapter = new AlarmAdapter(alarmList, dbHelper);
         adapter.notifyDataSetChanged();
         //_______________________________________________________________________________________
 
@@ -155,7 +157,7 @@ public class DashboardActivity extends AppCompatActivity {
     @Override
     protected void onResume(){
         super.onResume();
-        DBHelper dbHelper = new DBHelper(this);
+        dbHelper = DBHelper.getInstance(this);
         alarmList.clear();
         alarmList.addAll(dbHelper.getAllAlarms());
         adapter.notifyDataSetChanged();
@@ -185,7 +187,7 @@ public class DashboardActivity extends AppCompatActivity {
                     title, alarmTone, isVibrationOn, isMotionMonitoringOn, isActive);
 
             // Next 2 lines: Saving alarm to DB
-            DBHelper dbHelper = new DBHelper(this);
+            dbHelper = DBHelper.getInstance(this);
             dbHelper.addAlarm(newAlarmCard);
 
             /* Next 3 lines: Updating recyclerView by adding it to the local copy
@@ -271,7 +273,7 @@ public class DashboardActivity extends AppCompatActivity {
     private void deleteSelectedAlarms(){
         // Loop through all the created alarms and delete the ones where isSelected = true
         Iterator<AlarmCard> alaramIterator = alarmList.iterator();
-        DBHelper dbHelper = new DBHelper(this);
+        dbHelper = DBHelper.getInstance(this);
         int numOfDeletedAlarms = 0;
 
         while (alaramIterator.hasNext()){

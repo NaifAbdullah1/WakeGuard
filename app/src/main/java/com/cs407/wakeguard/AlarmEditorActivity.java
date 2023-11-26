@@ -51,6 +51,8 @@ public class AlarmEditorActivity extends AppCompatActivity {
     // Days on which the alarm repeats: Sun    Mon    Tue    Wed    Thu    Fri    Sat
     private boolean[] repeatingDays = {false, false, false, false, false, false, false};
 
+    private DBHelper dbHelper;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -372,7 +374,7 @@ public class AlarmEditorActivity extends AppCompatActivity {
         boolean motionMonitoringSwitch = mSwitch.isChecked();
 
         // Saving the data to the DB
-        DBHelper dbHelper = new DBHelper(this);
+        dbHelper = DBHelper.getInstance(this);
         AlarmCard alarmCard = new AlarmCard(time, daysActive, title, alarmTone, vibrationSwitch, motionMonitoringSwitch, true);
         Log.i("D", alarmCard.toString());
         dbHelper.addAlarm(alarmCard);

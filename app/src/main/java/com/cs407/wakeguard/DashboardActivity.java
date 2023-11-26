@@ -31,11 +31,9 @@ import java.util.List;
  *
  *
  * TODO: 2- When there are no alarms created, have a TextView in the place of the recycler stating that
- * there are no created alarms (or even keep it empty)
+ *      there are no created alarms (or even keep it empty)
  *
  * TODO: 3- Work on updating the alarms. This involves two steps:
- *   A- When the user switches an alarm off or on, a switch event listener should update the alarm in
- *   the DB accordingly
  *   B- When the user clicks the alarm to edit its details, you're going to want to update it in a
  *   similar way to how you create one. Maybe use the boolean value "isEditing" and have a two-way
  *   if-statement in the onActivityResult (use the intent to pass whether you're editing or creating

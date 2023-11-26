@@ -9,7 +9,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
@@ -19,20 +18,31 @@ import android.widget.Toast;
 import com.arbelkilani.clock.Clock;
 import com.arbelkilani.clock.enumeration.ClockType;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.PrimitiveIterator;
 
 
 /**
  * Dashboard's clock: https://github.com/arbelkilani/Clock-view
  *
  * NATHAN'S TODO:
- * 1- When there are no alarms created, have a TextView in the place of the recycler stating that
+ * TODO: 1- The alarm cards do show the time correctly, but we want to make it such that the
+ *      format of the time changes from the hh:mm a format to the 24 Hr format depending on the settings.
+ *
+ *
+ * TODO: 2- When there are no alarms created, have a TextView in the place of the recycler stating that
  * there are no created alarms (or even keep it empty)
  *
- * 2-
+ * TODO: 3- Work on updating the alarms. This involves two steps:
+ *   A- When the user switches an alarm off or on, a switch event listener should update the alarm in
+ *   the DB accordingly
+ *   B- When the user clicks the alarm to edit its details, you're going to want to update it in a
+ *   similar way to how you create one. Maybe use the boolean value "isEditing" and have a two-way
+ *   if-statement in the onActivityResult (use the intent to pass whether you're editing or creating
+ *   an alarm)
+ *
+ *   TODO: 4- Make sure to prevent the user from saving an alarm if the title field is empty
+ *
  */
 public class DashboardActivity extends AppCompatActivity {
 
@@ -137,16 +147,14 @@ public class DashboardActivity extends AppCompatActivity {
         TextView upcomingAlarmsTextView = findViewById(R.id.upcomingAlarmsTextView);
         // TODO: Add code to change this textview such that if there's >= 1 upcoming active alarm, the TextView should change as per the wireframe
 
-
     }
 
+    /**
+     * This ensures that the list of alarms in the dashboard is always synced with DB contents.
+     */
     @Override
     protected void onResume(){
         super.onResume();
-        refreshAlarmsList();
-    }
-
-    public void refreshAlarmsList(){
         DBHelper dbHelper = new DBHelper(this);
         alarmList.clear();
         alarmList.addAll(dbHelper.getAllAlarms());
@@ -211,7 +219,7 @@ public class DashboardActivity extends AppCompatActivity {
         addAlarmButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
-                silenceSelectedAlarms();
+                silenceAllAlarms();
                 exitSelectionMode();
             }
         });
@@ -295,14 +303,12 @@ public class DashboardActivity extends AppCompatActivity {
      * This function runs when the user clicks the "Silence Alarms" button. It sets all the selected
      * alarms to inactive.
      */
-    private void silenceSelectedAlarms(){
+    private void silenceAllAlarms(){
         Iterator<AlarmCard> alaramIterator = alarmList.iterator();
 
         while (alaramIterator.hasNext()){
             AlarmCard currentAlarm = alaramIterator.next();
-            if (currentAlarm.isSelected()){
                 currentAlarm.setActive(false);
-            }
         }
         adapter.notifyDataSetChanged();
     }

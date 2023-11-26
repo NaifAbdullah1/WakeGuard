@@ -31,11 +31,6 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
         this.alarmList = alarmList;
     }
 
-    public void addAlarm(AlarmCard alarmCard){
-        alarmList.add(alarmCard);
-        notifyItemInserted(alarmList.size() - 1);
-    }
-
     public void setAlarms(List<AlarmCard> alarmList) {
         this.alarmList = alarmList;
     }
@@ -50,11 +45,9 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
     @Override
     public void onBindViewHolder(AlarmViewHolder holder, int position) {
         AlarmCard alarm = alarmList.get(position);
-        holder.alarmTimeTextView.setText(alarm.getTime());
+        holder.alarmTimeTextView.setText(alarm.getFormattedTime());
         holder.alarmTitleTextView.setText(alarm.getTitle());
         holder.alarmSwitchActive.setChecked(alarm.isActive());
-        // Bind other views in the card
-
         holder.alarmCheckBox.setVisibility(isSelectionMode ? View.VISIBLE : View.GONE);
         holder.alarmCheckBox.setChecked(alarm.isSelected());
     }
@@ -97,6 +90,7 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
                         AlarmCard alarm = alarmList.get(position);
                         alarm.setActive(isChecked);
                         // TODO: UPDATE THE DATABASE HERE TO INDICATE THAT THIS ALARM IS NOW INACTIVE
+
                     }
                 }
             });

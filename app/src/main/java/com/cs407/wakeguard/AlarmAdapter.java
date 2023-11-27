@@ -120,7 +120,13 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
                             // Getting the specific alarm card using the index
                             // Using an intent to go to the alarm editor screen
                             Intent editAlarmIntent = new Intent(v.getContext(), AlarmEditorActivity.class);
-                            // TODO: YOU WILL NEED TO PASS THE INFO, (MAYBE THE ALARM ID) TO THE INTENT SO THAT THE CORRESPONDING ALARM INFO STORED IN THE DB IS RETREIVED.
+                            editAlarmIntent.putExtra("alarmId", clickedAlarmCard.getId());
+                            editAlarmIntent.putExtra("time", clickedAlarmCard.getTime());
+                            editAlarmIntent.putExtra("daysActive", clickedAlarmCard.getDaysActive());
+                            editAlarmIntent.putExtra("title", clickedAlarmCard.getTitle());
+                            editAlarmIntent.putExtra("alarmTone", clickedAlarmCard.getAlarmTone());
+                            editAlarmIntent.putExtra("isVibrationOn", clickedAlarmCard.isVibrationOn());
+                            editAlarmIntent.putExtra("isMotionMonitoringOn", clickedAlarmCard.isMotionMonitoringOn());
 
                             v.getContext().startActivity(editAlarmIntent);
                         }

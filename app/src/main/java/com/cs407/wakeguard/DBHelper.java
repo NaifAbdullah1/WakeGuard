@@ -107,8 +107,25 @@ public class DBHelper extends SQLiteOpenHelper {
 
     }
 
-    public void updateAlarm(int alarmID){
+    public void updateAlarm(AlarmCard alarmToUpdate){
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
 
+        values.put("time", alarmToUpdate.getTime());
+        values.put("daysActive", alarmToUpdate.getDaysActive());
+        values.put("title", alarmToUpdate.getTitle());
+        values.put("alarmToneName", alarmToUpdate.getAlarmTone());
+        values.put("isVibrationOn", alarmToUpdate.isVibrationOn() ? 1 : 0);
+
+        values.put("isMotionMonitoringOn", alarmToUpdate.isMotionMonitoringOn() ? 1 : 0);
+        values.put("isActive", alarmToUpdate.isActive() ? 1 : 0);
+
+        String whereClause = "id=?";
+
+        String []  whereArgs = new String[]{String.valueOf(alarmToUpdate.getId())};
+
+        db.update("alarms", values, whereClause, whereArgs);
+        db.close();
     }
 
     public void toggleAlarm(int alarmID, boolean isActive){
@@ -174,6 +191,44 @@ public class DBHelper extends SQLiteOpenHelper {
         return alarmList;
 
     }
+
+    public AlarmCard getAlarmById(int alarmId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query("alarms", new String[]{"id", "time", "daysActive", "title", "alarmToneName", "isVibrationOn", "isMotionMonitoringOn", "isActive"}, "id=?", new String[]{String.valueOf(alarmId)}, null, null, null);
+
+        if (cursor != null && cursor.moveToFirst()) {
+            int idIndex = cursor.getColumnIndex("id");
+            int timeIndex = cursor.getColumnIndex("time");
+            int daysActiveIndex = cursor.getColumnIndex("daysActive");
+            int titleIndex = cursor.getColumnIndex("title");
+            int alarmToneNameIndex = cursor.getColumnIndex("alarmToneName");
+            int isVibrationOnIndex = cursor.getColumnIndex("isVibrationOn");
+            int isMotionMonitoringOnIndex = cursor.getColumnIndex("isMotionMonitoringOn");
+            int isActiveIndex = cursor.getColumnIndex("isActive");
+
+            if (idIndex != -1 && timeIndex != -1 && daysActiveIndex != -1 && titleIndex != -1 &&
+                    alarmToneNameIndex != -1 && isVibrationOnIndex != -1 &&
+                    isMotionMonitoringOnIndex != -1 && isActiveIndex != -1){
+                AlarmCard alarmCard = new AlarmCard(
+                        cursor.getInt(idIndex),
+                        cursor.getString(timeIndex),
+                        cursor.getString(daysActiveIndex),
+                        cursor.getString(titleIndex),
+                        cursor.getString(alarmToneNameIndex),
+                        cursor.getInt(isVibrationOnIndex) == 1,
+                        cursor.getInt(isMotionMonitoringOnIndex) == 1,
+                        cursor.getInt(isActiveIndex) == 1
+                );
+                cursor.close();
+                return alarmCard;
+            }
+        }
+        if (cursor != null) {
+            cursor.close();
+        }
+        return null;
+    }
+
 
     public void printAllAlarms() {
         String selectQuery = "SELECT * FROM alarms";

@@ -18,6 +18,7 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 
@@ -53,29 +54,36 @@ public class AlarmEditorActivity extends AppCompatActivity {
 
     private DBHelper dbHelper;
 
+    private Intent intent;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_alarm_editor);
 
-        if (getIntent().hasExtra("alarmId")){
+        dbHelper = DBHelper.getInstance(this);
+
+        // Getting the intent from when clicking an alarm card for editing purposes
+        intent = getIntent();
+
+        // This will help us in determining whether to create a new alarm or edit an existing one.
+        if (intent != null && getIntent().hasExtra("alarmId")){
             isEditingAlarm = true;
-            int alarmId = getIntent().getIntExtra("alarmId", -1);
+        }else {
+            isEditingAlarm = false;
         }
 
         // Get 24-hour mode from SharedPreferences. Use it below to set time picker 24 hour mode
         SharedPreferences sp = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
         Boolean mode24Hr = sp.getBoolean("24hourMode", false);
 
-        Intent intent = getIntent();
-
         // Initialize components with little setup
         vibrationSwitch = (SwitchCompat) findViewById(R.id.vibrationSwitch);
-        vibrationSwitch.setChecked(intent.getBooleanExtra("vibration", true));
+        vibrationSwitch.setChecked(intent.getBooleanExtra("isVibrationOn", true));
         motionMonitoringSwitch = (SwitchCompat) findViewById(R.id.motionMonitorSwitch);
-        motionMonitoringSwitch.setChecked(intent.getBooleanExtra("motionMonitoring", true));
+        motionMonitoringSwitch.setChecked(intent.getBooleanExtra("isMotionMonitoringOn", true));
         alarmNameText = (EditText) findViewById(R.id.alarmNameText);
-        alarmNameText.setText(intent.getStringExtra("alarmName"));
+        alarmNameText.setText(intent.getStringExtra("title"));
 
         // Set time picker to show 6am or the existing alarm's time
         tPicker = (TimePicker) findViewById(R.id.timePicker);
@@ -363,6 +371,8 @@ public class AlarmEditorActivity extends AppCompatActivity {
         //      Account for other user settings in SharedPreferences
         //TODO: Validating alarm date/time to ensure passing time does not result in saving an alarm set to go off before the current date/time
 
+        dbHelper.printAllAlarms();
+
         // Getting the values of the newly-created alarm to send to DB
         String time = tPicker.getHour() + ":" + tPicker.getMinute();
         String daysActive = toDaysActiveString();
@@ -373,12 +383,31 @@ public class AlarmEditorActivity extends AppCompatActivity {
         SwitchCompat mSwitch = findViewById(R.id.motionMonitorSwitch);
         boolean motionMonitoringSwitch = mSwitch.isChecked();
 
-        // Saving the data to the DB
-        dbHelper = DBHelper.getInstance(this);
         AlarmCard alarmCard = new AlarmCard(time, daysActive, title, alarmTone, vibrationSwitch, motionMonitoringSwitch, true);
         Log.i("D", alarmCard.toString());
-        dbHelper.addAlarm(alarmCard);
 
+        if (isEditingAlarm){
+            int alarmId = intent.getIntExtra("alarmId", -1);
+
+            if (alarmId != -1){
+                alarmCard.setId(alarmId);
+                dbHelper.updateAlarm(alarmCard);
+            }else{
+                Toast.makeText(getApplicationContext(), "ERROR", Toast.LENGTH_SHORT).show();
+            }
+        }else {
+            Log.i("Debug", "Saving New Alarm");
+
+            // Saving the data to the DB
+            dbHelper = DBHelper.getInstance(this);
+            dbHelper.addAlarm(alarmCard);
+
+
+
+            // Creating an intent to go back to dashboard and send the alarm data.
+            //Intent intent = new Intent(this, DashboardActivity.class);
+            //startActivity(intent);
+        }
         Intent returnIntent = new Intent();
         returnIntent.putExtra("time", time);
         returnIntent.putExtra("daysActive", daysActive);
@@ -387,13 +416,12 @@ public class AlarmEditorActivity extends AppCompatActivity {
         returnIntent.putExtra("vibrationSwitch", vibrationSwitch);
         returnIntent.putExtra("motionMonitoringSwitch", motionMonitoringSwitch);
 
+        dbHelper.printAllAlarms();
+
         // Setting result and finishing activity
         setResult(RESULT_OK, returnIntent);
         finish();
 
-        // Creating an intent to go back to dashboard and send the alarm data.
-        //Intent intent = new Intent(this, DashboardActivity.class);
-        //startActivity(intent);
     }
 
     public void discardChanges(View v) {

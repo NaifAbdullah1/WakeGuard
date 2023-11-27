@@ -75,11 +75,7 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put("isMotionMonitoringOn", alarmCard.isMotionMonitoringOn() ? 1 : 0);
         values.put("isActive", alarmCard.isActive() ? 1 : 0);
 
-        Log.i("D", "INSERTING INTO DB##############");
-
         db.insert("alarms", null, values);
-        Log.i("D", "After inserting ###############");
-        printAllAlarms();
         db.close();
     }
 
@@ -94,12 +90,6 @@ public class DBHelper extends SQLiteOpenHelper {
 
         // Performing the DELETE operation
         int deletedRows = db.delete("alarms", whereClause, whereArgs);
-
-        // Logging results
-        if (deletedRows > 0)
-            Log.i("DBHelper", "Deleted " + deletedRows + " row(s) with ID: " + alarmID);
-        else
-            Log.i("DBHelper", "No rows deleted.");
 
         //Closing DB connection.
         db.close();

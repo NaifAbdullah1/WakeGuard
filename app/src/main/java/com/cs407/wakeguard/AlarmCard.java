@@ -177,10 +177,12 @@ public class AlarmCard {
     }
 
     /**
+     * This function is used for displaying the time of alarm cards
+     *
      * If we're in 24 Hr mode, then we must return the time in 24 Hrs format, otherwise,
      * use normal format.
      *
-     * @return
+     * @return alarm's time in the format HH:mm a,
      */
     public String getFormattedTime(){
         try{

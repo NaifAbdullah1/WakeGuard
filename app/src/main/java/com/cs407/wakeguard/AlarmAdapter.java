@@ -1,5 +1,6 @@
 package com.cs407.wakeguard;
 
+import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,9 +30,12 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
 
     private DBHelper dbHelper;
 
-    public AlarmAdapter(List<AlarmCard> alarmList, DBHelper dbHelper) {
+    private Context context;
+
+    public AlarmAdapter(List<AlarmCard> alarmList, DBHelper dbHelper, Context context) {
         this.alarmList = alarmList;
         this.dbHelper = dbHelper;
+        this.context = context;
     }
 
     public void setAlarms(List<AlarmCard> alarmList) {
@@ -42,7 +46,7 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
     public AlarmViewHolder onCreateViewHolder(ViewGroup parent, int viewType){
         View itemView = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.alarm_card, parent, false);
-        return new AlarmViewHolder(itemView);
+        return new AlarmViewHolder(itemView, context);
     }
 
     @Override
@@ -71,8 +75,11 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
         SwitchMaterial alarmSwitchActive;
         CheckBox alarmCheckBox;
 
-        AlarmViewHolder(View view){
+        private Context context;
+
+        AlarmViewHolder(View view, Context context){
             super(view);
+            this.context = context;
             alarmTimeTextView=view.findViewById(R.id.alarmTimeTextView);
             alarmTitleTextView=view.findViewById(R.id.alarmTitleTextView);
             alarmSwitchActive=view.findViewById(R.id.alarmSwitch);
@@ -92,8 +99,12 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
                         // Update alarm's active state
                         AlarmCard alarm = alarmList.get(position);
                         alarm.setActive(isChecked);
-                        // TODO: UPDATE THE DATABASE HERE TO INDICATE THAT THIS ALARM IS NOW INACTIVE
                         dbHelper.toggleAlarm(alarm.getId(), alarm.isActive());
+
+                        // Notifying the DashboardActivity to update the upcoming alarms text
+                        if (context instanceof DashboardActivity){
+                            ((DashboardActivity) context).updateUpcomingAlarmText();
+                        }
                     }
                 }
             });

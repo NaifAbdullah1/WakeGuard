@@ -99,8 +99,6 @@ public class AlarmEditorActivity extends AppCompatActivity {
 
         tPicker.setIs24HourView(mode24Hr);
 
-        Log.i("Time", "TIME: " + intent.getStringExtra("time"));
-
         // If an existing alarm was clicked on the home page,
         // repeated days will be sent to this activity via an Intent
         boolean[] tempRepeatingDays = intent.getBooleanArrayExtra("repeatingDays");
@@ -108,9 +106,6 @@ public class AlarmEditorActivity extends AppCompatActivity {
         repeating = false;
         // Check if intent extra with repeating days was sent
         if(tempRepeatingDays != null) {
-            for (int i = 0; i < tempRepeatingDays.length; i++){
-                Log.i("DAYSloop", "day " + i + " value: " + tempRepeatingDays[i]);
-            }
 
             // Check for at least one repeating day
             for(int i=0; i < tempRepeatingDays.length; i++) {
@@ -389,8 +384,6 @@ public class AlarmEditorActivity extends AppCompatActivity {
         //      Account for other user settings in SharedPreferences
         //TODO: Validating alarm date/time to ensure passing time does not result in saving an alarm set to go off before the current date/time
 
-        dbHelper.printAllAlarms();
-
         // Getting the values of the newly-created alarm to send to DB
         String time = tPicker.getHour() + ":" + tPicker.getMinute();
         String repeatingDays = toDaysActiveString();
@@ -433,8 +426,6 @@ public class AlarmEditorActivity extends AppCompatActivity {
         returnIntent.putExtra("alarmTone", alarmTone);
         returnIntent.putExtra("vibrationSwitch", vibrationSwitch);
         returnIntent.putExtra("motionMonitoringSwitch", motionMonitoringSwitch);
-
-        dbHelper.printAllAlarms();
 
         // Setting result and finishing activity
         setResult(RESULT_OK, returnIntent);

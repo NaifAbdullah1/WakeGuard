@@ -10,6 +10,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
@@ -18,30 +20,33 @@ import android.widget.Toast;
 import com.arbelkilani.clock.Clock;
 import com.arbelkilani.clock.enumeration.ClockType;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 
 
 /**
  * Dashboard's clock: https://github.com/arbelkilani/Clock-view
  *
  * NATHAN'S TODO:
- * TODO: 1- The alarm cards do show the time correctly, but we want to make it such that the
- *      format of the time changes from the hh:mm a format to the 24 Hr format depending on the settings.
+ * TODO: 1- We want the alarm cards to adjust the format of the time from the hh:mm a format to
+ *  the 24 Hr format depending on the settings.
  *
  *
  * TODO: 2- When there are no alarms created, have a TextView in the place of the recycler stating that
  *      there are no created alarms (or even keep it empty)
  *
- * TODO: Work on updating an alarm in DB, once you do that, make sure changes are persistent. Then, you may proceed to the steps below
- *   3- Work on updating the alarms. This involves two steps:
- *   B- When the user clicks the alarm to edit its details, you're going to want to update it in a
- *   similar way to how you create one. Maybe use the boolean value "isEditing" and have a two-way
- *   if-statement in the onActivityResult (use the intent to pass whether you're editing or creating
- *   an alarm)
+ * TODO: 3- We need to ensure that the next upcoming alarm is displayed in the dashboard.
  *
  *
  *   TODO: 4- Make sure to prevent the user from saving an alarm if the title field is empty
+ *
+ *   TODO 5- Put a cap on the length of the alarm title.
  *
  */
 public class DashboardActivity extends AppCompatActivity {
@@ -70,6 +75,18 @@ public class DashboardActivity extends AppCompatActivity {
 
     private DBHelper dbHelper;
 
+    private TextView upcomingAlarmsTextView;
+
+    private final Handler alarmCountdownHandler = new Handler();
+
+    private final Runnable alarmCountdownRunnable = new Runnable() {
+        @Override
+        public void run() {
+            updateUpcomingAlarmText();
+            alarmCountdownHandler.postDelayed(this, 60000); // Update every minute
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -80,6 +97,7 @@ public class DashboardActivity extends AppCompatActivity {
         // ############### VARIABLE INITIALIZATION GOES HERE #########################
         // Exiting selection mode when the user clicks anywhere except an alarm card
         ConstraintLayout parentLayout = findViewById(R.id.parentLayout);
+        upcomingAlarmsTextView = findViewById(R.id.upcomingAlarmsTextView);
         // Initializing the settingsButton so that its functions (such as showDeleteIcon) work
         settingsButton = findViewById(R.id.settingsButton);
         addAlarmButton = findViewById(R.id.addAlarmButton);
@@ -93,7 +111,7 @@ public class DashboardActivity extends AppCompatActivity {
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager((getApplicationContext()));
         // Initializing the list of created alarms + the adapter
         alarmList = dbHelper.getAllAlarms();
-        adapter = new AlarmAdapter(alarmList, dbHelper);
+        adapter = new AlarmAdapter(alarmList, dbHelper, this);
         adapter.notifyDataSetChanged();
         //_______________________________________________________________________________________
 
@@ -103,6 +121,10 @@ public class DashboardActivity extends AppCompatActivity {
         parentLayout.setOnTouchListener(new View.OnTouchListener(){
             @Override
             public boolean onTouch(View v, MotionEvent event){
+                //dbHelper.printAllAlarms();
+                for(AlarmCard alarm: alarmList){ // TODO: REMOVE
+                    Log.i("ALARMS", "" + alarm.getId() + ", " + alarm.getTitle() + ", " + alarm.isActive() + "\n");
+                }
                 if(isSelectionModeActive()){
                     exitSelectionMode();
                     return true; // consuming the touch event
@@ -146,10 +168,6 @@ public class DashboardActivity extends AppCompatActivity {
         dashboardClock.setPadding(0, 0, 0, 0);
         //_______________________________________________________________________________________
 
-
-        TextView upcomingAlarmsTextView = findViewById(R.id.upcomingAlarmsTextView);
-        // TODO: Add code to change this textview such that if there's >= 1 upcoming active alarm, the TextView should change as per the wireframe
-
     }
 
     /**
@@ -162,6 +180,19 @@ public class DashboardActivity extends AppCompatActivity {
         alarmList.clear();
         alarmList.addAll(dbHelper.getAllAlarms());
         adapter.notifyDataSetChanged();
+
+        // Running the alarm countdown again.
+        alarmCountdownHandler.post(alarmCountdownRunnable);
+    }
+
+    @Override
+    protected void onPause(){
+        super.onPause();
+
+        /* Preventing the countdown from running when the application is
+        paused (for example, user switching to another app). This minimizes the
+        apps resource consumption in the background. */
+        alarmCountdownHandler.removeCallbacks(alarmCountdownRunnable);
     }
 
     /**
@@ -195,6 +226,129 @@ public class DashboardActivity extends AppCompatActivity {
             alarmList.add(newAlarmCard);
             adapter.setAlarms(alarmList); // Update the adapter's data
             adapter.notifyDataSetChanged();
+        }
+    }
+
+    protected void updateUpcomingAlarmText(){
+        AlarmCard nearestAlarm = findNearestUpcomingAlarm();
+
+
+
+        if (nearestAlarm != null){
+            Log.i("TIMESTAMP", "" + convertToTimestamp(nearestAlarm.getTime(), nearestAlarm.getRepeatingDays()));
+            // Calculating difference in time
+            long timeDiff = convertToTimestamp(nearestAlarm.getTime(), nearestAlarm.getRepeatingDays()) - System.currentTimeMillis();
+
+            // Convert diff to Days, Hours, and Minutes
+            String countdownText = formatCountdownText(timeDiff);
+
+            upcomingAlarmsTextView.setText("The next alarm is in " + countdownText);
+
+        }else{
+            upcomingAlarmsTextView.setText("No Upcoming Alarms");
+        }
+    }
+
+    private String formatCountdownText(long diff) {
+        long days = TimeUnit.MILLISECONDS.toDays(diff);
+        long hours = TimeUnit.MILLISECONDS.toHours(diff) % 24;
+        long minutes = TimeUnit.MILLISECONDS.toMinutes(diff) % 60;
+
+        StringBuilder sb = new StringBuilder();
+        if (days > 0) sb.append(days + " Days, ");
+        if (hours > 0) sb.append(hours + " Hours, ");
+        sb.append(minutes + " Minutes");
+        return sb.toString();
+    }
+
+    private AlarmCard findNearestUpcomingAlarm(){
+        // Assuming alarmList is already populated and contains the alarms.
+
+        AlarmCard nearestAlarm = null;
+        long nearestTime = Long.MAX_VALUE;
+        long currentTime = System.currentTimeMillis();
+
+        // Going through the list of alarms to find an active one
+        for (AlarmCard alarm : alarmList){
+            if(alarm.isActive()){
+                // Convert the alarm time to a timestamp
+                Log.i("nearest alarm", "WEW###########");
+                long alarmTime = convertToTimestamp(alarm.getTime(), alarm.getRepeatingDays());
+                Log.i("nearest alarm", "alarm time" + alarmTime);
+                if (alarmTime > currentTime && alarmTime < nearestTime){
+                    nearestTime = alarmTime;
+                    nearestAlarm = alarm;
+                }
+            }
+        }
+
+
+        return nearestAlarm;
+    }
+
+    private long convertToTimestamp(String time, String repeatingDays) {
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+        SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        Calendar now = Calendar.getInstance();
+
+        try {
+            // Parse the alarm time
+            Date alarmTime = timeFormat.parse(time);
+            Calendar nextAlarm = Calendar.getInstance();
+            nextAlarm.setTime(alarmTime);
+
+            // Set initial date to today
+            nextAlarm.set(Calendar.YEAR, now.get(Calendar.YEAR));
+            nextAlarm.set(Calendar.MONTH, now.get(Calendar.MONTH));
+            nextAlarm.set(Calendar.DAY_OF_MONTH, now.get(Calendar.DAY_OF_MONTH));
+
+            int today = now.get(Calendar.DAY_OF_WEEK);
+            int daysUntilNextAlarm = 0;
+
+            // Loop through the days to find the next active day
+            for (int i = 0; i < 7; i++) {
+                int checkDay = (today + i) % 7;
+                String dayString = getDayString(checkDay);
+
+                if (repeatingDays.contains(dayString)) {
+                    daysUntilNextAlarm = i;
+                    break;
+                }
+            }
+
+            // Add the calculated days to the current date
+            nextAlarm.add(Calendar.DATE, daysUntilNextAlarm);
+
+            // If the calculated next alarm is before the current time, set it for the next week
+            if (nextAlarm.before(now)) {
+                nextAlarm.add(Calendar.DATE, 7);
+            }
+
+            return dateTimeFormat.parse(dateTimeFormat.format(nextAlarm.getTime())).getTime();
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return -1; // Handle appropriately
+        }
+    }
+
+    private String getDayString(int calendarDay) {
+        switch (calendarDay) {
+            case Calendar.SUNDAY:
+                return "Su";
+            case Calendar.MONDAY:
+                return "Mo";
+            case Calendar.TUESDAY:
+                return "Tu";
+            case Calendar.WEDNESDAY:
+                return "We";
+            case Calendar.THURSDAY:
+                return "Th";
+            case Calendar.FRIDAY:
+                return "Fr";
+            case Calendar.SATURDAY:
+                return "Sa";
+            default:
+                return "";
         }
     }
 

@@ -10,6 +10,7 @@ import android.content.SharedPreferences;
 import android.icu.text.DateFormat;
 import android.icu.util.Calendar;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.DatePicker;
@@ -17,10 +18,15 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 
 public class AlarmEditorActivity extends AppCompatActivity {
+    // This field indicates whether we're opening this activity for editing an alarm or creating a new one
+    // True = we're editing an existing alarm, False = we're creating a new alarm
+    private boolean isEditingAlarm = false;
+
     // Switch for enabling/disabling vibration
     SwitchCompat vibrationSwitch;
     // Switch for enabling/disabling motion monitoring
@@ -46,37 +52,61 @@ public class AlarmEditorActivity extends AppCompatActivity {
     // Days on which the alarm repeats: Sun    Mon    Tue    Wed    Thu    Fri    Sat
     private boolean[] repeatingDays = {false, false, false, false, false, false, false};
 
+    private DBHelper dbHelper;
+
+    private Intent intent;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_alarm_editor);
 
+        dbHelper = DBHelper.getInstance(this);
+
+        // Getting the intent from when clicking an alarm card for editing purposes
+        intent = getIntent();
+
+        // This will help us in determining whether to create a new alarm or edit an existing one.
+        if (intent != null && getIntent().hasExtra("alarmId")){
+            isEditingAlarm = true;
+        }else {
+            isEditingAlarm = false;
+        }
+
         // Get 24-hour mode from SharedPreferences. Use it below to set time picker 24 hour mode
         SharedPreferences sp = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
         Boolean mode24Hr = sp.getBoolean("24hourMode", false);
 
-        Intent intent = getIntent();
-
         // Initialize components with little setup
         vibrationSwitch = (SwitchCompat) findViewById(R.id.vibrationSwitch);
-        vibrationSwitch.setChecked(intent.getBooleanExtra("vibration", true));
+        vibrationSwitch.setChecked(intent.getBooleanExtra("isVibrationOn", true));
         motionMonitoringSwitch = (SwitchCompat) findViewById(R.id.motionMonitorSwitch);
-        motionMonitoringSwitch.setChecked(intent.getBooleanExtra("motionMonitoring", true));
+        motionMonitoringSwitch.setChecked(intent.getBooleanExtra("isMotionMonitoringOn", true));
         alarmNameText = (EditText) findViewById(R.id.alarmNameText);
-        alarmNameText.setText(intent.getStringExtra("alarmName"));
+        alarmNameText.setText(intent.getStringExtra("title"));
 
         // Set time picker to show 6am or the existing alarm's time
         tPicker = (TimePicker) findViewById(R.id.timePicker);
-        tPicker.setHour(intent.getIntExtra("hour", 6));
-        tPicker.setMinute(intent.getIntExtra("minute", 0));
+        if (intent != null && isEditingAlarm){
+            int hour = Integer.parseInt(intent.getStringExtra("time").split(":")[0]);
+            tPicker.setHour(hour);
+            int minutes = Integer.parseInt(intent.getStringExtra("time").split(":")[1]);
+            tPicker.setMinute(minutes);
+        }else{
+            tPicker.setHour(6);
+            tPicker.setMinute(0);
+        }
+
         tPicker.setIs24HourView(mode24Hr);
 
         // If an existing alarm was clicked on the home page,
         // repeated days will be sent to this activity via an Intent
         boolean[] tempRepeatingDays = intent.getBooleanArrayExtra("repeatingDays");
+
         repeating = false;
         // Check if intent extra with repeating days was sent
         if(tempRepeatingDays != null) {
+
             // Check for at least one repeating day
             for(int i=0; i < tempRepeatingDays.length; i++) {
                 repeatingDays[i] = tempRepeatingDays[i];
@@ -86,6 +116,9 @@ public class AlarmEditorActivity extends AppCompatActivity {
             }
         }
 
+        // TODO: MAYBE SET THE REPEATING DAYS HERE?
+
+        // DEPRECATED
         selectedDateText = (TextView) findViewById(R.id.dateText);
         if(repeating) {
             // Repeating at least one day. Set dateText and buttons for repeating days accordingly
@@ -292,6 +325,10 @@ public class AlarmEditorActivity extends AppCompatActivity {
         dpDialog.show();
     }
 
+    /**
+     * An onClick function that runs whenever any of the week buttons are clicked.
+     * @param v
+     */
     public void setRepeatingDay(View v) {
         if(v.getId() == R.id.sundayBtn) {
             repeatingDays[0] = ((ToggleButton)v).isChecked();
@@ -345,13 +382,79 @@ public class AlarmEditorActivity extends AppCompatActivity {
     public void saveAlarm(View v) {
         // TODO Save alarm settings in database
         //      Account for other user settings in SharedPreferences
-        //      Validate alarm date/time to ensure passing time does not result in saving an alarm set to go off before the current date/time
-        Intent intent = new Intent(this, DashboardActivity.class);
-        startActivity(intent);
+        //TODO: Validating alarm date/time to ensure passing time does not result in saving an alarm set to go off before the current date/time
+
+        // Getting the values of the newly-created alarm to send to DB
+        String time = tPicker.getHour() + ":" + tPicker.getMinute();
+        String repeatingDays = toDaysActiveString();
+        String title = alarmNameText.getText().toString();
+        String alarmTone = "Default";
+        SwitchCompat vSwitch = findViewById(R.id.vibrationSwitch);
+        boolean vibrationSwitch = vSwitch.isChecked();
+        SwitchCompat mSwitch = findViewById(R.id.motionMonitorSwitch);
+        boolean motionMonitoringSwitch = mSwitch.isChecked();
+
+        AlarmCard alarmCard = new AlarmCard(time, repeatingDays, title, alarmTone, vibrationSwitch, motionMonitoringSwitch, true);
+        Log.i("D", alarmCard.toString());
+
+        if (isEditingAlarm){
+            int alarmId = intent.getIntExtra("alarmId", -1);
+
+            if (alarmId != -1){
+                alarmCard.setId(alarmId);
+                dbHelper.updateAlarm(alarmCard);
+            }else{
+                Toast.makeText(getApplicationContext(), "ERROR", Toast.LENGTH_SHORT).show();
+            }
+        }else {
+            Log.i("Debug", "Saving New Alarm");
+
+            // Saving the data to the DB
+            dbHelper = DBHelper.getInstance(this);
+            dbHelper.addAlarm(alarmCard);
+
+
+
+            // Creating an intent to go back to dashboard and send the alarm data.
+            //Intent intent = new Intent(this, DashboardActivity.class);
+            //startActivity(intent);
+        }
+        Intent returnIntent = new Intent();
+        returnIntent.putExtra("time", time);
+        returnIntent.putExtra("repeatingDays", repeatingDays);
+        returnIntent.putExtra("title", title);
+        returnIntent.putExtra("alarmTone", alarmTone);
+        returnIntent.putExtra("vibrationSwitch", vibrationSwitch);
+        returnIntent.putExtra("motionMonitoringSwitch", motionMonitoringSwitch);
+
+        // Setting result and finishing activity
+        setResult(RESULT_OK, returnIntent);
+        finish();
+
     }
 
     public void discardChanges(View v) {
         Intent intent = new Intent(this, DashboardActivity.class);
         startActivity(intent);
+    }
+
+    public String toDaysActiveString(){
+        String days = "";
+        if (repeatingDays[0])
+            days += "Su,";
+        if (repeatingDays[1])
+            days += "Mo,";
+        if (repeatingDays[2])
+            days += "Tu,";
+        if (repeatingDays[3])
+            days += "We,";
+        if (repeatingDays[4])
+            days += "Th,";
+        if (repeatingDays[5])
+            days += "Fr,";
+        if (repeatingDays[6])
+            days += "Sa";
+
+        return days;
     }
 }

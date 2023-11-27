@@ -1,5 +1,6 @@
 package com.cs407.wakeguard;
 
+import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,7 +28,17 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
     // SelectionMode is when the checkboxes are visible next to every alarm card
     private boolean isSelectionMode = false;
 
-    public AlarmAdapter(List<AlarmCard> alarmList) {
+    private DBHelper dbHelper;
+
+    private Context context;
+
+    public AlarmAdapter(List<AlarmCard> alarmList, DBHelper dbHelper, Context context) {
+        this.alarmList = alarmList;
+        this.dbHelper = dbHelper;
+        this.context = context;
+    }
+
+    public void setAlarms(List<AlarmCard> alarmList) {
         this.alarmList = alarmList;
     }
 
@@ -35,17 +46,15 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
     public AlarmViewHolder onCreateViewHolder(ViewGroup parent, int viewType){
         View itemView = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.alarm_card, parent, false);
-        return new AlarmViewHolder(itemView);
+        return new AlarmViewHolder(itemView, context);
     }
 
     @Override
     public void onBindViewHolder(AlarmViewHolder holder, int position) {
         AlarmCard alarm = alarmList.get(position);
-        holder.alarmTimeTextView.setText(alarm.getTime());
+        holder.alarmTimeTextView.setText(alarm.getFormattedTime());
         holder.alarmTitleTextView.setText(alarm.getTitle());
         holder.alarmSwitchActive.setChecked(alarm.isActive());
-        // Bind other views in the card
-
         holder.alarmCheckBox.setVisibility(isSelectionMode ? View.VISIBLE : View.GONE);
         holder.alarmCheckBox.setChecked(alarm.isSelected());
     }
@@ -66,8 +75,11 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
         SwitchMaterial alarmSwitchActive;
         CheckBox alarmCheckBox;
 
-        AlarmViewHolder(View view){
+        private Context context;
+
+        AlarmViewHolder(View view, Context context){
             super(view);
+            this.context = context;
             alarmTimeTextView=view.findViewById(R.id.alarmTimeTextView);
             alarmTitleTextView=view.findViewById(R.id.alarmTitleTextView);
             alarmSwitchActive=view.findViewById(R.id.alarmSwitch);
@@ -87,7 +99,12 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
                         // Update alarm's active state
                         AlarmCard alarm = alarmList.get(position);
                         alarm.setActive(isChecked);
-                        // TODO: UPDATE THE DATABASE HERE TO INDICATE THAT THIS ALARM IS NOW INACTIVE
+                        dbHelper.toggleAlarm(alarm.getId(), alarm.isActive());
+
+                        // Notifying the DashboardActivity to update the upcoming alarms text
+                        if (context instanceof DashboardActivity){
+                            ((DashboardActivity) context).updateUpcomingAlarmText();
+                        }
                     }
                 }
             });
@@ -114,7 +131,13 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
                             // Getting the specific alarm card using the index
                             // Using an intent to go to the alarm editor screen
                             Intent editAlarmIntent = new Intent(v.getContext(), AlarmEditorActivity.class);
-                            // TODO: YOU WILL NEED TO PASS THE INFO, (MAYBE THE ALARM ID) TO THE INTENT SO THAT THE CORRESPONDING ALARM INFO STORED IN THE DB IS RETREIVED.
+                            editAlarmIntent.putExtra("alarmId", clickedAlarmCard.getId());
+                            editAlarmIntent.putExtra("time", clickedAlarmCard.getTime());
+                            editAlarmIntent.putExtra("repeatingDays", clickedAlarmCard.getRepeatingDaysBooleanArray());
+                            editAlarmIntent.putExtra("title", clickedAlarmCard.getTitle());
+                            editAlarmIntent.putExtra("alarmTone", clickedAlarmCard.getAlarmTone());
+                            editAlarmIntent.putExtra("isVibrationOn", clickedAlarmCard.isVibrationOn());
+                            editAlarmIntent.putExtra("isMotionMonitoringOn", clickedAlarmCard.isMotionMonitoringOn());
 
                             v.getContext().startActivity(editAlarmIntent);
                         }

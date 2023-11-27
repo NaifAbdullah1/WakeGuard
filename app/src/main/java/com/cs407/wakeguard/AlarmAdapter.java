@@ -122,7 +122,7 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
                             Intent editAlarmIntent = new Intent(v.getContext(), AlarmEditorActivity.class);
                             editAlarmIntent.putExtra("alarmId", clickedAlarmCard.getId());
                             editAlarmIntent.putExtra("time", clickedAlarmCard.getTime());
-                            editAlarmIntent.putExtra("daysActive", clickedAlarmCard.getDaysActive());
+                            editAlarmIntent.putExtra("repeatingDays", clickedAlarmCard.getRepeatingDaysBooleanArray());
                             editAlarmIntent.putExtra("title", clickedAlarmCard.getTitle());
                             editAlarmIntent.putExtra("alarmTone", clickedAlarmCard.getAlarmTone());
                             editAlarmIntent.putExtra("isVibrationOn", clickedAlarmCard.isVibrationOn());

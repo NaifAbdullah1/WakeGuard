@@ -75,6 +75,8 @@ public class DashboardActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dashboard);
 
+        dbHelper = DBHelper.getInstance(this);
+
         // ############### VARIABLE INITIALIZATION GOES HERE #########################
         // Exiting selection mode when the user clicks anywhere except an alarm card
         ConstraintLayout parentLayout = findViewById(R.id.parentLayout);
@@ -89,7 +91,6 @@ public class DashboardActivity extends AppCompatActivity {
          * displayed on the RecyclerView (which displays the alarm cards) and how to arrange
          * the items. It also determines other functions like scroll direction etc..*/
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager((getApplicationContext()));
-        dbHelper = DBHelper.getInstance(this);
         // Initializing the list of created alarms + the adapter
         alarmList = dbHelper.getAllAlarms();
         adapter = new AlarmAdapter(alarmList, dbHelper);
@@ -187,7 +188,6 @@ public class DashboardActivity extends AppCompatActivity {
                     title, alarmTone, isVibrationOn, isMotionMonitoringOn, isActive);
 
             // Next 2 lines: Saving alarm to DB
-            dbHelper = DBHelper.getInstance(this);
             dbHelper.addAlarm(newAlarmCard);
 
             /* Next 3 lines: Updating recyclerView by adding it to the local copy
@@ -273,7 +273,6 @@ public class DashboardActivity extends AppCompatActivity {
     private void deleteSelectedAlarms(){
         // Loop through all the created alarms and delete the ones where isSelected = true
         Iterator<AlarmCard> alaramIterator = alarmList.iterator();
-        dbHelper = DBHelper.getInstance(this);
         int numOfDeletedAlarms = 0;
 
         while (alaramIterator.hasNext()){

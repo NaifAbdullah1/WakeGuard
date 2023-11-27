@@ -1,7 +1,6 @@
 package com.cs407.wakeguard;
 
 import android.util.Log;
-import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -22,7 +21,7 @@ public class AlarmCard {
     * any additional steps to render it in your view.*/
     private String time;
 
-    private String daysActive; // comma-separated list -- 'Mon', 'Tue', 'Wed' etc.
+    private String repeatingDays; // comma-separated list -- 'Mon', 'Tue', 'Wed' etc.
 
     private String title;
 
@@ -42,9 +41,9 @@ public class AlarmCard {
     /**
      * We use this constructor for when we create new alarms (as opposed to retreiving them from db)
      */
-    public AlarmCard(String time, String daysActive, String title, String alarmTone, boolean vibrationOn, boolean motionMonitoringOn, boolean isActive) {
+    public AlarmCard(String time, String repeatingDays, String title, String alarmTone, boolean vibrationOn, boolean motionMonitoringOn, boolean isActive) {
         this.time = time;
-        this.daysActive = daysActive;
+        this.repeatingDays = repeatingDays;
         this.title = title;
         this.alarmTone = alarmTone;
         this.vibrationOn = vibrationOn;
@@ -55,11 +54,11 @@ public class AlarmCard {
     /**
      * Constructor with ID for alarms retrieved from the database
       */
-    public AlarmCard(int id, String time, String daysActive, String title,
+    public AlarmCard(int id, String time, String repeatingDays, String title,
                      String alarmTone, boolean vibrationOn, boolean motionMonitoringOn, boolean isActive) {
         this.id = id;
         this.time = time;
-        this.daysActive = daysActive;
+        this.repeatingDays = repeatingDays;
         this.title = title;
         this.alarmTone = alarmTone;
         this.vibrationOn = vibrationOn;
@@ -91,12 +90,36 @@ public class AlarmCard {
         this.title = title;
     }
 
-    public String getDaysActive() {
-        return daysActive;
+    public String getRepeatingDays() {
+        return repeatingDays;
     }
 
-    public void setDaysActive(String daysActive) {
-        this.daysActive = daysActive;
+    public boolean [] getRepeatingDaysBooleanArray(){
+        boolean [] returnValue = {false, false, false, false, false, false, false};
+
+        String repeatingDaysList = getRepeatingDays();
+
+        if (repeatingDaysList.contains("Su"))
+            returnValue[0] = true;
+        if (repeatingDaysList.contains("Mo"))
+            returnValue[1] = true;
+        if (repeatingDaysList.contains("Tu"))
+            returnValue[2] = true;
+        if (repeatingDaysList.contains("We"))
+            returnValue[3] = true;
+        if (repeatingDaysList.contains("Th"))
+            returnValue[4] = true;
+        if (repeatingDaysList.contains("Fr"))
+            returnValue[5] = true;
+        if (repeatingDaysList.contains("Sa"))
+            returnValue[6] = true;
+
+        return returnValue;
+
+    }
+
+    public void setRepeatingDays(String repeatingDays) {
+        this.repeatingDays = repeatingDays;
     }
 
     public String getAlarmTone() {
@@ -143,7 +166,7 @@ public class AlarmCard {
     public String toString() {
         return "AlarmCard{" +
                 "time='" + time + '\'' +
-                ", daysActive='" + daysActive + '\'' +
+                ", daysActive='" + repeatingDays + '\'' +
                 ", title='" + title + '\'' +
                 ", alarmTone='" + alarmTone + '\'' +
                 ", vibrationOn=" + vibrationOn +

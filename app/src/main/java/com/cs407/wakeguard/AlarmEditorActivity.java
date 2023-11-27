@@ -87,16 +87,31 @@ public class AlarmEditorActivity extends AppCompatActivity {
 
         // Set time picker to show 6am or the existing alarm's time
         tPicker = (TimePicker) findViewById(R.id.timePicker);
-        tPicker.setHour(intent.getIntExtra("hour", 6));
-        tPicker.setMinute(intent.getIntExtra("minute", 0));
+        if (intent != null && isEditingAlarm){
+            int hour = Integer.parseInt(intent.getStringExtra("time").split(":")[0]);
+            tPicker.setHour(hour);
+            int minutes = Integer.parseInt(intent.getStringExtra("time").split(":")[1]);
+            tPicker.setMinute(minutes);
+        }else{
+            tPicker.setHour(6);
+            tPicker.setMinute(0);
+        }
+
         tPicker.setIs24HourView(mode24Hr);
+
+        Log.i("Time", "TIME: " + intent.getStringExtra("time"));
 
         // If an existing alarm was clicked on the home page,
         // repeated days will be sent to this activity via an Intent
         boolean[] tempRepeatingDays = intent.getBooleanArrayExtra("repeatingDays");
+
         repeating = false;
         // Check if intent extra with repeating days was sent
         if(tempRepeatingDays != null) {
+            for (int i = 0; i < tempRepeatingDays.length; i++){
+                Log.i("DAYSloop", "day " + i + " value: " + tempRepeatingDays[i]);
+            }
+
             // Check for at least one repeating day
             for(int i=0; i < tempRepeatingDays.length; i++) {
                 repeatingDays[i] = tempRepeatingDays[i];
@@ -106,6 +121,9 @@ public class AlarmEditorActivity extends AppCompatActivity {
             }
         }
 
+        // TODO: MAYBE SET THE REPEATING DAYS HERE?
+
+        // DEPRECATED
         selectedDateText = (TextView) findViewById(R.id.dateText);
         if(repeating) {
             // Repeating at least one day. Set dateText and buttons for repeating days accordingly
@@ -375,7 +393,7 @@ public class AlarmEditorActivity extends AppCompatActivity {
 
         // Getting the values of the newly-created alarm to send to DB
         String time = tPicker.getHour() + ":" + tPicker.getMinute();
-        String daysActive = toDaysActiveString();
+        String repeatingDays = toDaysActiveString();
         String title = alarmNameText.getText().toString();
         String alarmTone = "Default";
         SwitchCompat vSwitch = findViewById(R.id.vibrationSwitch);
@@ -383,7 +401,7 @@ public class AlarmEditorActivity extends AppCompatActivity {
         SwitchCompat mSwitch = findViewById(R.id.motionMonitorSwitch);
         boolean motionMonitoringSwitch = mSwitch.isChecked();
 
-        AlarmCard alarmCard = new AlarmCard(time, daysActive, title, alarmTone, vibrationSwitch, motionMonitoringSwitch, true);
+        AlarmCard alarmCard = new AlarmCard(time, repeatingDays, title, alarmTone, vibrationSwitch, motionMonitoringSwitch, true);
         Log.i("D", alarmCard.toString());
 
         if (isEditingAlarm){
@@ -410,7 +428,7 @@ public class AlarmEditorActivity extends AppCompatActivity {
         }
         Intent returnIntent = new Intent();
         returnIntent.putExtra("time", time);
-        returnIntent.putExtra("daysActive", daysActive);
+        returnIntent.putExtra("repeatingDays", repeatingDays);
         returnIntent.putExtra("title", title);
         returnIntent.putExtra("alarmTone", alarmTone);
         returnIntent.putExtra("vibrationSwitch", vibrationSwitch);
@@ -432,19 +450,19 @@ public class AlarmEditorActivity extends AppCompatActivity {
     public String toDaysActiveString(){
         String days = "";
         if (repeatingDays[0])
-            days += "Mo,";
+            days += "Su,";
         if (repeatingDays[1])
-            days += "Tu,";
+            days += "Mo,";
         if (repeatingDays[2])
-            days += "We,";
+            days += "Tu,";
         if (repeatingDays[3])
-            days += "Th,";
+            days += "We,";
         if (repeatingDays[4])
-            days += "Fr,";
+            days += "Th,";
         if (repeatingDays[5])
-            days += "Sa,";
+            days += "Fr,";
         if (repeatingDays[6])
-            days += "Su";
+            days += "Sa";
 
         return days;
     }

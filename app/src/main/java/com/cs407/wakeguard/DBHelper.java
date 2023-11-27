@@ -6,7 +6,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,7 +68,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
         ContentValues values = new ContentValues();
         values.put("time", alarmCard.getTime());
-        values.put("daysActive", String.join(", ", alarmCard.getDaysActive()));
+        values.put("daysActive", String.join(", ", alarmCard.getRepeatingDays()));
         values.put("title", alarmCard.getTitle());
         values.put("alarmToneName", alarmCard.getAlarmTone());
         values.put("isVibrationOn", alarmCard.isVibrationOn() ? 1 : 0);
@@ -112,7 +111,7 @@ public class DBHelper extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
 
         values.put("time", alarmToUpdate.getTime());
-        values.put("daysActive", alarmToUpdate.getDaysActive());
+        values.put("daysActive", alarmToUpdate.getRepeatingDays());
         values.put("title", alarmToUpdate.getTitle());
         values.put("alarmToneName", alarmToUpdate.getAlarmTone());
         values.put("isVibrationOn", alarmToUpdate.isVibrationOn() ? 1 : 0);

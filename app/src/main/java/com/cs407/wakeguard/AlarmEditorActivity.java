@@ -44,9 +44,9 @@ public class AlarmEditorActivity extends AppCompatActivity {
     int year, month, dayOfMonth;
     // Constants for Calendar fields
     private final int YEAR = Calendar.YEAR,
-                      DAY_OF_YEAR = Calendar.DAY_OF_YEAR,
-                      MONTH = Calendar.MONTH,
-                      DAY_OF_MONTH = Calendar.DAY_OF_MONTH;
+            DAY_OF_YEAR = Calendar.DAY_OF_YEAR,
+            MONTH = Calendar.MONTH,
+            DAY_OF_MONTH = Calendar.DAY_OF_MONTH;
     // Strings for selectedDateText when repeating on one or more days
     private final String[] dayOfWeekStrings = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
     // Days on which the alarm repeats: Sun    Mon    Tue    Wed    Thu    Fri    Sat
@@ -151,8 +151,8 @@ public class AlarmEditorActivity extends AppCompatActivity {
             Calendar today = Calendar.getInstance();
             String dateStr = DateFormat.getDateInstance(DateFormat.FULL).format(c.getTime());
             if((year == today.get(YEAR)) &&
-               (month == today.get(MONTH)) &&
-               (dayOfMonth == today.get(DAY_OF_MONTH))) {
+                    (month == today.get(MONTH)) &&
+                    (dayOfMonth == today.get(DAY_OF_MONTH))) {
                 selectedDateText.setText("Today - " + dateStr);
             } else {
                 selectedDateText.setText(dateStr);
@@ -231,8 +231,8 @@ public class AlarmEditorActivity extends AppCompatActivity {
         Calendar c = Calendar.getInstance();
 
         if((y == c.get(YEAR)) &&
-           (m == c.get(MONTH)) &&
-           (dom == c.get(DAY_OF_MONTH))) {
+                (m == c.get(MONTH)) &&
+                (dom == c.get(DAY_OF_MONTH))) {
             // Passed date is today
             final int actualTimeOfDay = c.get(Calendar.HOUR_OF_DAY) * 60 + c.get(Calendar.MINUTE);
             final int selectedTimeOfDay = tPicker.getHour() * 60 + tPicker.getMinute();
@@ -380,13 +380,9 @@ public class AlarmEditorActivity extends AppCompatActivity {
     }
 
     public void saveAlarm(View v) {
-        // TODO Save alarm settings in database
-        //      Account for other user settings in SharedPreferences
-        //TODO: Validating alarm date/time to ensure passing time does not result in saving an alarm set to go off before the current date/time
-
         // Getting the values of the newly-created alarm to send to DB
         String time = tPicker.getHour() + ":" + tPicker.getMinute();
-        String repeatingDays = toDaysActiveString();
+        String repeatingDays = convertRepeatingDaysArrayToString();
         String title = alarmNameText.getText().toString();
         String alarmTone = "Default";
         SwitchCompat vSwitch = findViewById(R.id.vibrationSwitch);
@@ -394,31 +390,41 @@ public class AlarmEditorActivity extends AppCompatActivity {
         SwitchCompat mSwitch = findViewById(R.id.motionMonitorSwitch);
         boolean motionMonitoringSwitch = mSwitch.isChecked();
 
+        /*Creating a new alarm object from the data that was collected from the user. Now, we're
+         * either going to make a NEW alarm entry in the DB, or we're going to update an existing
+         * one, all using the alarm card object below. */
         AlarmCard alarmCard = new AlarmCard(time, repeatingDays, title, alarmTone, vibrationSwitch, motionMonitoringSwitch, true);
-        Log.i("D", alarmCard.toString());
 
-        if (isEditingAlarm){
+        //Making sure the user has entered an alarm title
+        if (title == null || title.equals("")){
+            Toast.makeText(getApplicationContext(), "Please enter a title for the alarm", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Alarm title shouldn't be too long for the alarm card to display
+        if (title.length() > 35){
+            Toast.makeText(getApplicationContext(), "Alarm title shouldn't be longer than 30 characters", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (isEditingAlarm && intent != null){ // Editing an existing alarm
             int alarmId = intent.getIntExtra("alarmId", -1);
-
             if (alarmId != -1){
                 alarmCard.setId(alarmId);
                 dbHelper.updateAlarm(alarmCard);
             }else{
-                Toast.makeText(getApplicationContext(), "ERROR", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "ERROR, an alarm with a -1 id detected",
+                        Toast.LENGTH_SHORT).show();
             }
-        }else {
-            Log.i("Debug", "Saving New Alarm");
-
+        }else { // Add a new alarm
             // Saving the data to the DB
             dbHelper = DBHelper.getInstance(this);
             dbHelper.addAlarm(alarmCard);
 
-
-
-            // Creating an intent to go back to dashboard and send the alarm data.
-            //Intent intent = new Intent(this, DashboardActivity.class);
-            //startActivity(intent);
         }
+
+        // We'll need to pass the data of the newly created/updated alarm to the
+
         Intent returnIntent = new Intent();
         returnIntent.putExtra("time", time);
         returnIntent.putExtra("repeatingDays", repeatingDays);
@@ -429,6 +435,7 @@ public class AlarmEditorActivity extends AppCompatActivity {
 
         // Setting result and finishing activity
         setResult(RESULT_OK, returnIntent);
+
         finish();
 
     }
@@ -438,7 +445,7 @@ public class AlarmEditorActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    public String toDaysActiveString(){
+    public String convertRepeatingDaysArrayToString(){
         String days = "";
         if (repeatingDays[0])
             days += "Su,";

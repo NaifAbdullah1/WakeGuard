@@ -35,18 +35,13 @@ import java.util.concurrent.TimeUnit;
  *
  * NATHAN'S TODO:
  * TODO: 1- We want the alarm cards to adjust the format of the time from the hh:mm a format to
- *  the 24 Hr format depending on the settings.
+ *  the 24 Hr format depending on the settings. We're waiting on team members to finish implementing the settings screen
  *
+ *  TODO: 2- The current alarms in the screen have a problem, you must ensure that we're correctly capturing the nearest alarm.
+ *      Fix the findnearestalarm() function.
  *
- * TODO: 2- When there are no alarms created, have a TextView in the place of the recycler stating that
- *      there are no created alarms (or even keep it empty)
- *
- * TODO: 3- We need to ensure that the next upcoming alarm is displayed in the dashboard.
- *
- *
- *   TODO: 4- Make sure to prevent the user from saving an alarm if the title field is empty
- *
- *   TODO 5- Put a cap on the length of the alarm title.
+ *  TODO: 3- Investigate whether it's necessary to return intent from the alarm editor activity after saving the alarm to the DB.
+ *      ASK CHAT GPT AND test it on your own. It's probably not needed.
  *
  */
 public class DashboardActivity extends AppCompatActivity {
@@ -60,23 +55,28 @@ public class DashboardActivity extends AppCompatActivity {
      */
     private AlarmAdapter adapter;
 
-    // A list object containing all the AlarmCard objects, both active and inactive alarms
+    // A list object containing all the AlarmCard objects, that appear on the screen to the user
     private List<AlarmCard> alarmList;
 
-    // SelectionMode is when the checkboxes are visible next to every alarm card
+    // SelectionMode is when the user press-and-hold one of the alarms and checkboxes appear
     private boolean isSelectionMode = false;
 
+    // The button that looks like a gear icon.
     private AppCompatImageButton settingsButton;
 
+    // The button that looks like a "+" sign
     private AppCompatImageButton addAlarmButton;
 
-    // TODO: MAKE SURE YOU UNDERSTAND WHAT THIS DOES
+    // This is for the onActivityResult() which runs after returning to Dashboard from AlarmEditor
     private static final int NEW_ALARM_REQUEST_CODE = 1;
 
+    // To do CRUD operations on alarms.
     private DBHelper dbHelper;
 
+    // The text right under the clock in he dashboard. It counts down time for the nearest active alarm
     private TextView upcomingAlarmsTextView;
 
+    // The next two variables are responsible for keeping the alarm countdown in dashboard live
     private final Handler alarmCountdownHandler = new Handler();
 
     private final Runnable alarmCountdownRunnable = new Runnable() {
@@ -92,24 +92,21 @@ public class DashboardActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dashboard);
 
+        // Must initialize DB everywhere were we do CRUD operations
         dbHelper = DBHelper.getInstance(this);
 
         // ############### VARIABLE INITIALIZATION GOES HERE #########################
-        // Exiting selection mode when the user clicks anywhere except an alarm card
         ConstraintLayout parentLayout = findViewById(R.id.parentLayout);
         upcomingAlarmsTextView = findViewById(R.id.upcomingAlarmsTextView);
-        // Initializing the settingsButton so that its functions (such as showDeleteIcon) work
         settingsButton = findViewById(R.id.settingsButton);
         addAlarmButton = findViewById(R.id.addAlarmButton);
         recyclerView = findViewById(R.id.createdAlarmsRecycerView);
-        // Getting the object representing the dashboard's clock
         Clock dashboardClock = findViewById(R.id.dashboardClock);
 
-        /*Layout managers are needed because they help us define what gets
-         * displayed on the RecyclerView (which displays the alarm cards) and how to arrange
-         * the items. It also determines other functions like scroll direction etc..*/
+        /*Layout managers help us define what gets displayed on the RecyclerView (which displays
+         the alarm cards) and how to arrange the items. It also determines other functions
+         like scroll direction etc..*/
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager((getApplicationContext()));
-        // Initializing the list of created alarms + the adapter
         alarmList = dbHelper.getAllAlarms();
         adapter = new AlarmAdapter(alarmList, dbHelper, this);
         adapter.notifyDataSetChanged();
@@ -118,6 +115,7 @@ public class DashboardActivity extends AppCompatActivity {
 
         // ################## LISTENERS GO HERE #######################################
 
+        // Exiting selection mode when the user clicks anywhere except an alarm card
         parentLayout.setOnTouchListener(new View.OnTouchListener(){
             @Override
             public boolean onTouch(View v, MotionEvent event){
@@ -133,13 +131,11 @@ public class DashboardActivity extends AppCompatActivity {
             }
         });
 
-        /* Creating a listening for adding alarms button (the "+" button).
-        This will take us to the alarm editor page to create a new alarm*/
+        // Navigating to alarmEditor activity when pressing the add button
         addAlarmButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
                 Intent addNewAlarmIntent = new Intent(DashboardActivity.this, AlarmEditorActivity.class);
-                //startActivity(addNewAlarmIntent, NEW_ALARM_REQUEST_CODE);
                 startActivity(addNewAlarmIntent);
             }
         });
@@ -152,11 +148,11 @@ public class DashboardActivity extends AppCompatActivity {
         //// ################## OBJECTS' SETTINGS GO HERE #######################################
 
         /*An ItemAnimator handles animations for item views when changes such
-        * as items being added, removed, or moved occur (Within the RecyclerView)
-        * Specifically, the DefaultItemAnimator provides default animations for
-        * common item changes. For example, when you insert a new item into
-        * the RecyclerView, it will animate in from offscreen. When you remove an
-        * item, the DefaultItemAnimator will animate its disappearance.*/
+         * as items being added, removed, or moved occur (Within the RecyclerView)
+         * Specifically, the DefaultItemAnimator provides default animations for
+         * common item changes. For example, when you insert a new item into
+         * the RecyclerView, it will animate in from offscreen. When you remove an
+         * item, the DefaultItemAnimator will animate its disappearance.*/
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(layoutManager);
@@ -164,27 +160,31 @@ public class DashboardActivity extends AppCompatActivity {
         // Setting the clock type to numeric (instead of analog)
         dashboardClock.setClockType(ClockType.numeric);
         /*Removing padding all around the clock so that if there's
-        * anything close to the clock, it would be clickable */
+         * anything close to the clock, it would be clickable */
         dashboardClock.setPadding(0, 0, 0, 0);
         //_______________________________________________________________________________________
 
     }
 
     /**
-     * This ensures that the list of alarms in the dashboard is always synced with DB contents.
+     * This function runs every time the Dashboard activity is brought up to the screen (Whether
+     * it was because the user switched to another app and returned to the app, or user was in the
+     * app but navigated away and back to the screen)
      */
     @Override
     protected void onResume(){
         super.onResume();
         dbHelper = DBHelper.getInstance(this);
+        // Clearing the alarmList and refreshing it from the DB to ensure data is up to date
         alarmList.clear();
         alarmList.addAll(dbHelper.getAllAlarms());
-        adapter.notifyDataSetChanged();
-
-        // Running the alarm countdown again.
-        alarmCountdownHandler.post(alarmCountdownRunnable);
+        adapter.notifyDataSetChanged(); // signaling the adapter to refresh
+        alarmCountdownHandler.post(alarmCountdownRunnable); // Running the alarm countdown again.
     }
 
+    /**
+     * If the application is paused (for example, user switches to another app). This function runs
+     */
     @Override
     protected void onPause(){
         super.onPause();
@@ -198,7 +198,6 @@ public class DashboardActivity extends AppCompatActivity {
     /**
      * When AlarmEditorActivity finishes, this function will be called. This is where
      * we receive alarm data from the AlarmEditorActivity
-     * TODO: QUESTION: if an activity starts another activity using intents, does the starting activity (in this case, DashboardActivity.java by default calls onActivityResult() always? Try to understand the control-flow here.
      */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data){
@@ -208,14 +207,14 @@ public class DashboardActivity extends AppCompatActivity {
             /* Unpacking the data we got from the Intent (which started the
              AlarmEditorActivity. We're retrieving the new alarm data*/
             String time = data.getStringExtra("time");
-            String daysActive = data.getStringExtra("daysActive");
+            String repeatingDays = data.getStringExtra("repeatingDays");
             String title = data.getStringExtra("title");
             String alarmTone = data.getStringExtra("alarmTone");
             boolean isVibrationOn = data.getBooleanExtra("isVibrationOn", true);
             boolean isMotionMonitoringOn = data.getBooleanExtra("isMotionMonitoringOn", true);
             boolean isActive = data.getBooleanExtra("isActive", true);
 
-            AlarmCard newAlarmCard = new AlarmCard(time, daysActive,
+            AlarmCard newAlarmCard = new AlarmCard(time, repeatingDays,
                     title, alarmTone, isVibrationOn, isMotionMonitoringOn, isActive);
 
             // Next 2 lines: Saving alarm to DB
@@ -229,26 +228,34 @@ public class DashboardActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Updates the text under the clock in the dashboard to reflect the countdown for the nearest
+     * active alarm.
+     */
     protected void updateUpcomingAlarmText(){
         AlarmCard nearestAlarm = findNearestUpcomingAlarm();
 
-
-
         if (nearestAlarm != null){
-            Log.i("TIMESTAMP", "" + convertToTimestamp(nearestAlarm.getTime(), nearestAlarm.getRepeatingDays()));
             // Calculating difference in time
             long timeDiff = convertToTimestamp(nearestAlarm.getTime(), nearestAlarm.getRepeatingDays()) - System.currentTimeMillis();
-
             // Convert diff to Days, Hours, and Minutes
             String countdownText = formatCountdownText(timeDiff);
-
             upcomingAlarmsTextView.setText("The next alarm is in " + countdownText);
-
         }else{
             upcomingAlarmsTextView.setText("No Upcoming Alarms");
         }
     }
 
+    /**
+     * Formats how the text under the clock appears. If there's an upcoming alarm, that's too close,
+     * we won't display the days or hours, we will only display as much as we need to.
+     * This prevent us from saying that an alarm that's, for example, 30 minutes away, is "in 0
+     * days and 0 hours and 30 minutes", rather, this function will make it say that it's
+     * only "in 30 minutes"
+     * @param diff the difference in time between the current time and the neares time, this makes
+     *             up the countdown.
+     * @return the text that'll appear on the screen as the countdown.
+     */
     private String formatCountdownText(long diff) {
         long days = TimeUnit.MILLISECONDS.toDays(diff);
         long hours = TimeUnit.MILLISECONDS.toHours(diff) % 24;
@@ -261,9 +268,12 @@ public class DashboardActivity extends AppCompatActivity {
         return sb.toString();
     }
 
+    /**
+     * Iterates over all the alarms and finds the nearest alarm that's active. We need this to ensure
+     * that the countdown is always visible for the user if they had an active alarm.
+     * @return AlarmCard object representing the nearest active alarm.
+     */
     private AlarmCard findNearestUpcomingAlarm(){
-        // Assuming alarmList is already populated and contains the alarms.
-
         AlarmCard nearestAlarm = null;
         long nearestTime = Long.MAX_VALUE;
         long currentTime = System.currentTimeMillis();
@@ -272,20 +282,27 @@ public class DashboardActivity extends AppCompatActivity {
         for (AlarmCard alarm : alarmList){
             if(alarm.isActive()){
                 // Convert the alarm time to a timestamp
-                Log.i("nearest alarm", "WEW###########");
                 long alarmTime = convertToTimestamp(alarm.getTime(), alarm.getRepeatingDays());
-                Log.i("nearest alarm", "alarm time" + alarmTime);
                 if (alarmTime > currentTime && alarmTime < nearestTime){
                     nearestTime = alarmTime;
                     nearestAlarm = alarm;
                 }
             }
         }
-
-
         return nearestAlarm;
     }
 
+    /**
+     * Converts the time of the nearest active alarm to EPOCH time for the purpose of comparing it
+     * against the current time. This is so that we can display the countdown for the nearest
+     * upcoming alarm in the dashboard.
+     *
+     *
+     * @param time The string representing the time of the upcoming alarm in 24Hr format (HH:mm)
+     * @param repeatingDays The days in which the alarm repeats. it's "" if it's a
+     *                      non-repeating alarm
+     * @return the time of the alarm in EPOCH format.
+     */
     private long convertToTimestamp(String time, String repeatingDays) {
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
         SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
@@ -305,11 +322,21 @@ public class DashboardActivity extends AppCompatActivity {
             int today = now.get(Calendar.DAY_OF_WEEK);
             int daysUntilNextAlarm = 0;
 
+            // For non-repeating alarms
+            if (repeatingDays == null || repeatingDays.trim().isEmpty()) {
+
+                if (nextAlarm.after(now)) { // Alarm time is later today
+                    return nextAlarm.getTimeInMillis();
+                } else { // Alarm time is earlier, set for the next day
+                    nextAlarm.add(Calendar.DAY_OF_MONTH, 1);
+                    return nextAlarm.getTimeInMillis();
+                }
+            }
+
             // Loop through the days to find the next active day
             for (int i = 0; i < 7; i++) {
                 int checkDay = (today + i) % 7;
                 String dayString = getDayString(checkDay);
-
                 if (repeatingDays.contains(dayString)) {
                     daysUntilNextAlarm = i;
                     break;
@@ -323,14 +350,19 @@ public class DashboardActivity extends AppCompatActivity {
             if (nextAlarm.before(now)) {
                 nextAlarm.add(Calendar.DATE, 7);
             }
-
             return dateTimeFormat.parse(dateTimeFormat.format(nextAlarm.getTime())).getTime();
         } catch (ParseException e) {
             e.printStackTrace();
-            return -1; // Handle appropriately
+            return -1;
         }
     }
 
+    /**
+     * Converts a calendar day to a 2-letter string.
+     *
+     * @param calendarDay where 0= sunday and 6 = Saturday
+     * @return The string representing the day
+     */
     private String getDayString(int calendarDay) {
         switch (calendarDay) {
             case Calendar.SUNDAY:
@@ -353,16 +385,19 @@ public class DashboardActivity extends AppCompatActivity {
     }
 
     /**
-     * Entering selection mode
+     * Entering selection mode. When in selection mode, the Setting icon will turn into the trash
+     * icon and the "+" button will turn into the "Silence All alarms" button. Checkboxes will
+     * appear next to every alarm too.
      */
     public void enterSelectionMode(){
         isSelectionMode = true;
-        adapter.setSelectionMode(true);
-        adapter.notifyDataSetChanged();
+        adapter.setSelectionMode(true); // So that checkboxes appear next to every alarm card.
+        adapter.notifyDataSetChanged(); // refreshing the container of alarm cards.
 
         // replacing settings button with delete icon
         settingsButton.setImageResource(R.drawable.ic_delete);
-        // Changing the associated onClickListener
+
+        // The "Settings" button, which is now the trash button, will delete selected alarms.
         settingsButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
@@ -371,7 +406,10 @@ public class DashboardActivity extends AppCompatActivity {
             }
         });
 
+        // Changing the "+" btn to the "Silence All alarms" button
         addAlarmButton.setImageResource(R.drawable.ic_volume_off);
+
+        // Same as above with the settings button
         addAlarmButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
@@ -383,7 +421,7 @@ public class DashboardActivity extends AppCompatActivity {
     }
 
     /**
-     * Exits selection mode
+     * Exits selection mode to return to the normal state of the dahsboard.
      */
     public void exitSelectionMode(){
         isSelectionMode = false;
@@ -397,8 +435,7 @@ public class DashboardActivity extends AppCompatActivity {
         settingsButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
-                // Handing settings funcitonality
-                // TODO: Use intents to go to the settings.
+                // TODO: Use intents to go to the settings screen.
             }
         });
 
@@ -406,16 +443,18 @@ public class DashboardActivity extends AppCompatActivity {
         addAlarmButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
-                Intent addNewAlarmIntent = new Intent(DashboardActivity.this, AlarmEditorActivity.class);
+                Intent addNewAlarmIntent = new Intent(DashboardActivity.this,
+                        AlarmEditorActivity.class);
                 startActivity(addNewAlarmIntent);
             }
         });
 
+        // To ensure that none of the alarm's checkboxes remain checked after exiting selection mode
         deselectAllAlarms();
     }
 
     /**
-     * Checks if selection mode is enabled
+     * Getter to check  if selection mode is enabled
      */
     public boolean isSelectionModeActive(){
         return isSelectionMode;
@@ -427,7 +466,7 @@ public class DashboardActivity extends AppCompatActivity {
     private void deleteSelectedAlarms(){
         // Loop through all the created alarms and delete the ones where isSelected = true
         Iterator<AlarmCard> alaramIterator = alarmList.iterator();
-        int numOfDeletedAlarms = 0;
+        int numOfDeletedAlarms = 0; // Keeping track of the # of deleted alarms for the toast message
 
         while (alaramIterator.hasNext()){
             AlarmCard alarmToDelete = alaramIterator.next();
@@ -447,9 +486,11 @@ public class DashboardActivity extends AppCompatActivity {
 
         // Displaying a toast message to let user know that deletion was successful.
         if (numOfDeletedAlarms == 1){
-            Toast.makeText(getApplicationContext(), "Alarm Deleted", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "Alarm Deleted",
+                    Toast.LENGTH_SHORT).show();
         }else if (numOfDeletedAlarms > 1){
-            Toast.makeText(getApplicationContext(), numOfDeletedAlarms + " Alarms Deleted", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), numOfDeletedAlarms + " Alarms Deleted",
+                    Toast.LENGTH_SHORT).show();
         }
 
     }
@@ -463,7 +504,7 @@ public class DashboardActivity extends AppCompatActivity {
 
         while (alaramIterator.hasNext()){
             AlarmCard currentAlarm = alaramIterator.next();
-                currentAlarm.setActive(false);
+            currentAlarm.setActive(false);
         }
         adapter.notifyDataSetChanged();
     }

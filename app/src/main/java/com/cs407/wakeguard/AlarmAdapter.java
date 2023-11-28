@@ -23,11 +23,13 @@ import java.util.List;
  * be added into the RecyclerView or ListView.
  */
 public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHolder> {
+    // The list containing all the alarms that are visible to the user. This list is synced with DB
     private List<AlarmCard> alarmList;
 
     // SelectionMode is when the checkboxes are visible next to every alarm card
     private boolean isSelectionMode = false;
 
+    // Need this for making the CRUD operations. We must reference this every time we use the DB
     private DBHelper dbHelper;
 
     private Context context;

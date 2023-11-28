@@ -299,6 +299,7 @@ public class DashboardActivity extends AppCompatActivity {
      *
      *
      * @param time The string representing the time of the upcoming alarm in 24Hr format (HH:mm)
+     *             for example, 13:57, which is 1:57 PM
      * @param repeatingDays The days in which the alarm repeats. it's "" if it's a
      *                      non-repeating alarm
      * @return the time of the alarm in EPOCH format.

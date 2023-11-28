@@ -35,14 +35,15 @@ import java.util.concurrent.TimeUnit;
  *
  * NATHAN'S TODO:
  * TODO: 1- We want the alarm cards to adjust the format of the time from the hh:mm a format to
- *  the 24 Hr format depending on the settings. We're waiting on team members to finish implementing the settings screen
+ *  the 24 Hr format depending on the settings. We're waiting on team members to finish
+ *  implementing the settings screen
  *
- *  TODO: 2- The current alarms in the screen have a problem, you must ensure that we're correctly capturing the nearest alarm.
- *      Fix the findnearestalarm() function.
+ *  TODO: 2- The current alarms in the screen have a problem, you must ensure that we're
+ *      correctly capturing the nearest alarm. Fix the findnearestalarm() function.
  *
- *  TODO: 3- Investigate whether it's necessary to return intent from the alarm editor activity after saving the alarm to the DB.
- *      ASK CHAT GPT AND test it on your own. It's probably not needed.
- *
+ *  TODO: 3- Investigate whether it's necessary to return intent from the alarm editor
+ *      activity after saving the alarm to the DB. ASK CHAT GPT AND test it on your own. It's
+ *      probably not needed.
  */
 public class DashboardActivity extends AppCompatActivity {
 

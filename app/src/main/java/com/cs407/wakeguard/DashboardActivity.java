@@ -68,9 +68,6 @@ public class DashboardActivity extends AppCompatActivity {
     // The button that looks like a "+" sign
     private AppCompatImageButton addAlarmButton;
 
-    // This is for the onActivityResult() which runs after returning to Dashboard from AlarmEditor
-    private static final int NEW_ALARM_REQUEST_CODE = 1;
-
     // To do CRUD operations on alarms.
     private DBHelper dbHelper;
 
@@ -194,39 +191,6 @@ public class DashboardActivity extends AppCompatActivity {
         paused (for example, user switching to another app). This minimizes the
         apps resource consumption in the background. */
         alarmCountdownHandler.removeCallbacks(alarmCountdownRunnable);
-    }
-
-    /**
-     * When AlarmEditorActivity finishes, this function will be called. This is where
-     * we receive alarm data from the AlarmEditorActivity
-     */
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data){
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == NEW_ALARM_REQUEST_CODE && resultCode == RESULT_OK && data != null){
-            /* Unpacking the data we got from the Intent (which started the
-             AlarmEditorActivity. We're retrieving the new alarm data*/
-            String time = data.getStringExtra("time");
-            String repeatingDays = data.getStringExtra("repeatingDays");
-            String title = data.getStringExtra("title");
-            String alarmTone = data.getStringExtra("alarmTone");
-            boolean isVibrationOn = data.getBooleanExtra("isVibrationOn", true);
-            boolean isMotionMonitoringOn = data.getBooleanExtra("isMotionMonitoringOn", true);
-            boolean isActive = data.getBooleanExtra("isActive", true);
-
-            AlarmCard newAlarmCard = new AlarmCard(time, repeatingDays,
-                    title, alarmTone, isVibrationOn, isMotionMonitoringOn, isActive);
-
-            // Next 2 lines: Saving alarm to DB
-            dbHelper.addAlarm(newAlarmCard);
-
-            /* Next 3 lines: Updating recyclerView by adding it to the local copy
-            of alarms and notifying the recyclerView */
-            alarmList.add(newAlarmCard);
-            adapter.setAlarms(alarmList); // Update the adapter's data
-            adapter.notifyDataSetChanged();
-        }
     }
 
     /**

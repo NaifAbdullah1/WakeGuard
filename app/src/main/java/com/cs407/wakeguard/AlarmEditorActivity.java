@@ -420,22 +420,9 @@ public class AlarmEditorActivity extends AppCompatActivity {
             // Saving the data to the DB
             dbHelper = DBHelper.getInstance(this);
             dbHelper.addAlarm(alarmCard);
-
         }
 
-        // We'll need to pass the data of the newly created/updated alarm to the
-
-        Intent returnIntent = new Intent();
-        returnIntent.putExtra("time", time);
-        returnIntent.putExtra("repeatingDays", repeatingDays);
-        returnIntent.putExtra("title", title);
-        returnIntent.putExtra("alarmTone", alarmTone);
-        returnIntent.putExtra("vibrationSwitch", vibrationSwitch);
-        returnIntent.putExtra("motionMonitoringSwitch", motionMonitoringSwitch);
-
-        // Setting result and finishing activity
-        setResult(RESULT_OK, returnIntent);
-
+        // Switching back to the Dashboard Activity. onResume() will update alarm cards container
         finish();
 
     }

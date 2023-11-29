@@ -12,7 +12,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_alarm_alert);
 
-        // TODO: Update component info on Initial Alarm Screen. Listed below are the components that need live updating
+        // TODO: Update component info to match active alarm. Listed below are the components ids from activity _alarm_alert.xml that need live updating
         // TimeText: set to time alarm scheduled to go off
         // WakeGuardStatus: set to if WakeGuard is enabled or not on current alarm
         // AlarmTitle: the title given to the current alarm by the user

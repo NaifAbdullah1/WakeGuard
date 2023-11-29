@@ -126,22 +126,22 @@ public class SettingsActivity extends AppCompatActivity {
         infoDoNotDisturb.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
-                builder.setMessage(R.string.low_battery_message)
-                        .setTitle(R.string.low_battery_title);
+                builder.setMessage(R.string.do_not_disturb_message)
+                        .setTitle(R.string.do_not_disturb_title);
 
-                AlertDialog low_battery_info = builder.create();
-                low_battery_info.show();
+                AlertDialog dnd_info = builder.create();
+                dnd_info.show();
             }
         });
         ImageButton infoLowBattery = findViewById(R.id.lowBatteryInfo);
         infoLowBattery.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
-                builder.setMessage(R.string.do_not_disturb_message)
-                        .setTitle(R.string.do_not_disturb_title);
+                builder.setMessage(R.string.low_battery_message)
+                        .setTitle(R.string.low_battery_title);
 
-                AlertDialog dnd_info = builder.create();
-                dnd_info.show();
+                AlertDialog low_battery_info = builder.create();
+                low_battery_info.show();
             }
         });
     }

@@ -10,8 +10,8 @@
         android:id="@+id/lowBattery"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="34dp"
-        android:layout_marginTop="135dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="132dp"
         android:text="Low Battery Alarm"
         android:textAppearance="@style/TextAppearance.AppCompat.Display1"
         android:textSize="20sp"
@@ -22,8 +22,8 @@
         android:id="@+id/doNotDisturb"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="34dp"
-        android:layout_marginTop="38dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="28dp"
         android:text="Follow ''Do Not Disturb''"
         android:textAppearance="@style/TextAppearance.AppCompat.Display1"
         android:textSize="20sp"
@@ -34,8 +34,8 @@
         android:id="@+id/militaryTime"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="34dp"
-        android:layout_marginTop="38dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="35dp"
         android:text="24 Hour Time Format"
         android:textAppearance="@style/TextAppearance.AppCompat.Display1"
         android:textSize="20sp"
@@ -46,8 +46,8 @@
         android:id="@+id/activityMonitor"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="34dp"
-        android:layout_marginTop="38dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="32dp"
         android:text="Activity  Threshold"
         android:textAppearance="@style/TextAppearance.AppCompat.Display1"
         android:textSize="20sp"
@@ -60,7 +60,6 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="38dp"
         app:layout_constraintBottom_toTopOf="@+id/doNotDisturbButton"
-        app:layout_constraintEnd_toEndOf="@+id/doNotDisturbButton"
         app:layout_constraintStart_toStartOf="@+id/doNotDisturbButton" />
 
     <TextView
@@ -78,7 +77,7 @@
         android:id="@+id/backSettings"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="34dp"
+        android:layout_marginStart="16dp"
         android:layout_marginTop="40dp"
         android:adjustViewBounds="true"
         android:backgroundTint="#FEFAFD"
@@ -101,53 +100,50 @@
         android:id="@+id/militaryTimeButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="38dp"
-        app:layout_constraintEnd_toEndOf="@+id/doNotDisturbButton"
-        app:layout_constraintStart_toStartOf="@+id/doNotDisturbButton"
-        app:layout_constraintTop_toBottomOf="@+id/doNotDisturbButton" />
+        android:layout_marginStart="8dp"
+        android:layout_marginBottom="30dp"
+        app:layout_constraintBottom_toTopOf="@+id/activityMonitorMenu"
+        app:layout_constraintStart_toStartOf="@+id/activityMonitorMenu" />
 
     <Spinner
         android:id="@+id/activityMonitorMenu"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="330dp"
-        android:layout_marginEnd="25dp"
+        android:layout_width="99dp"
+        android:layout_height="0dp"
         android:spinnerMode="dropdown"
-        app:layout_constraintBottom_toTopOf="@+id/minuteNumberPicker"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintBottom_toBottomOf="@+id/activityMonitor"
+        app:layout_constraintStart_toStartOf="@+id/minuteNumberPicker"
+        app:layout_constraintTop_toTopOf="@+id/activityMonitor" />
 
     <TextView
         android:id="@+id/activityDuration"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="34dp"
-        android:layout_marginTop="32dp"
-        android:layout_marginEnd="42dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="54dp"
         android:text="Activity Monitor Duration"
         android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@+id/minuteNumberPicker"
         app:layout_constraintEnd_toStartOf="@+id/minuteNumberPicker"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/activityMonitor" />
+        app:layout_constraintTop_toTopOf="@+id/minuteNumberPicker" />
 
     <TextView
         android:id="@+id/minutes"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="15dp"
-        android:layout_marginBottom="44dp"
         android:text="min"
         android:textSize="20sp"
-        app:layout_constraintBottom_toBottomOf="@+id/minuteNumberPicker"
+        app:layout_constraintBottom_toBottomOf="@+id/activityDuration"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toEndOf="@+id/minuteNumberPicker" />
+        app:layout_constraintStart_toEndOf="@+id/minuteNumberPicker"
+        app:layout_constraintTop_toTopOf="@+id/activityDuration" />
 
     <ImageButton
         android:id="@+id/lowBatteryInfo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
+        android:layout_marginEnd="8dp"
         android:adjustViewBounds="true"
         android:background="#00FFFFFF"
         android:backgroundTint="#FEFAFD"
@@ -155,7 +151,7 @@
         android:maxHeight="30dp"
         android:scaleType="fitCenter"
         app:layout_constraintBottom_toBottomOf="@+id/lowBattery"
-        app:layout_constraintStart_toEndOf="@+id/lowBattery"
+        app:layout_constraintEnd_toStartOf="@+id/doNotDistubInfo"
         app:srcCompat="@drawable/ic_infoicon" />
 
     <ImageButton
@@ -163,6 +159,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="19dp"
+        android:layout_marginBottom="1dp"
         android:adjustViewBounds="true"
         android:background="#00FFFFFF"
         android:backgroundTint="#FEFAFD"
@@ -176,23 +173,23 @@
     <NumberPicker
         android:id="@+id/minuteNumberPicker"
         android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginStart="298dp"
+        android:layout_height="258dp"
+        android:layout_marginTop="271dp"
         android:layout_marginBottom="272dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/minutes"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/activityMonitorMenu" />
+        app:layout_constraintStart_toEndOf="@+id/activityDuration"
+        app:layout_constraintTop_toBottomOf="@+id/titleSettings" />
 
     <TextView
         android:id="@+id/defaultSettings"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="58dp"
-        android:layout_marginEnd="58dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginBottom="41dp"
         android:text="Reset Default Settings"
         android:textSize="20sp"
-        app:layout_constraintBaseline_toBaselineOf="@+id/resetButton"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button

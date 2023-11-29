@@ -3,7 +3,7 @@
 
 Pending tasks: 
 
-☐ Notification-going-off Activity (The screen that appears to the user when the alarm goes off. A representation of this screen can be found in the Wireframe). 
+☐ AlarmAlertActivity (The screen that appears to the user when the alarm goes off. A representation of this screen can be found in the Wireframe). Please name the .java file as "AlarmAlertActivity.java" and the XML file as "activity_alarm_alert.xml" 
 
 ☐ Settings Activity
 

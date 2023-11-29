@@ -1,14 +1,8 @@
 package com.cs407.wakeguard;
 
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.AppCompatImageButton;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.recyclerview.widget.DefaultItemAnimator;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -16,6 +10,14 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatImageButton;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.arbelkilani.clock.Clock;
 import com.arbelkilani.clock.enumeration.ClockType;
@@ -80,6 +82,13 @@ public class DashboardActivity extends AppCompatActivity {
     // The next two variables are responsible for keeping the alarm countdown in dashboard live
     private final Handler alarmCountdownHandler = new Handler();
 
+    //Settings Configuration Variables
+    private boolean lpm;
+    private boolean dnd;
+    private boolean mtf;
+    private int atm ;
+    private int amd;
+
     private final Runnable alarmCountdownRunnable = new Runnable() {
         @Override
         public void run() {
@@ -111,6 +120,14 @@ public class DashboardActivity extends AppCompatActivity {
         alarmList = dbHelper.getAllAlarms();
         adapter = new AlarmAdapter(alarmList, dbHelper, this);
         adapter.notifyDataSetChanged();
+
+        //Setting Configuration Variables
+        SharedPreferences sharedPref = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
+        lpm = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("lpm", false);
+        dnd = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("dnd", false);
+        mtf = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("mtf", false);
+        atm = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getInt("atm", 1);
+        amd = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getInt("amd", 0);
         //_______________________________________________________________________________________
 
 
@@ -141,7 +158,20 @@ public class DashboardActivity extends AppCompatActivity {
             }
         });
 
-        // TODO: ADD THE SETTINGS' OnClickListener HERE
+        settingsButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+
+                sharedPref.edit().putBoolean("lpm", lpm).apply();
+                sharedPref.edit().putBoolean("dnd", dnd).apply();
+                sharedPref.edit().putBoolean("mtf", mtf).apply();
+                sharedPref.edit().putInt("amd", amd).apply();
+                sharedPref.edit().putInt("atm", atm).apply();
+
+                Intent settingsIntent = new Intent(DashboardActivity.this, SettingsActivity.class);
+                startActivity(settingsIntent);
+            }
+        });
 
         //_______________________________________________________________________________________
 

@@ -116,8 +116,6 @@ public class AlarmEditorActivity extends AppCompatActivity {
             }
         }
 
-        // TODO: MAYBE SET THE REPEATING DAYS HERE?
-
         // DEPRECATED
         selectedDateText = (TextView) findViewById(R.id.dateText);
         if(repeating) {

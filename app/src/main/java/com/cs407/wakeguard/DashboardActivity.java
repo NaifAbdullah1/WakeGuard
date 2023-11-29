@@ -8,6 +8,9 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -33,17 +36,26 @@ import java.util.concurrent.TimeUnit;
 /**
  * Dashboard's clock: https://github.com/arbelkilani/Clock-view
  *
- * NATHAN'S TODO:
+ * NATHAN'S Notes:
  * TODO: 1- We want the alarm cards to adjust the format of the time from the hh:mm a format to
  *  the 24 Hr format depending on the settings. We're waiting on team members to finish
  *  implementing the settings screen
  *
- *  TODO: 2- The current alarms in the screen have a problem, you must ensure that we're
- *      correctly capturing the nearest alarm. Fix the findnearestalarm() function.
+ * AlarmService:
+ *  This service will handle playing the alarm tone.
+ *  It can also manage other tasks like vibration or flashing the screen.
+ *  If you're playing media or sounds, make sure to handle audio focus appropriately.
  *
- *  TODO: 3- Investigate whether it's necessary to return intent from the alarm editor
- *      activity after saving the alarm to the DB. ASK CHAT GPT AND test it on your own. It's
- *      probably not needed.
+ * AlarmAlertActivity:
+ *  This activity will be brought to the foreground when the alarm goes off.
+ *  Here, you can provide options to dismiss or snooze the alarm.
+ *  Ensure that the activity handles cases where the user might have already dismissed the alarm through another means (e.g., a notification).
+ *
+ * Optional: Wake Locks:
+ *  Depending on your app's requirements and target Android versions, you might need to handle wake locks to ensure that your service continues to run even if the device goes to sleep.
+ *  From Android 8.0 (API level 26), you should use startForegroundService() instead of startService() if the service will perform long-running operations in the background.
+ *
+ * We might also need to register the AlarmService by adding the following to the manifest.xml: <service android:name=".AlarmService" />
  */
 public class DashboardActivity extends AppCompatActivity {
 
@@ -118,9 +130,6 @@ public class DashboardActivity extends AppCompatActivity {
             @Override
             public boolean onTouch(View v, MotionEvent event){
                 //dbHelper.printAllAlarms();
-                for(AlarmCard alarm: alarmList){ // TODO: REMOVE
-                    Log.i("ALARMS", "" + alarm.getId() + ", " + alarm.getTitle() + ", " + alarm.isActive() + "\n");
-                }
                 if(isSelectionModeActive()){
                     exitSelectionMode();
                     return true; // consuming the touch event
@@ -161,7 +170,6 @@ public class DashboardActivity extends AppCompatActivity {
          * anything close to the clock, it would be clickable */
         dashboardClock.setPadding(0, 0, 0, 0);
         //_______________________________________________________________________________________
-
     }
 
     /**
@@ -425,6 +433,11 @@ public class DashboardActivity extends AppCompatActivity {
                 startActivity(addNewAlarmIntent);
             }
         });
+
+
+        Intent serviceIntent = new Intent(this, AlarmService.class);
+        startService(serviceIntent); // Directly start the service without setting an alarm
+
 
         // To ensure that none of the alarm's checkboxes remain checked after exiting selection mode
         deselectAllAlarms();

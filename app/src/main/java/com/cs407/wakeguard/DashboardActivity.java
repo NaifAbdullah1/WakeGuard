@@ -83,11 +83,11 @@ public class DashboardActivity extends AppCompatActivity {
     private final Handler alarmCountdownHandler = new Handler();
 
     //Settings Configuration Variables
-    private boolean lpm;
-    private boolean dnd;
-    private boolean mtf;
-    private int atm ;
-    private int amd;
+    private boolean isLowPowerMode;
+    private boolean isDoNotDisturb;
+    private boolean isMilitaryTimeFormat;
+    private int activityThresholdMonitoringLevel;
+    private int activityMonitoringDuration;
 
     private final Runnable alarmCountdownRunnable = new Runnable() {
         @Override
@@ -123,11 +123,11 @@ public class DashboardActivity extends AppCompatActivity {
 
         //Setting Configuration Variables
         SharedPreferences sharedPref = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
-        lpm = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("lpm", false);
-        dnd = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("dnd", false);
-        mtf = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("mtf", false);
-        atm = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getInt("atm", 1);
-        amd = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getInt("amd", 0);
+        isLowPowerMode = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("isLowPowerMode", false);
+        isDoNotDisturb = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("isDoNotDisturb", false);
+        isMilitaryTimeFormat = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("isMilitaryTimeFormat", false);
+        activityThresholdMonitoringLevel = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getInt("activityThresholdMonitoringLevel", 1);
+        activityMonitoringDuration = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getInt("activityMonitoringDuration", 0);
         //_______________________________________________________________________________________
 
 
@@ -162,11 +162,11 @@ public class DashboardActivity extends AppCompatActivity {
             @Override
             public void onClick(View v){
 
-                sharedPref.edit().putBoolean("lpm", lpm).apply();
-                sharedPref.edit().putBoolean("dnd", dnd).apply();
-                sharedPref.edit().putBoolean("mtf", mtf).apply();
-                sharedPref.edit().putInt("amd", amd).apply();
-                sharedPref.edit().putInt("atm", atm).apply();
+                sharedPref.edit().putBoolean("isLowPowerMode", isLowPowerMode).apply();
+                sharedPref.edit().putBoolean("isDoNotDisturb", isDoNotDisturb).apply();
+                sharedPref.edit().putBoolean("isMilitaryTimeFormat", isMilitaryTimeFormat).apply();
+                sharedPref.edit().putInt("activityMonitoringDuration", activityMonitoringDuration).apply();
+                sharedPref.edit().putInt("activityThresholdMonitoringLevel", activityThresholdMonitoringLevel).apply();
 
                 Intent settingsIntent = new Intent(DashboardActivity.this, SettingsActivity.class);
                 startActivity(settingsIntent);

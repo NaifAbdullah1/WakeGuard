@@ -18,11 +18,11 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class SettingsActivity extends AppCompatActivity {
 
-    private boolean lpm;
-    private boolean dnd;
-    private boolean mtf;
-    private int atm;
-    private int amd;
+    private boolean isLowPowerMode;
+    private boolean isDoNotDisturb;
+    private boolean isMilitaryTimeFormat;
+    private int activityThresholdMonitoringLevel;
+    private int activityMonitoringDuration;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,20 +30,20 @@ public class SettingsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_settings);
 
         //Assign Variables
-        lpm = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("lpm", false);
-        dnd = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("dnd", false);
-        mtf = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("mtf", false);
-        atm = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getInt("atm", 0);
-        amd = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getInt("amd", 0);
-        Log.i("lpm", "" + lpm);
-        Log.i("dnd", "" + dnd);
-        Log.i("mtf", "" + mtf);
-        Log.i("atm", "" + atm);
-        Log.i("amd", "" + amd);
+        isLowPowerMode = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("isLowPowerMode", false);
+        isDoNotDisturb = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("isDoNotDisturb", false);
+        isMilitaryTimeFormat = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("isMilitaryTimeFormat", false);
+        activityThresholdMonitoringLevel = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getInt("activityThresholdMonitoringLevel", 0);
+        activityMonitoringDuration = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getInt("activityMonitoringDuration", 0);
+        Log.i("isLowPowerMode", "" + isLowPowerMode);
+        Log.i("isDoNotDisturb", "" + isDoNotDisturb);
+        Log.i("isMilitaryTimeFormat", "" + isMilitaryTimeFormat);
+        Log.i("activityThresholdMonitoringLevel", "" + activityThresholdMonitoringLevel);
+        Log.i("activityMonitoringDuration", "" + activityMonitoringDuration);
 
-        Switch lp_switch = findViewById(R.id.lowbatterybutton);
-        Switch dnd_switch = findViewById(R.id.doNotDisturbButton);
-        Switch mtf_switch = findViewById(R.id.militaryTimeButton);
+        Switch isLowPowerModeSwitch = findViewById(R.id.lowbatterybutton);
+        Switch isDoNotDisturbSwitch = findViewById(R.id.doNotDisturbButton);
+        Switch isMilitaryTimeFormatSwitch = findViewById(R.id.militaryTimeButton);
         NumberPicker activity_duration = findViewById(R.id.minuteNumberPicker);
         activity_duration.setMinValue(0);
         activity_duration.setMaxValue(59);
@@ -57,11 +57,11 @@ public class SettingsActivity extends AppCompatActivity {
         activityMonitorThreshold.setAdapter(adapter);
 
         //Initialize Values
-        lp_switch.setChecked(lpm);
-        dnd_switch.setChecked(dnd);
-        mtf_switch.setChecked(mtf);
-        activity_duration.setValue(amd);
-        activityMonitorThreshold.setSelection(atm);
+        isLowPowerModeSwitch.setChecked(isLowPowerMode);
+        isDoNotDisturbSwitch.setChecked(isDoNotDisturb);
+        isMilitaryTimeFormatSwitch.setChecked(isMilitaryTimeFormat);
+        activity_duration.setValue(activityMonitoringDuration);
+        activityMonitorThreshold.setSelection(activityThresholdMonitoringLevel);
 
         //Infomation Popup Builder
         AlertDialog.Builder builder = new AlertDialog.Builder(SettingsActivity.this);
@@ -77,33 +77,33 @@ public class SettingsActivity extends AppCompatActivity {
         reset.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                lpm = false;
-                dnd = false;
-                mtf = false;
-                atm = 1;
-                amd = 0;
-                lp_switch.setChecked(lpm);
-                dnd_switch.setChecked(dnd);
-                mtf_switch.setChecked(mtf);
-                activityMonitorThreshold.setSelection(atm);
+                isLowPowerMode = false;
+                isDoNotDisturb = false;
+                isMilitaryTimeFormat = false;
+                activityThresholdMonitoringLevel = 1;
+                activityMonitoringDuration = 0;
+                isLowPowerModeSwitch.setChecked(isLowPowerMode);
+                isDoNotDisturbSwitch.setChecked(isDoNotDisturb);
+                isMilitaryTimeFormatSwitch.setChecked(isMilitaryTimeFormat);
+                activityMonitorThreshold.setSelection(activityThresholdMonitoringLevel);
             }
         });
-        lp_switch.setOnClickListener(new View.OnClickListener() {
+        isLowPowerModeSwitch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                lpm = !lpm;
+                isLowPowerMode = !isLowPowerMode;
             }
         });
-        dnd_switch.setOnClickListener(new View.OnClickListener() {
+        isDoNotDisturbSwitch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                dnd = !dnd;
+                isDoNotDisturb = !isDoNotDisturb;
             }
         });
-        mtf_switch.setOnClickListener(new View.OnClickListener() {
+        isMilitaryTimeFormatSwitch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mtf = !mtf;
+                isMilitaryTimeFormat = !isMilitaryTimeFormat;
             }
         });
 
@@ -113,11 +113,11 @@ public class SettingsActivity extends AppCompatActivity {
             public void onClick(View v){
                 Intent backDashboard = new Intent(SettingsActivity.this, DashboardActivity.class);
                 SharedPreferences sharedPref = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
-                sharedPref.edit().putBoolean("lpm", lpm).apply();
-                sharedPref.edit().putBoolean("dnd", dnd).apply();
-                sharedPref.edit().putBoolean("mtf", mtf).apply();
-                sharedPref.edit().putInt("amd", amd).apply();
-                sharedPref.edit().putInt("atm", atm).apply();
+                sharedPref.edit().putBoolean("isLowPowerMode", isLowPowerMode).apply();
+                sharedPref.edit().putBoolean("isDoNotDisturb", isDoNotDisturb).apply();
+                sharedPref.edit().putBoolean("isMilitaryTimeFormat", isMilitaryTimeFormat).apply();
+                sharedPref.edit().putInt("activityMonitoringDuration", activityMonitoringDuration).apply();
+                sharedPref.edit().putInt("activityThresholdMonitoringLevel", activityThresholdMonitoringLevel).apply();
                 startActivity(backDashboard);
             }
         });

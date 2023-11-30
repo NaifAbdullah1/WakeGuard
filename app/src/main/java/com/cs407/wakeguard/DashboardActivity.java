@@ -351,38 +351,49 @@ public class DashboardActivity extends AppCompatActivity {
             nextAlarm.set(Calendar.MONTH, now.get(Calendar.MONTH));
             nextAlarm.set(Calendar.DAY_OF_MONTH, now.get(Calendar.DAY_OF_MONTH));
 
-            int today = now.get(Calendar.DAY_OF_WEEK);
-            int daysUntilNextAlarm = 0;
-
             // For non-repeating alarms
             if (repeatingDays == null || repeatingDays.trim().isEmpty()) {
-
-                if (nextAlarm.after(now)) { // Alarm time is later today
+                if (nextAlarm.after(now)) {
                     return nextAlarm.getTimeInMillis();
-                } else { // Alarm time is earlier, set for the next day
+                } else {
                     nextAlarm.add(Calendar.DAY_OF_MONTH, 1);
                     return nextAlarm.getTimeInMillis();
                 }
             }
 
-            // Loop through the days to find the next active day
+            // Initialize minimum difference
+            long minDiff = -1;
+            boolean todayCheckedAndPassed = false;
+
             for (int i = 0; i < 7; i++) {
-                int checkDay = (today + i) % 7;
-                String dayString = getDayString(checkDay);
+                int dayIndex = (now.get(Calendar.DAY_OF_WEEK) + i) % 7;
+                if (dayIndex == 0) dayIndex = 7; // Adjust for Sunday
+
+                String dayString = getDayString(dayIndex);
                 if (repeatingDays.contains(dayString)) {
-                    daysUntilNextAlarm = i;
-                    break;
+                    Calendar potentialNextAlarm = (Calendar) nextAlarm.clone();
+                    potentialNextAlarm.add(Calendar.DATE, i);
+
+                    if (i == 0 && !potentialNextAlarm.after(now)) {
+                        todayCheckedAndPassed = true;
+                        continue;
+                    }
+
+                    long diff = potentialNextAlarm.getTimeInMillis() - now.getTimeInMillis();
+                    if (minDiff == -1 || diff < minDiff) {
+                        minDiff = diff;
+                        nextAlarm = potentialNextAlarm;
+                    }
                 }
             }
 
-            // Add the calculated days to the current date
-            nextAlarm.add(Calendar.DATE, daysUntilNextAlarm);
-
-            // If the calculated next alarm is before the current time, set it for the next week
-            if (nextAlarm.before(now)) {
+            // If today was the only repeating day and time has passed, set for next week
+            if (todayCheckedAndPassed && minDiff == -1) {
                 nextAlarm.add(Calendar.DATE, 7);
+                return nextAlarm.getTimeInMillis();
             }
-            return dateTimeFormat.parse(dateTimeFormat.format(nextAlarm.getTime())).getTime();
+
+            return minDiff != -1 ? nextAlarm.getTimeInMillis() : -1;
         } catch (ParseException e) {
             e.printStackTrace();
             return -1;

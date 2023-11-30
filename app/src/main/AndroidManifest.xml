@@ -17,6 +17,10 @@
             android:configChanges="orientation|screenSize"
             android:exported="false" />
         <activity
+            android:name=".SettingsActivity"
+            android:configChanges="orientation|screenSize"
+            android:exported="false" />
+        <activity
             android:name=".DashboardActivity"
             android:exported="true">
             <intent-filter>

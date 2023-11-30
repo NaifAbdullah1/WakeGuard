@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">WakeGuard</string>
+    <string name="low_battery_message">Alarms will follow the phones Low Power Mode, this may cause alarms not to go off.</string>
+    <string name="low_battery_title">Low Power Mode</string>
+    <string name="do_not_disturb_message">Alarms will follow the phones Do not Disturb setting, this may cause alarms not to go off.</string>
+    <string name="do_not_disturb_title">Do Not Disturb</string>
+    <string-array name="monitorThresholds">
+        <item>High</item>
+        <item>Medium</item>
+        <item>Low</item>
+    </string-array>
 </resources>

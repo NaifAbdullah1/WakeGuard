@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".SettingsActivity">
+
+    <TextView
+        android:id="@+id/lowBattery"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="132dp"
+        android:text="Low Battery Alarm"
+        android:textAppearance="@style/TextAppearance.AppCompat.Display1"
+        android:textSize="20sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/doNotDisturb"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="28dp"
+        android:text="Follow ''Do Not Disturb''"
+        android:textAppearance="@style/TextAppearance.AppCompat.Display1"
+        android:textSize="20sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/lowBattery" />
+
+    <TextView
+        android:id="@+id/militaryTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="35dp"
+        android:text="24 Hour Time Format"
+        android:textAppearance="@style/TextAppearance.AppCompat.Display1"
+        android:textSize="20sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/doNotDisturb" />
+
+    <TextView
+        android:id="@+id/activityMonitor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="32dp"
+        android:text="Activity  Threshold"
+        android:textAppearance="@style/TextAppearance.AppCompat.Display1"
+        android:textSize="20sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/militaryTime" />
+
+    <Switch
+        android:id="@+id/lowbatterybutton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="38dp"
+        app:layout_constraintBottom_toTopOf="@+id/doNotDisturbButton"
+        app:layout_constraintStart_toStartOf="@+id/doNotDisturbButton" />
+
+    <TextView
+        android:id="@+id/titleSettings"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:text="Settings"
+        android:textSize="34sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toEndOf="@+id/backSettings"
+        app:layout_constraintTop_toTopOf="@+id/backSettings" />
+
+    <ImageButton
+        android:id="@+id/backSettings"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="40dp"
+        android:adjustViewBounds="true"
+        android:backgroundTint="#FEFAFD"
+        android:maxWidth="50dp"
+        android:maxHeight="50dp"
+        android:scaleType="fitCenter"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_backarrow" />
+
+    <Switch
+        android:id="@+id/doNotDisturbButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="26dp"
+        app:layout_constraintBottom_toBottomOf="@+id/doNotDistubInfo"
+        app:layout_constraintStart_toEndOf="@+id/doNotDistubInfo" />
+
+    <Switch
+        android:id="@+id/militaryTimeButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginBottom="30dp"
+        app:layout_constraintBottom_toTopOf="@+id/activityMonitorMenu"
+        app:layout_constraintStart_toStartOf="@+id/activityMonitorMenu" />
+
+    <Spinner
+        android:id="@+id/activityMonitorMenu"
+        android:layout_width="99dp"
+        android:layout_height="0dp"
+        android:spinnerMode="dropdown"
+        app:layout_constraintBottom_toBottomOf="@+id/activityMonitor"
+        app:layout_constraintStart_toStartOf="@+id/minuteNumberPicker"
+        app:layout_constraintTop_toTopOf="@+id/activityMonitor" />
+
+    <TextView
+        android:id="@+id/activityDuration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="54dp"
+        android:text="Activity Monitor Duration"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@+id/minuteNumberPicker"
+        app:layout_constraintEnd_toStartOf="@+id/minuteNumberPicker"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/minuteNumberPicker" />
+
+    <TextView
+        android:id="@+id/minutes"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="15dp"
+        android:text="min"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@+id/activityDuration"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/minuteNumberPicker"
+        app:layout_constraintTop_toTopOf="@+id/activityDuration" />
+
+    <ImageButton
+        android:id="@+id/lowBatteryInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:adjustViewBounds="true"
+        android:background="#00FFFFFF"
+        android:backgroundTint="#FEFAFD"
+        android:maxWidth="30dp"
+        android:maxHeight="30dp"
+        android:scaleType="fitCenter"
+        app:layout_constraintBottom_toBottomOf="@+id/lowBattery"
+        app:layout_constraintEnd_toStartOf="@+id/doNotDistubInfo"
+        app:srcCompat="@drawable/ic_infoicon" />
+
+    <ImageButton
+        android:id="@+id/doNotDistubInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="19dp"
+        android:layout_marginBottom="1dp"
+        android:adjustViewBounds="true"
+        android:background="#00FFFFFF"
+        android:backgroundTint="#FEFAFD"
+        android:maxWidth="30dp"
+        android:maxHeight="30dp"
+        android:scaleType="fitCenter"
+        app:layout_constraintBottom_toBottomOf="@+id/doNotDisturb"
+        app:layout_constraintStart_toEndOf="@+id/doNotDisturb"
+        app:srcCompat="@drawable/ic_infoicon" />
+
+    <NumberPicker
+        android:id="@+id/minuteNumberPicker"
+        android:layout_width="0dp"
+        android:layout_height="258dp"
+        android:layout_marginTop="271dp"
+        android:layout_marginBottom="272dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/minutes"
+        app:layout_constraintStart_toEndOf="@+id/activityDuration"
+        app:layout_constraintTop_toBottomOf="@+id/titleSettings" />
+
+    <TextView
+        android:id="@+id/defaultSettings"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginBottom="41dp"
+        android:text="Reset Default Settings"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/resetButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="33dp"
+        android:layout_marginBottom="28dp"
+        android:text="Reset"
+        android:textColorLink="#1C1414"
+        app:cornerRadius="10dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -38,7 +38,6 @@ public class AlarmService extends Service {
      */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId){
-        Log.d("AlarmService", "Service started - Vibrating");
 
         // Example vibration pattern: Vibrate for 500 milliseconds, pause for 1000 milliseconds, then repeat.
         long[] pattern = {0, 500, 1000};
@@ -55,7 +54,6 @@ public class AlarmService extends Service {
 
     @Override
     public void onDestroy() {
-        Log.d("AlarmService", "Service destroyed - Vibration stopped");
         super.onDestroy();
         vibrator.cancel(); // Stop vibration when service is destroyed
     }

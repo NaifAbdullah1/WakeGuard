@@ -472,11 +472,6 @@ public class DashboardActivity extends AppCompatActivity {
             }
         });
 
-
-        Intent serviceIntent = new Intent(this, AlarmService.class);
-        startService(serviceIntent); // Directly start the service without setting an alarm
-
-
         // To ensure that none of the alarm's checkboxes remain checked after exiting selection mode
         deselectAllAlarms();
     }
@@ -520,7 +515,7 @@ public class DashboardActivity extends AppCompatActivity {
             Toast.makeText(getApplicationContext(), numOfDeletedAlarms + " Alarms Deleted",
                     Toast.LENGTH_SHORT).show();
         }
-
+        updateUpcomingAlarmText();
     }
 
     /**

@@ -110,7 +110,7 @@ public class DashboardActivity extends AppCompatActivity {
         @Override
         public void run() {
             updateUpcomingAlarmText();
-            alarmCountdownHandler.postDelayed(this, 60000); // Update every minute
+            alarmCountdownHandler.postDelayed(this, 30000); // Update every 0.5 minute
         }
     };
 
@@ -224,6 +224,8 @@ public class DashboardActivity extends AppCompatActivity {
         alarmList.addAll(dbHelper.getAllAlarms());
         adapter.notifyDataSetChanged(); // signaling the adapter to refresh
         alarmCountdownHandler.post(alarmCountdownRunnable); // Running the alarm countdown again.
+        // Scheduling all active alarms
+        rescheduleAllAlarms();
     }
 
     /**
@@ -238,6 +240,58 @@ public class DashboardActivity extends AppCompatActivity {
         apps resource consumption in the background. */
         alarmCountdownHandler.removeCallbacks(alarmCountdownRunnable);
     }
+
+    /**
+     * Re-schedules all alarms using AlarmManager. This function ensures that all alarms
+     * are set to go off at the specified time.
+     */
+    public void rescheduleAllAlarms(){
+        // First, we cancel them all
+        for (AlarmCard alarm: alarmList) {
+            cancelAlarm(alarm.getId());
+            scheduleAlarm(alarm);
+        }
+    }
+
+
+    private void scheduleAlarm(AlarmCard alarmCard){
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(this, AlarmReceiver.class);
+        PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this,
+                alarmCard.getId(), intent, PendingIntent.FLAG_IMMUTABLE);
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(System.currentTimeMillis());
+
+        long alarmTimeInEpoch = convertToTimestamp(alarmCard.getTime(), alarmCard.getRepeatingDays());
+        Calendar alarmTime = Calendar.getInstance();
+        alarmTime.setTimeInMillis(alarmTimeInEpoch);
+
+        // If the alarm is repeating
+        if (!alarmCard.getRepeatingDays().equals("")){
+            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, alarmTime.getTimeInMillis(),
+                    AlarmManager.INTERVAL_DAY, alarmPendingIntent);
+        }else {
+            // Set a single alarm
+            alarmManager.set(AlarmManager.RTC_WAKEUP, alarmTime.getTimeInMillis(), alarmPendingIntent);
+        }
+    }
+
+
+    /**
+     * Cancels an alarm such that it won't go off anymore.
+     * @param alarmId
+     */
+    private void cancelAlarm(int alarmId){
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent (this, AlarmReceiver.class);
+        PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this, alarmId,
+                intent, PendingIntent.FLAG_IMMUTABLE);
+
+        // Canceling the alarm with the specified ID
+        alarmManager.cancel(alarmPendingIntent);
+    }
+
 
     /**
      * Updates the text under the clock in the dashboard to reflect the countdown for the nearest
@@ -317,7 +371,6 @@ public class DashboardActivity extends AppCompatActivity {
      */
     private long convertToTimestamp(String time, String repeatingDays) {
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
-        SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         Calendar now = Calendar.getInstance();
 
         try {

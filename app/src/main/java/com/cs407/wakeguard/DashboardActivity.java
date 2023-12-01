@@ -51,6 +51,16 @@ import java.util.concurrent.TimeUnit;
  *  the 24 Hr format depending on the settings. We're waiting on team members to finish
  *  implementing the settings screen
  *
+ *  TODO 2: Find a way to make the countdown update every second.
+ *
+ *  TODO 3: In alarmAlertActivity, ensure that when wakeguard is disabled, space the elements out well
+ *
+ *  TODO 4: In alarmAlertActivity, make sure PM/AM is working. Account for 24hr time too.
+ *
+ *  TODO 5: Alarm doesn't get triggered when it's a repeating one
+ *
+ *  TODO 6: After dismissing a non-repeating alarm, the alarm should be set inactive. Use DB operation to make the change. Consider editing the setters in AlarmCard
+ *
  * AlarmService:
  *  This service will handle playing the alarm tone.
  *  It can also manage other tasks like vibration or flashing the screen.
@@ -253,30 +263,51 @@ public class DashboardActivity extends AppCompatActivity {
         }
     }
 
-
     private void scheduleAlarm(AlarmCard alarmCard){
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        Intent intent = new Intent(this, AlarmReceiver.class);
-        PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this,
-                alarmCard.getId(), intent, PendingIntent.FLAG_IMMUTABLE);
+        Intent alarmReceiverIntent = new Intent(this, AlarmReceiver.class);
+        alarmReceiverIntent.putExtra("alarmId", alarmCard.getId());
 
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(System.currentTimeMillis());
+        // Check if the alarm is repeating
+        if (!alarmCard.getRepeatingDays().equals("")) {
+            scheduleRepeatingAlarm(alarmCard, alarmManager, alarmReceiverIntent);
+        } else {
+            long alarmTimeInEpoch = convertToTimestamp(alarmCard.getTime(), alarmCard.getRepeatingDays());
+            Calendar alarmTime = Calendar.getInstance();
+            alarmTime.setTimeInMillis(alarmTimeInEpoch);
 
-        long alarmTimeInEpoch = convertToTimestamp(alarmCard.getTime(), alarmCard.getRepeatingDays());
-        Calendar alarmTime = Calendar.getInstance();
-        alarmTime.setTimeInMillis(alarmTimeInEpoch);
+            // Generate a unique request code
+            int requestCode = generateRequestCode(alarmCard.getId(), alarmTime);
 
-        // If the alarm is repeating
-        if (!alarmCard.getRepeatingDays().equals("")){
-            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, alarmTime.getTimeInMillis(),
-                    AlarmManager.INTERVAL_DAY, alarmPendingIntent);
-        }else {
+            // Use the unique request code for the PendingIntent
+            PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this, requestCode, alarmReceiverIntent, PendingIntent.FLAG_IMMUTABLE);
+
             // Set a single alarm
             alarmManager.set(AlarmManager.RTC_WAKEUP, alarmTime.getTimeInMillis(), alarmPendingIntent);
         }
     }
 
+    private void scheduleRepeatingAlarm(AlarmCard alarmCard, AlarmManager alarmManager,
+                                        Intent alarmReceiverIntent) {
+        String[] days = alarmCard.getRepeatingDays().split(","); // Assuming this returns days like "Mo,Tu,We"
+
+        for (String day : days) {
+            int dayOfWeek = convertDayStringToCalendarDay(day);
+            Calendar alarmTime = getNextAlarmTime(alarmCard.getTime(), dayOfWeek);
+
+            int requestCode = generateRequestCode(alarmCard.getId(), alarmTime);
+            PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this, requestCode,
+                    alarmReceiverIntent, PendingIntent.FLAG_IMMUTABLE);
+
+            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, alarmTime.getTimeInMillis(),
+                    AlarmManager.INTERVAL_DAY * 7, alarmPendingIntent);
+        }
+    }
+
+    private int generateRequestCode(int alarmId, Calendar alarmTime){
+        int dayOfWeek = alarmTime.get(Calendar.DAY_OF_WEEK);
+        return alarmId * 10 + dayOfWeek; //Adjust multiplier as needed to ensure uniqueness.
+    }
 
     /**
      * Cancels an alarm such that it won't go off anymore.
@@ -292,6 +323,34 @@ public class DashboardActivity extends AppCompatActivity {
         alarmManager.cancel(alarmPendingIntent);
     }
 
+    private Calendar getNextAlarmTime(String time, int dayOfWeek) {
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+        Calendar nextAlarm = Calendar.getInstance();
+        Calendar now = Calendar.getInstance();
+
+        try {
+            Date alarmTime = timeFormat.parse(time);
+            nextAlarm.setTime(alarmTime);
+
+            // Set initial date to today
+            nextAlarm.set(Calendar.YEAR, now.get(Calendar.YEAR));
+            nextAlarm.set(Calendar.MONTH, now.get(Calendar.MONTH));
+            nextAlarm.set(Calendar.DAY_OF_MONTH, now.get(Calendar.DAY_OF_MONTH));
+
+            // Set the day of the week
+            nextAlarm.set(Calendar.DAY_OF_WEEK, dayOfWeek);
+
+            // If the calculated alarm time is before the current time, set it for the next week
+            if (nextAlarm.before(now)) {
+                nextAlarm.add(Calendar.WEEK_OF_YEAR, 1);
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+            // Handle exception - maybe return null or set a default alarm time
+        }
+
+        return nextAlarm;
+    }
 
     /**
      * Updates the text under the clock in the dashboard to reflect the countdown for the nearest
@@ -457,6 +516,27 @@ public class DashboardActivity extends AppCompatActivity {
                 return "Sa";
             default:
                 return "";
+        }
+    }
+
+    private int convertDayStringToCalendarDay(String day) {
+        switch (day.trim()) {
+            case "Su":
+                return Calendar.SUNDAY;
+            case "Mo":
+                return Calendar.MONDAY;
+            case "Tu":
+                return Calendar.TUESDAY;
+            case "We":
+                return Calendar.WEDNESDAY;
+            case "Th":
+                return Calendar.THURSDAY;
+            case "Fr":
+                return Calendar.FRIDAY;
+            case "Sa":
+                return Calendar.SATURDAY;
+            default:
+                return -1; // Invalid day
         }
     }
 

@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit;
  *  the 24 Hr format depending on the settings. We're waiting on team members to finish
  *  implementing the settings screen
  *
- *  TODO 5: That's it, we're doing the single scheduling for repeating alarms.  Alarm doesn't get triggered when it's a repeating one
+ *  TODO 5: When an alarm is deleted, it should be deactivated first, when it's deactivated, the pending intent should be canceled.
  *
  *  
  *  TODO 4: In alarmAlertActivity, make sure PM/AM is working. Account for 24hr time too.
@@ -56,6 +56,8 @@ import java.util.concurrent.TimeUnit;
  *  TODO 3: In alarmAlertActivity, ensure that when wakeguard is disabled, space the elements out well
  *
  * TODO: Ensure alarms work after phone reboot too
+ *
+ *  TODO: Make the app refresh the shceduling every time the user opens the app. Or with a background script
  *
  *  TODO 6: After dismissing a non-repeating alarm, the alarm should be set inactive. Use DB operation to make the change. Consider editing the setters in AlarmCard
  *
@@ -113,6 +115,8 @@ public class DashboardActivity extends AppCompatActivity {
     private boolean isMilitaryTimeFormat;
     private int activityThresholdMonitoringLevel;
     private int activityMonitoringDuration;
+
+    private int WEEKS_TO_SCHEDULE_AHEAD = 2;
 
     private final Runnable alarmCountdownRunnable = new Runnable() {
         @Override
@@ -265,10 +269,12 @@ public class DashboardActivity extends AppCompatActivity {
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         Intent alarmReceiverIntent = new Intent(this, AlarmReceiver.class);
         alarmReceiverIntent.putExtra("alarmId", alarmCard.getId());
+
         Log.d("ALARM", "Attempting to schedule alarm");
+
         // Check if the alarm is repeating
         if (!alarmCard.getRepeatingDays().equals("")) {
-            scheduleRepeatingAlarm(alarmCard, alarmManager, alarmReceiverIntent);
+            scheduleMultipleAlarm(alarmCard, alarmManager, alarmReceiverIntent);
         } else {
             long alarmTimeInEpoch = convertToTimestamp(alarmCard.getTime(), alarmCard.getRepeatingDays());
             Log.d("########", "alarmTimeInEpoch " + alarmTimeInEpoch);
@@ -279,7 +285,7 @@ public class DashboardActivity extends AppCompatActivity {
             Log.d("########", "alarmtimeNONrepeating: " + alarmTime.getTimeInMillis());
 
             // Generate a unique request code
-            int requestCode = generateRequestCode(alarmCard.getId(), alarmTime);
+            int requestCode = generateRequestCode(alarmCard.getId(),0, 0);
 
             // Use the unique request code for the PendingIntent
             PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this, requestCode,
@@ -306,7 +312,7 @@ public class DashboardActivity extends AppCompatActivity {
         }
     }
 
-    private void scheduleRepeatingAlarm(AlarmCard alarmCard, AlarmManager alarmManager,
+    private void scheduleMultipleAlarm(AlarmCard alarmCard, AlarmManager alarmManager,
                                         Intent alarmReceiverIntent) {
         String[] days = alarmCard.getRepeatingDays().split(","); // Assuming this returns days like "Mo,Tu,We"
 
@@ -317,25 +323,26 @@ public class DashboardActivity extends AppCompatActivity {
 
         for (String day : days) {
             int dayOfWeek = convertDayStringToCalendarDay(day);
-            Calendar alarmTime = getNextAlarmTime(alarmCard.getTime(), dayOfWeek);
+            Calendar nextAlarmTime = getNextAlarmTime(alarmCard.getTime(), dayOfWeek);
             Log.d("#############", "Day of week: "+ dayOfWeek);
-            Log.d("#############", "alarmTime: "+ alarmTime.getTimeInMillis());
+            Log.d("#############", "alarmTime: "+ nextAlarmTime.getTimeInMillis());
 
-            int requestCode = generateRequestCode(alarmCard.getId(), alarmTime);
-            PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this, requestCode,
-                    alarmReceiverIntent, PendingIntent.FLAG_IMMUTABLE);
+            for (int weekOffset = 0; weekOffset < WEEKS_TO_SCHEDULE_AHEAD; weekOffset++){
+                Calendar alarmTime = (Calendar) nextAlarmTime.clone();
+                alarmTime.add(Calendar.WEEK_OF_YEAR, weekOffset);
 
-            Log.d("SETTING", "SCHEDULED ALARM NOW");
-            Log.d("ALARM-TIME", " " + alarmTime.getTimeInMillis());
-            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, alarmTime.getTimeInMillis(),
-                    AlarmManager.INTERVAL_DAY * 7, alarmPendingIntent);
+                int requestCode = generateRequestCode(alarmCard.getId(), dayOfWeek, weekOffset);
+                PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this, requestCode,
+                        alarmReceiverIntent, PendingIntent.FLAG_IMMUTABLE);
+
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
+                        alarmTime.getTimeInMillis(), alarmPendingIntent);
+            }
         }
     }
 
-    private int generateRequestCode(int alarmId, Calendar alarmTime){
-        int dayOfWeek = alarmTime.get(Calendar.DAY_OF_WEEK);
-        Log.d("time ", "req ode: " + (1 + new Random().nextInt(100)));
-        return (1 + new Random().nextInt(100)); //Adjust multiplier as needed to ensure uniqueness.
+    private int generateRequestCode(int alarmId, int dayOfWeek, int weekOffset){
+        return alarmId * 1000 + dayOfWeek * 100 + weekOffset; // Ensure uniqueness
     }
 
     /**
@@ -345,11 +352,14 @@ public class DashboardActivity extends AppCompatActivity {
     private void cancelAlarm(int alarmId){
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent (this, AlarmReceiver.class);
-        PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this, alarmId,
-                intent, PendingIntent.FLAG_IMMUTABLE);
-
-        // Canceling the alarm with the specified ID
-        alarmManager.cancel(alarmPendingIntent);
+        for (int dayOfWeek = Calendar.SUNDAY; dayOfWeek <= Calendar.SATURDAY; dayOfWeek++){
+            for (int weekOffset = 0; weekOffset < WEEKS_TO_SCHEDULE_AHEAD; weekOffset++){
+                int requestCode = generateRequestCode(alarmId, dayOfWeek, weekOffset);
+                PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this,
+                        requestCode, intent, PendingIntent.FLAG_IMMUTABLE);
+                alarmManager.cancel(alarmPendingIntent);
+            }
+        }
     }
 
     private Calendar getNextAlarmTime(String time, int dayOfWeek) {

@@ -79,10 +79,12 @@ public class AlarmAlertActivity extends AppCompatActivity {
      */
     public void onStopClick(View view) {
         /*If the alarm is non-repeating, then toggle it off. Otherwise, just return to the dashboard. */
-        boolean isAlarmRepeating = !triggeredAlarm.getRepeatingDays().equals("");
-        if (!isAlarmRepeating){
-          triggeredAlarm.setActive(false);
-          dbHelper.toggleAlarm(triggeredAlarm.getId(), triggeredAlarm.isActive());
+        if (triggeredAlarm != null){
+            boolean isAlarmRepeating = !triggeredAlarm.getRepeatingDays().equals("");
+            if (!isAlarmRepeating){
+                triggeredAlarm.setActive(false);
+                dbHelper.toggleAlarm(triggeredAlarm.getId(), triggeredAlarm.isActive());
+            }
         }
         finish();
     }

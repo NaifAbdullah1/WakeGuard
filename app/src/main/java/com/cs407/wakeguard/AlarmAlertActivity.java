@@ -75,7 +75,6 @@ public class AlarmAlertActivity extends AppCompatActivity {
      */
     public void onStopClick(View view) {
         /*If the alarm is non-repeating, then toggle it off. Otherwise, just return to the dashboard. */
-        Log.d("trigg alarm", "" + triggeredAlarm.toString());
             boolean isAlarmRepeating = !triggeredAlarm.getRepeatingDays().equals("");
             if (!isAlarmRepeating){
                 triggeredAlarm.setActive(false);

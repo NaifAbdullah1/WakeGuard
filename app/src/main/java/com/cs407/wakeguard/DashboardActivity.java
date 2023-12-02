@@ -1,7 +1,7 @@
 package com.cs407.wakeguard;
 
 import android.content.Context;
-import androidx.annotation.Nullable;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -11,7 +11,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
@@ -33,7 +32,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 
@@ -119,6 +117,8 @@ public class DashboardActivity extends AppCompatActivity {
 
     private int WEEKS_TO_SCHEDULE_AHEAD = 2;
 
+    private static int requestCodeCreator = 1;
+
     private final Runnable alarmCountdownRunnable = new Runnable() {
         @Override
         public void run() {
@@ -153,6 +153,7 @@ public class DashboardActivity extends AppCompatActivity {
 
         //Setting Configuration Variables
         SharedPreferences sharedPref = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
+        requestCodeCreator = sharedPref.getInt("nextRequestCode", 1);
         isLowPowerMode = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("isLowPowerMode", false);
         isDoNotDisturb = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("isDoNotDisturb", false);
         isMilitaryTimeFormat = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("isMilitaryTimeFormat", false);
@@ -269,26 +270,21 @@ public class DashboardActivity extends AppCompatActivity {
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         // This intent is sent to AlarmReceiver.java with the alarm's ID as an extra
         Intent alarmReceiverIntent = new Intent(this, AlarmReceiver.class);
-        Log.d("ID ScheduleAlarm ", " " + alarmCard.getId());
         alarmReceiverIntent.putExtra("alarmId", alarmCard.getId());
-        alarmReceiverIntent.putExtra("IID", 69);
-        Log.d("PRE PRINT", alarmReceiverIntent.getIntExtra("alarmId", -1) + "");
 
         // Check if the alarm is repeating
         if (!alarmCard.getRepeatingDays().equals("")) {
             scheduleMultipleAlarm(alarmCard, alarmManager, alarmReceiverIntent);
-            Log.d("PRINTIGN MULTIPLE", alarmReceiverIntent.getIntExtra("alarmId", -1) + "");
 
         } else {
             long alarmTimeInEpoch = convertToTimestamp(alarmCard.getTime(), alarmCard.getRepeatingDays());
-
             Calendar alarmTime = Calendar.getInstance();
             alarmTime.setTimeInMillis(alarmTimeInEpoch);
 
             // Generate a unique request code
-            int requestCode = generateRequestCode(alarmCard.getId(),-1, -1);
+            int requestCode = generateRequestCode();
+            Log.d("nonRepeatingReq Code", "" + requestCode);
 
-            Log.d("PRINTIGN SING", alarmReceiverIntent.getIntExtra("alarmId", -1) + "");
             // Use the unique request code for the PendingIntent
             PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this, requestCode,
                     alarmReceiverIntent, PendingIntent.FLAG_IMMUTABLE);
@@ -299,8 +295,8 @@ public class DashboardActivity extends AppCompatActivity {
             if (alarmManager != null) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     if (alarmManager.canScheduleExactAlarms()) {
-                        Log.d("11", alarmReceiverIntent.getIntExtra("alarmId", -1) + "");
-                        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarmTime.getTimeInMillis(), alarmPendingIntent);
+                        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
+                                alarmTime.getTimeInMillis(), alarmPendingIntent);
                     } else {
                         // Show a dialog or notification to inform the user they need to grant the permission
                         // Redirect to the system settings for your app
@@ -308,7 +304,6 @@ public class DashboardActivity extends AppCompatActivity {
                         startActivity(permissionIntent);
                     }
                 } else {
-                    Log.d("222", alarmReceiverIntent.getIntExtra("alarmId", -1) + "");
                     // For older versions, set the alarm without checking the permission
                     alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarmTime.getTimeInMillis(), alarmPendingIntent);
                 }
@@ -328,22 +323,38 @@ public class DashboardActivity extends AppCompatActivity {
                 Calendar alarmTime = (Calendar) nextAlarmTime.clone();
                 alarmTime.add(Calendar.WEEK_OF_YEAR, weekOffset);
 
-                int requestCode = generateRequestCode(alarmCard.getId(), dayOfWeek, weekOffset);
+                int requestCode = generateRequestCode();
+                Log.d("RepeatingReq Code", "" + requestCode);
                 PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this, requestCode,
                         alarmReceiverIntent, PendingIntent.FLAG_IMMUTABLE);
-                Log.d("PRINTIGN 232", alarmReceiverIntent.getIntExtra("alarmId", -1) + "");
-
 
                 alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
                         alarmTime.getTimeInMillis(), alarmPendingIntent);
             }
         }
     }
-    private int generateRequestCode(int alarmId, int dayOfWeek, int weekOffset){
-        if (dayOfWeek == -1 && weekOffset == -1) // for handling non-repeating alarms since they don't need those two values.
-            return alarmId;
-        else
-            return alarmId * 1000 + dayOfWeek * 100 + weekOffset; // Ensure uniqueness
+
+
+    private synchronized int generateRequestCode(){
+        int reqCode = requestCodeCreator++;
+        saveRequestCode(requestCodeCreator); // saving it to SharedPreference for persistence.
+        return reqCode;
+    }
+
+    /**
+     * Every time you create and activate an alarm, we need a "request code" that goes along with
+     * that alarm to help Android distinguish between alarms. It's like an alarm id.
+     * We use the static variable "requestCodeCreator" to make request codes when needed. But since
+     * it's a static variable, it will reset when restarting the app. Therefore, we need to save it
+     * in SharedPreferences so that it doesn't reset. This makes it persistent.
+     * @param requestCode
+     */
+    private void saveRequestCode(int requestCode){
+        SharedPreferences sharedPreferences = getSharedPreferences("com.cs407.wakeguard",
+                Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putInt("nextRequestCode", requestCodeCreator);
+        editor.apply();
     }
 
     /**
@@ -358,7 +369,7 @@ public class DashboardActivity extends AppCompatActivity {
 
         if (alarmToCancel != null && alarmToCancel.getRepeatingDays().equals("")){ // Canceling a non-repeating alarm
             // Cancelling non-repeating alarm
-            int nonRepeatingAlarmRequestCode = generateRequestCode(alarmId, -1, -1);
+            int nonRepeatingAlarmRequestCode = generateRequestCode();
             PendingIntent nonRepeatingIntent = PendingIntent.getBroadcast(this,
                     nonRepeatingAlarmRequestCode, intent, PendingIntent.FLAG_IMMUTABLE);
             alarmManager.cancel(nonRepeatingIntent);
@@ -366,7 +377,7 @@ public class DashboardActivity extends AppCompatActivity {
             // Canceling the alarm if it's a repeated one
             for (int dayOfWeek = Calendar.SUNDAY; dayOfWeek <= Calendar.SATURDAY; dayOfWeek++){
                 for (int weekOffset = 0; weekOffset < WEEKS_TO_SCHEDULE_AHEAD; weekOffset++){
-                    int requestCode = generateRequestCode(alarmId, dayOfWeek, weekOffset);
+                    int requestCode = generateRequestCode();
                     PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this,
                             requestCode, intent, PendingIntent.FLAG_IMMUTABLE);
                     alarmManager.cancel(alarmPendingIntent);

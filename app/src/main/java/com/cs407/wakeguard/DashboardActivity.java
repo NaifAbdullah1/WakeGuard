@@ -24,14 +24,6 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.AppCompatImageButton;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.recyclerview.widget.DefaultItemAnimator;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import com.arbelkilani.clock.Clock;
 import com.arbelkilani.clock.enumeration.ClockType;
 
@@ -54,7 +46,7 @@ import java.util.concurrent.TimeUnit;
  *  the 24 Hr format depending on the settings. We're waiting on team members to finish
  *  implementing the settings screen
  *
- *  TODO 5: Alarm doesn't get triggered when it's a repeating one
+ *  TODO 5: That's it, we're doing the single scheduling for repeating alarms.  Alarm doesn't get triggered when it's a repeating one
  *
  *  
  *  TODO 4: In alarmAlertActivity, make sure PM/AM is working. Account for 24hr time too.
@@ -63,6 +55,7 @@ import java.util.concurrent.TimeUnit;
  *
  *  TODO 3: In alarmAlertActivity, ensure that when wakeguard is disabled, space the elements out well
  *
+ * TODO: Ensure alarms work after phone reboot too
  *
  *  TODO 6: After dismissing a non-repeating alarm, the alarm should be set inactive. Use DB operation to make the change. Consider editing the setters in AlarmCard
  *
@@ -332,6 +325,8 @@ public class DashboardActivity extends AppCompatActivity {
             PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this, requestCode,
                     alarmReceiverIntent, PendingIntent.FLAG_IMMUTABLE);
 
+            Log.d("SETTING", "SCHEDULED ALARM NOW");
+            Log.d("ALARM-TIME", " " + alarmTime.getTimeInMillis());
             alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, alarmTime.getTimeInMillis(),
                     AlarmManager.INTERVAL_DAY * 7, alarmPendingIntent);
         }

@@ -48,6 +48,7 @@ import java.util.concurrent.TimeUnit;
  *
  *  TODO 5: When an alarm is deleted, it should be deactivated first, when it's deactivated, the pending intent should be canceled.
  *
+ *  TODO: When an alarm is switched off, it doesn't get canceled, it still rings .
  *  
  *  TODO 4: In alarmAlertActivity, make sure PM/AM is working. Account for 24hr time too.
  *
@@ -258,35 +259,36 @@ public class DashboardActivity extends AppCompatActivity {
      * are set to go off at the specified time.
      */
     public void rescheduleAllAlarms(){
-        // First, we cancel them all
         for (AlarmCard alarm: alarmList) {
             cancelAlarm(alarm.getId());
             scheduleAlarm(alarm);
         }
     }
 
-    private void scheduleAlarm(AlarmCard alarmCard){
+    public void scheduleAlarm(AlarmCard alarmCard){
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        // This intent is sent to AlarmReceiver.java with the alarm's ID as an extra
         Intent alarmReceiverIntent = new Intent(this, AlarmReceiver.class);
+        Log.d("ID ScheduleAlarm ", " " + alarmCard.getId());
         alarmReceiverIntent.putExtra("alarmId", alarmCard.getId());
-
-        Log.d("ALARM", "Attempting to schedule alarm");
+        alarmReceiverIntent.putExtra("IID", 69);
+        Log.d("PRE PRINT", alarmReceiverIntent.getIntExtra("alarmId", -1) + "");
 
         // Check if the alarm is repeating
         if (!alarmCard.getRepeatingDays().equals("")) {
             scheduleMultipleAlarm(alarmCard, alarmManager, alarmReceiverIntent);
+            Log.d("PRINTIGN MULTIPLE", alarmReceiverIntent.getIntExtra("alarmId", -1) + "");
+
         } else {
             long alarmTimeInEpoch = convertToTimestamp(alarmCard.getTime(), alarmCard.getRepeatingDays());
-            Log.d("########", "alarmTimeInEpoch " + alarmTimeInEpoch);
 
             Calendar alarmTime = Calendar.getInstance();
             alarmTime.setTimeInMillis(alarmTimeInEpoch);
 
-            Log.d("########", "alarmtimeNONrepeating: " + alarmTime.getTimeInMillis());
-
             // Generate a unique request code
-            int requestCode = generateRequestCode(alarmCard.getId(),0, 0);
+            int requestCode = generateRequestCode(alarmCard.getId(),-1, -1);
 
+            Log.d("PRINTIGN SING", alarmReceiverIntent.getIntExtra("alarmId", -1) + "");
             // Use the unique request code for the PendingIntent
             PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this, requestCode,
                     alarmReceiverIntent, PendingIntent.FLAG_IMMUTABLE);
@@ -297,6 +299,7 @@ public class DashboardActivity extends AppCompatActivity {
             if (alarmManager != null) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     if (alarmManager.canScheduleExactAlarms()) {
+                        Log.d("11", alarmReceiverIntent.getIntExtra("alarmId", -1) + "");
                         alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarmTime.getTimeInMillis(), alarmPendingIntent);
                     } else {
                         // Show a dialog or notification to inform the user they need to grant the permission
@@ -305,6 +308,7 @@ public class DashboardActivity extends AppCompatActivity {
                         startActivity(permissionIntent);
                     }
                 } else {
+                    Log.d("222", alarmReceiverIntent.getIntExtra("alarmId", -1) + "");
                     // For older versions, set the alarm without checking the permission
                     alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarmTime.getTimeInMillis(), alarmPendingIntent);
                 }
@@ -316,16 +320,9 @@ public class DashboardActivity extends AppCompatActivity {
                                         Intent alarmReceiverIntent) {
         String[] days = alarmCard.getRepeatingDays().split(","); // Assuming this returns days like "Mo,Tu,We"
 
-        Log.d("#########", "Scheduling a repeating alarm");
-        for(String day: days){
-            Log.d("#############", "days: "+ day);
-        }
-
         for (String day : days) {
             int dayOfWeek = convertDayStringToCalendarDay(day);
             Calendar nextAlarmTime = getNextAlarmTime(alarmCard.getTime(), dayOfWeek);
-            Log.d("#############", "Day of week: "+ dayOfWeek);
-            Log.d("#############", "alarmTime: "+ nextAlarmTime.getTimeInMillis());
 
             for (int weekOffset = 0; weekOffset < WEEKS_TO_SCHEDULE_AHEAD; weekOffset++){
                 Calendar alarmTime = (Calendar) nextAlarmTime.clone();
@@ -334,30 +331,46 @@ public class DashboardActivity extends AppCompatActivity {
                 int requestCode = generateRequestCode(alarmCard.getId(), dayOfWeek, weekOffset);
                 PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this, requestCode,
                         alarmReceiverIntent, PendingIntent.FLAG_IMMUTABLE);
+                Log.d("PRINTIGN 232", alarmReceiverIntent.getIntExtra("alarmId", -1) + "");
+
 
                 alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
                         alarmTime.getTimeInMillis(), alarmPendingIntent);
             }
         }
     }
-
     private int generateRequestCode(int alarmId, int dayOfWeek, int weekOffset){
-        return alarmId * 1000 + dayOfWeek * 100 + weekOffset; // Ensure uniqueness
+        if (dayOfWeek == -1 && weekOffset == -1) // for handling non-repeating alarms since they don't need those two values.
+            return alarmId;
+        else
+            return alarmId * 1000 + dayOfWeek * 100 + weekOffset; // Ensure uniqueness
     }
 
     /**
      * Cancels an alarm such that it won't go off anymore.
      * @param alarmId
      */
-    private void cancelAlarm(int alarmId){
+    public void cancelAlarm(int alarmId){
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent (this, AlarmReceiver.class);
-        for (int dayOfWeek = Calendar.SUNDAY; dayOfWeek <= Calendar.SATURDAY; dayOfWeek++){
-            for (int weekOffset = 0; weekOffset < WEEKS_TO_SCHEDULE_AHEAD; weekOffset++){
-                int requestCode = generateRequestCode(alarmId, dayOfWeek, weekOffset);
-                PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this,
-                        requestCode, intent, PendingIntent.FLAG_IMMUTABLE);
-                alarmManager.cancel(alarmPendingIntent);
+
+        AlarmCard alarmToCancel = dbHelper.getAlarmById(alarmId);
+
+        if (alarmToCancel != null && alarmToCancel.getRepeatingDays().equals("")){ // Canceling a non-repeating alarm
+            // Cancelling non-repeating alarm
+            int nonRepeatingAlarmRequestCode = generateRequestCode(alarmId, -1, -1);
+            PendingIntent nonRepeatingIntent = PendingIntent.getBroadcast(this,
+                    nonRepeatingAlarmRequestCode, intent, PendingIntent.FLAG_IMMUTABLE);
+            alarmManager.cancel(nonRepeatingIntent);
+        }else { // Canceling a repeating alarm
+            // Canceling the alarm if it's a repeated one
+            for (int dayOfWeek = Calendar.SUNDAY; dayOfWeek <= Calendar.SATURDAY; dayOfWeek++){
+                for (int weekOffset = 0; weekOffset < WEEKS_TO_SCHEDULE_AHEAD; weekOffset++){
+                    int requestCode = generateRequestCode(alarmId, dayOfWeek, weekOffset);
+                    PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this,
+                            requestCode, intent, PendingIntent.FLAG_IMMUTABLE);
+                    alarmManager.cancel(alarmPendingIntent);
+                }
             }
         }
     }
@@ -666,6 +679,9 @@ public class DashboardActivity extends AppCompatActivity {
         while (alaramIterator.hasNext()){
             AlarmCard alarmToDelete = alaramIterator.next();
             if (alarmToDelete.isSelected()){
+                // We must un-schedule the alarm so it doesn't ring even after it's been removed
+                cancelAlarm(alarmToDelete.getId());
+
                 // Deleting the row from the recycler view
                 alaramIterator.remove();
                 numOfDeletedAlarms++;
@@ -700,6 +716,7 @@ public class DashboardActivity extends AppCompatActivity {
         while (alaramIterator.hasNext()){
             AlarmCard currentAlarm = alaramIterator.next();
             currentAlarm.setActive(false);
+            dbHelper.toggleAlarm(currentAlarm.getId(), false);
         }
         adapter.notifyDataSetChanged();
     }

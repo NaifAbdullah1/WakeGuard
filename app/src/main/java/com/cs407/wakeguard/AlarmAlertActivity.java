@@ -18,9 +18,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
     private TextView wakeGuardStatus;
     private TextView alarmTitleNoWakeGuard;
     private TextView alarmTitleWithWakeGuard;
-
     private AlarmCard triggeredAlarm;
-
     private DBHelper dbHelper;
 
     @Override
@@ -38,13 +36,8 @@ public class AlarmAlertActivity extends AppCompatActivity {
         wakeGuardLogo = findViewById(R.id.wakeGuardLogo);
         wakeGuardLogo.setClipToOutline(true);
 
-        // TODO: Update component info to match active alarm. Listed below are the components ids from activity _alarm_alert.xml that need live updating
-        // TimeText: set to time alarm scheduled to go off
-        // WakeGuardStatus: set to if WakeGuard is enabled or not on current alarm
-        // AlarmTitle: the title given to the current alarm by the user
-
         int alarmId = getIntent().getIntExtra("alarmId", -1);
-        Log.d("ALARM ID", ""+alarmId);
+        Log.d("ID alert", "" + alarmId);
         if (alarmId != -1){ // Making sure alarmId is valid before fetching from DB
             loadAlarmDetails(alarmId);
         }
@@ -52,7 +45,10 @@ public class AlarmAlertActivity extends AppCompatActivity {
     }
 
     public void loadAlarmDetails(int alarmId){
+        Log.d("alarm id", "" + alarmId);
         triggeredAlarm = dbHelper.getAlarmById(alarmId);
+        Log.d("retttt", "wew");
+        Log.d("Ret alarm", triggeredAlarm.toString());//////////////
         timeText.setText(triggeredAlarm.getFormattedTime());
         alarmTitleWithWakeGuard.setText(triggeredAlarm.getTitle());
         alarmTitleNoWakeGuard.setText(triggeredAlarm.getTitle());
@@ -79,13 +75,13 @@ public class AlarmAlertActivity extends AppCompatActivity {
      */
     public void onStopClick(View view) {
         /*If the alarm is non-repeating, then toggle it off. Otherwise, just return to the dashboard. */
-        if (triggeredAlarm != null){
+        Log.d("trigg alarm", "" + triggeredAlarm.toString());
             boolean isAlarmRepeating = !triggeredAlarm.getRepeatingDays().equals("");
             if (!isAlarmRepeating){
                 triggeredAlarm.setActive(false);
                 dbHelper.toggleAlarm(triggeredAlarm.getId(), triggeredAlarm.isActive());
             }
-        }
+
         finish();
     }
 

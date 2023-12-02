@@ -14,8 +14,10 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -39,6 +41,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 
@@ -51,13 +54,15 @@ import java.util.concurrent.TimeUnit;
  *  the 24 Hr format depending on the settings. We're waiting on team members to finish
  *  implementing the settings screen
  *
+ *  TODO 5: Alarm doesn't get triggered when it's a repeating one
+ *
+ *  
+ *  TODO 4: In alarmAlertActivity, make sure PM/AM is working. Account for 24hr time too.
+ *
  *  TODO 2: Find a way to make the countdown update every second.
  *
  *  TODO 3: In alarmAlertActivity, ensure that when wakeguard is disabled, space the elements out well
  *
- *  TODO 4: In alarmAlertActivity, make sure PM/AM is working. Account for 24hr time too.
- *
- *  TODO 5: Alarm doesn't get triggered when it's a repeating one
  *
  *  TODO 6: After dismissing a non-repeating alarm, the alarm should be set inactive. Use DB operation to make the change. Consider editing the setters in AlarmCard
  *
@@ -267,23 +272,44 @@ public class DashboardActivity extends AppCompatActivity {
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         Intent alarmReceiverIntent = new Intent(this, AlarmReceiver.class);
         alarmReceiverIntent.putExtra("alarmId", alarmCard.getId());
-
+        Log.d("ALARM", "Attempting to schedule alarm");
         // Check if the alarm is repeating
         if (!alarmCard.getRepeatingDays().equals("")) {
             scheduleRepeatingAlarm(alarmCard, alarmManager, alarmReceiverIntent);
         } else {
             long alarmTimeInEpoch = convertToTimestamp(alarmCard.getTime(), alarmCard.getRepeatingDays());
+            Log.d("########", "alarmTimeInEpoch " + alarmTimeInEpoch);
+
             Calendar alarmTime = Calendar.getInstance();
             alarmTime.setTimeInMillis(alarmTimeInEpoch);
+
+            Log.d("########", "alarmtimeNONrepeating: " + alarmTime.getTimeInMillis());
 
             // Generate a unique request code
             int requestCode = generateRequestCode(alarmCard.getId(), alarmTime);
 
             // Use the unique request code for the PendingIntent
-            PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this, requestCode, alarmReceiverIntent, PendingIntent.FLAG_IMMUTABLE);
+            PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this, requestCode,
+                    alarmReceiverIntent, PendingIntent.FLAG_IMMUTABLE);
 
             // Set a single alarm
-            alarmManager.set(AlarmManager.RTC_WAKEUP, alarmTime.getTimeInMillis(), alarmPendingIntent);
+            // Set a single, exact alarm
+
+            if (alarmManager != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    if (alarmManager.canScheduleExactAlarms()) {
+                        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarmTime.getTimeInMillis(), alarmPendingIntent);
+                    } else {
+                        // Show a dialog or notification to inform the user they need to grant the permission
+                        // Redirect to the system settings for your app
+                        Intent permissionIntent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+                        startActivity(permissionIntent);
+                    }
+                } else {
+                    // For older versions, set the alarm without checking the permission
+                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarmTime.getTimeInMillis(), alarmPendingIntent);
+                }
+            }
         }
     }
 
@@ -291,9 +317,16 @@ public class DashboardActivity extends AppCompatActivity {
                                         Intent alarmReceiverIntent) {
         String[] days = alarmCard.getRepeatingDays().split(","); // Assuming this returns days like "Mo,Tu,We"
 
+        Log.d("#########", "Scheduling a repeating alarm");
+        for(String day: days){
+            Log.d("#############", "days: "+ day);
+        }
+
         for (String day : days) {
             int dayOfWeek = convertDayStringToCalendarDay(day);
             Calendar alarmTime = getNextAlarmTime(alarmCard.getTime(), dayOfWeek);
+            Log.d("#############", "Day of week: "+ dayOfWeek);
+            Log.d("#############", "alarmTime: "+ alarmTime.getTimeInMillis());
 
             int requestCode = generateRequestCode(alarmCard.getId(), alarmTime);
             PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this, requestCode,
@@ -306,7 +339,8 @@ public class DashboardActivity extends AppCompatActivity {
 
     private int generateRequestCode(int alarmId, Calendar alarmTime){
         int dayOfWeek = alarmTime.get(Calendar.DAY_OF_WEEK);
-        return alarmId * 10 + dayOfWeek; //Adjust multiplier as needed to ensure uniqueness.
+        Log.d("time ", "req ode: " + (1 + new Random().nextInt(100)));
+        return (1 + new Random().nextInt(100)); //Adjust multiplier as needed to ensure uniqueness.
     }
 
     /**

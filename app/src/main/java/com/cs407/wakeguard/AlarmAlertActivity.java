@@ -53,7 +53,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
 
     public void loadAlarmDetails(int alarmId){
         triggeredAlarm = dbHelper.getAlarmById(alarmId);
-        timeText.setText(triggeredAlarm.getTime());
+        timeText.setText(triggeredAlarm.getFormattedTime());
         alarmTitleWithWakeGuard.setText(triggeredAlarm.getTitle());
         alarmTitleNoWakeGuard.setText(triggeredAlarm.getTitle());
         if (triggeredAlarm.isMotionMonitoringOn()){
@@ -82,8 +82,23 @@ public class AlarmAlertActivity extends AppCompatActivity {
         boolean isAlarmRepeating = !triggeredAlarm.getRepeatingDays().equals("");
         if (!isAlarmRepeating){
           triggeredAlarm.setActive(false);
+          dbHelper.toggleAlarm(triggeredAlarm.getId(), triggeredAlarm.isActive());
         }
-
         finish();
+    }
+
+    /**
+     * Intended to prevent the instantiation of duplicate AlarmAlertActivity
+     * @param intent The new intent that was started for the activity.
+     *
+     */
+    @Override
+    protected void onNewIntent(Intent intent){
+        super.onNewIntent(intent);
+        setIntent(intent);
+        int alarmId = intent.getIntExtra("alarmId", -1);
+        if (alarmId != -1){
+            loadAlarmDetails(alarmId);
+        }
     }
 }

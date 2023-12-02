@@ -48,10 +48,10 @@ public class AlarmService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId){
         // Create Notification, it's required by Android to notify user of background services.
-        Notification alarmNotificaiton = createNotification();
-
+        Notification alarmNotification = createNotification();
+        Log.d("DEBUG", "RINGING");
         // Start service in the foreground
-        startForeground(NOTIFICATION_ID, alarmNotificaiton);
+        startForeground(NOTIFICATION_ID, alarmNotification);
 
         // Example vibration pattern: Vibrate for 500 milliseconds, pause for 1000 milliseconds, then repeat.
         long[] pattern = {0, 500, 1000};

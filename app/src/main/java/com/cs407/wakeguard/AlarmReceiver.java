@@ -22,7 +22,7 @@ public class AlarmReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent){
         // Starting the AlarmAlertActivityIntent to bring up the alarm alert screen. TODO: Implement the AlarmAlertActivity screen
         Intent alarmAlertActivityIntent = new Intent(context, AlarmAlertActivity.class);
-        alarmAlertActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        alarmAlertActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         int alarmId = intent.getIntExtra("alarmId", -1);
         alarmAlertActivityIntent.putExtra("alarmId", alarmId); // Passing alarm Id to AlarmAlertActivity
         context.startActivity(alarmAlertActivityIntent);

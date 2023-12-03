@@ -135,6 +135,10 @@ public class DashboardActivity extends AppCompatActivity {
         // Must initialize DB everywhere were we do CRUD operations
         dbHelper = DBHelper.getInstance(this);
 
+        //dbHelper.deleteAllAlarms();
+        //dbHelper.deleteAllRequestCodes();
+        //requestCodeCreator = 1;
+
         // ############### VARIABLE INITIALIZATION GOES HERE #########################
         ConstraintLayout parentLayout = findViewById(R.id.parentLayout);
         upcomingAlarmsTextView = findViewById(R.id.upcomingAlarmsTextView);
@@ -168,7 +172,8 @@ public class DashboardActivity extends AppCompatActivity {
         parentLayout.setOnTouchListener(new View.OnTouchListener(){
             @Override
             public boolean onTouch(View v, MotionEvent event){
-                //dbHelper.printAllAlarms();
+                dbHelper.printAllRequestCodes();
+                dbHelper.printAllAlarms();
                 if(isSelectionModeActive()){
                     exitSelectionMode();
                     return true; // consuming the touch event
@@ -260,9 +265,15 @@ public class DashboardActivity extends AppCompatActivity {
      * are set to go off at the specified time.
      */
     public void rescheduleAllAlarms(){
+        dbHelper.deleteAllRequestCodes();
         for (AlarmCard alarm: alarmList) {
-            cancelAlarm(alarm.getId());
+            /*We schedule and then cancel all alarm to refresh the list of request codes. There
+            * could've been a better way. But I'm exhausted!!*/
             scheduleAlarm(alarm);
+            cancelAlarm(alarm.getId());
+
+            if (alarm.isActive())
+                scheduleAlarm(alarm); // Getting a fresh copy
         }
     }
 
@@ -283,7 +294,8 @@ public class DashboardActivity extends AppCompatActivity {
 
             // Generate a unique request code
             int requestCode = generateRequestCode();
-            Log.d("nonRepeatingReq Code", "" + requestCode);
+            System.out.println("SAVING REQUEST CODE SINGLE ALARM");
+            dbHelper.addRequestCode(alarmCard.getTitle()+alarmCard.getTime()+alarmCard.getFormattedTime(), requestCode, "");
 
             // Use the unique request code for the PendingIntent
             PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this, requestCode,
@@ -324,7 +336,8 @@ public class DashboardActivity extends AppCompatActivity {
                 alarmTime.add(Calendar.WEEK_OF_YEAR, weekOffset);
 
                 int requestCode = generateRequestCode();
-                Log.d("RepeatingReq Code", "" + requestCode);
+                dbHelper.addRequestCode(alarmCard.getTitle()+alarmCard.getTime()+alarmCard.getFormattedTime(), requestCode, day);
+
                 PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this, requestCode,
                         alarmReceiverIntent, PendingIntent.FLAG_IMMUTABLE);
 
@@ -333,7 +346,6 @@ public class DashboardActivity extends AppCompatActivity {
             }
         }
     }
-
 
     private synchronized int generateRequestCode(){
         int reqCode = requestCodeCreator++;
@@ -366,21 +378,33 @@ public class DashboardActivity extends AppCompatActivity {
         Intent intent = new Intent (this, AlarmReceiver.class);
 
         AlarmCard alarmToCancel = dbHelper.getAlarmById(alarmId);
-
         if (alarmToCancel != null && alarmToCancel.getRepeatingDays().equals("")){ // Canceling a non-repeating alarm
             // Cancelling non-repeating alarm
-            int nonRepeatingAlarmRequestCode = generateRequestCode();
+            String alarmIdentifier = alarmToCancel.getTitle()+alarmToCancel.getTime()+alarmToCancel.getFormattedTime();
+            int nonRepeatingAlarmRequestCode = dbHelper.getRequestCode(alarmIdentifier);
+            // Deleting the request code from the DB
+            dbHelper.deleteRequestCode(alarmIdentifier);
             PendingIntent nonRepeatingIntent = PendingIntent.getBroadcast(this,
                     nonRepeatingAlarmRequestCode, intent, PendingIntent.FLAG_IMMUTABLE);
             alarmManager.cancel(nonRepeatingIntent);
         }else { // Canceling a repeating alarm
-            // Canceling the alarm if it's a repeated one
-            for (int dayOfWeek = Calendar.SUNDAY; dayOfWeek <= Calendar.SATURDAY; dayOfWeek++){
-                for (int weekOffset = 0; weekOffset < WEEKS_TO_SCHEDULE_AHEAD; weekOffset++){
-                    int requestCode = generateRequestCode();
-                    PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this,
-                            requestCode, intent, PendingIntent.FLAG_IMMUTABLE);
-                    alarmManager.cancel(alarmPendingIntent);
+            if (alarmToCancel == null){ // Unexpected error
+                System.out.println("ERROR: ALARM NOT FOUND");
+            }else{ // No errors encountered, deleting all instances of the repeating alarm.
+                // Canceling the alarm if it's a repeated one
+                for (int dayOfWeek = Calendar.SUNDAY; dayOfWeek <= Calendar.SATURDAY; dayOfWeek++){
+                    for (int weekOffset = 0; weekOffset < WEEKS_TO_SCHEDULE_AHEAD; weekOffset++){
+                        String alarmIdentifier = alarmToCancel.getTitle()+alarmToCancel.getTime()+alarmToCancel.getFormattedTime()+getDayString(dayOfWeek);
+                        Object requestCode = dbHelper.getRequestCode(alarmIdentifier);
+                        if (requestCode == null)
+                            continue;
+                        else{
+                            dbHelper.deleteRequestCode(alarmIdentifier);
+                            PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this,
+                                    (int)requestCode, intent, PendingIntent.FLAG_IMMUTABLE);
+                            alarmManager.cancel(alarmPendingIntent);
+                        }
+                    }
                 }
             }
         }
@@ -691,6 +715,8 @@ public class DashboardActivity extends AppCompatActivity {
             AlarmCard alarmToDelete = alaramIterator.next();
             if (alarmToDelete.isSelected()){
                 // We must un-schedule the alarm so it doesn't ring even after it's been removed
+                alarmToDelete.setActive(false);
+                dbHelper.toggleAlarm(alarmToDelete.getId(), alarmToDelete.isActive());
                 cancelAlarm(alarmToDelete.getId());
 
                 // Deleting the row from the recycler view

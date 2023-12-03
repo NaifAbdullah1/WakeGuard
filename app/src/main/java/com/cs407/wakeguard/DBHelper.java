@@ -16,7 +16,7 @@ import java.util.List;
 public class DBHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "alarms.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     private static DBHelper instance;
 
@@ -56,12 +56,19 @@ public class DBHelper extends SQLiteOpenHelper {
                 "isMotionMonitoringOn INTEGER, " +
                 "isActive INTEGER)";
         db.execSQL(CREATE_ALARMS_TABLE);
+
+        String CREATE_REQUEST_CODES_TABLE = "CREATE TABLE IF NOT EXISTS requestCodes " +
+                "(id INTEGER PRIMARY KEY, " +
+                "alarmIdentifier TEXT, " +
+                "requestCode INTEGER)";
+        db.execSQL(CREATE_REQUEST_CODES_TABLE);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // Since we're not planning on upgrading the database, you can keep this simple.
-        // However, it's good practice to handle the upgrade scenario.
+        db.execSQL("DROP TABLE IF EXISTS alarms");
+        db.execSQL("DROP TABLE IF EXISTS requestCodes");
+        onCreate(db);
     }
 
     /**
@@ -82,8 +89,59 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put("isActive", alarmCard.isActive() ? 1 : 0);
 
         db.insert("alarms", null, values);
+
+        // Add request code now
+
+
         db.close();
     }
+
+    // Old
+    /*
+    public void addRequestCode(String alarmIdentifier, int requestCode, String day){
+        SQLiteDatabase db = this.getWritableDatabase();
+        System.out.println("IN DB, PREPPING TO INSERT REQ CODE");
+        ContentValues values = new ContentValues();
+
+        if (day.equals(""))
+            values.put("alarmIdentifier", alarmIdentifier);
+        else
+            values.put("alarmIdentifier", alarmIdentifier+day);
+
+        values.put("requestCode", requestCode);
+
+        db.insert("requestCodes", null, values);
+        db.close();
+    }
+
+    */
+
+    public void addRequestCode(String alarmIdentifier, int requestCode, String day){
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = null;
+        try {
+            // Construct the alarm identifier based on day
+            String identifier = day.equals("") ? alarmIdentifier : alarmIdentifier + day;
+
+            // Check if the alarm identifier already exists
+            cursor = db.query("requestCodes", new String[]{"requestCode"}, "alarmIdentifier=?",
+                    new String[]{identifier}, null, null, null);
+
+            // If cursor is empty, add the requestCode
+            if (cursor == null || !cursor.moveToFirst()) {
+                ContentValues values = new ContentValues();
+                values.put("alarmIdentifier", identifier);
+                values.put("requestCode", requestCode);
+                db.insert("requestCodes", null, values);
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+    }
+
 
     /**
      * Deletes a single alarm from the DB given its ID.
@@ -108,6 +166,27 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     /**
+     * Deletes all alarms from the database.
+     */
+    public void deleteAllAlarms() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete("alarms", null, null);
+        db.close();
+    }
+
+    public void deleteAllRequestCodes() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete("requestCodes", null, null);
+        db.close();
+    }
+
+    public void deleteRequestCode(String alarmIdentifier) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete("requestCodes", "alarmIdentifier=?", new String[]{alarmIdentifier});
+        db.close();
+    }
+
+    /**
      * When tapping on an alarm to edit it, this function runs when you click the check mark button
      * @param alarmToUpdate
      */
@@ -120,15 +199,24 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put("title", alarmToUpdate.getTitle());
         values.put("alarmToneName", alarmToUpdate.getAlarmTone());
         values.put("isVibrationOn", alarmToUpdate.isVibrationOn() ? 1 : 0);
-
         values.put("isMotionMonitoringOn", alarmToUpdate.isMotionMonitoringOn() ? 1 : 0);
         values.put("isActive", alarmToUpdate.isActive() ? 1 : 0);
 
         String whereClause = "id=?";
-
         String []  whereArgs = new String[]{String.valueOf(alarmToUpdate.getId())};
 
         db.update("alarms", values, whereClause, whereArgs);
+
+
+        db.close();
+    }
+
+    public void updateRequestCode(String alarmIdentifier, int newRequestCode) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("requestCode", newRequestCode);
+
+        db.update("requestCodes", values, "alarmIdentifier=?", new String[]{alarmIdentifier});
         db.close();
     }
 
@@ -252,6 +340,27 @@ public class DBHelper extends SQLiteOpenHelper {
         return null;
     }
 
+    public Integer getRequestCode(String alarmIdentifier){
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.query("requestCodes", new String[]{"requestCode"},
+                "alarmIdentifier=?", new String[]{alarmIdentifier}, null,
+                null, null);
+
+        if (cursor != null && cursor.moveToFirst()) {
+            int requestCodeColumnIndex = cursor.getColumnIndex("requestCode");
+            if (requestCodeColumnIndex != -1){
+                int requestCode = cursor.getInt(requestCodeColumnIndex);
+                cursor.close();
+                return requestCode;
+            }
+        }
+        if (cursor != null) {
+            cursor.close();
+        }
+        return null; // or a default value
+
+    }
+
     /**
      * For debugging purposes.
      * Neatly logs all the alarms (and their details) currently stored in the DB
@@ -298,5 +407,36 @@ public class DBHelper extends SQLiteOpenHelper {
         cursor.close();
         db.close();
     }
+
+    public void printAllRequestCodes() {
+        System.out.println("REQ CODES DUMP:----------------------------------------------------------------------");
+        SQLiteDatabase db = this.getReadableDatabase();
+        String selectQuery = "SELECT * FROM requestCodes";
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        if (cursor.moveToFirst()) {
+            int idIndex = cursor.getColumnIndex("id");
+            int alarmIdentifierIndex = cursor.getColumnIndex("alarmIdentifier");
+            int requestCodeIndex = cursor.getColumnIndex("requestCode");
+
+            if (idIndex != -1 && alarmIdentifierIndex != -1 && requestCodeIndex != -1) {
+                do {
+                    String requestCodeData = String.format("ID: %d, Alarm Identifier: %s, Request Code: %d",
+                            cursor.getInt(idIndex),
+                            cursor.getString(alarmIdentifierIndex),
+                            cursor.getInt(requestCodeIndex));
+
+                    Log.i("DBHelper", requestCodeData);
+                } while (cursor.moveToNext());
+            } else {
+                Log.i("DBHelper", "ERROR: COLUMN WASN'T FOUND");
+            }
+        } else {
+            Log.i("DBHelper", "No request codes found in the database.");
+        }
+        cursor.close();
+        db.close();
+    }
+
 
 }

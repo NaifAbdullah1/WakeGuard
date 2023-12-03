@@ -112,6 +112,7 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
                                 ((DashboardActivity) context).cancelAlarm(alarm.getId());
                         }
                     }
+                    ((DashboardActivity) context).rescheduleAllAlarms();
                 }
             });
 

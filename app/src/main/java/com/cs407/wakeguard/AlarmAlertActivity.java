@@ -45,10 +45,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
     }
 
     public void loadAlarmDetails(int alarmId){
-        Log.d("alarm id", "" + alarmId);
         triggeredAlarm = dbHelper.getAlarmById(alarmId);
-        Log.d("retttt", "wew");
-        Log.d("Ret alarm", triggeredAlarm.toString());//////////////
         timeText.setText(triggeredAlarm.getFormattedTime());
         alarmTitleWithWakeGuard.setText(triggeredAlarm.getTitle());
         alarmTitleNoWakeGuard.setText(triggeredAlarm.getTitle());
@@ -78,7 +75,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
             boolean isAlarmRepeating = !triggeredAlarm.getRepeatingDays().equals("");
             if (!isAlarmRepeating){
                 triggeredAlarm.setActive(false);
-                dbHelper.toggleAlarm(triggeredAlarm.getId(), triggeredAlarm.isActive());
+                //dbHelper.toggleAlarm(triggeredAlarm.getId(), false);
             }
 
         finish();

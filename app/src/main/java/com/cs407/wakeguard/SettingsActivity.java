@@ -71,7 +71,7 @@ public class SettingsActivity extends AppCompatActivity {
         activity_duration.setOnValueChangedListener(new NumberPicker.OnValueChangeListener() {
             @Override
             public void onValueChange(NumberPicker picker, int oldVal, int newVal) {
-                Log.i("num changed", "" + newVal);
+                activityMonitoringDuration = newVal;
             }
         });
         reset.setOnClickListener(new View.OnClickListener() {

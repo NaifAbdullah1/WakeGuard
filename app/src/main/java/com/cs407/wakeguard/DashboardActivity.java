@@ -1,28 +1,15 @@
 package com.cs407.wakeguard;
 
 import android.content.Context;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.AppCompatImageButton;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.recyclerview.widget.DefaultItemAnimator;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -32,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.arbelkilani.clock.Clock;
 import com.arbelkilani.clock.enumeration.ClockType;
+import com.arbelkilani.clock.enumeration.numeric.NumericFormat;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -145,6 +133,11 @@ public class DashboardActivity extends AppCompatActivity {
         isMilitaryTimeFormat = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("isMilitaryTimeFormat", false);
         activityThresholdMonitoringLevel = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getInt("activityThresholdMonitoringLevel", 1);
         activityMonitoringDuration = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getInt("activityMonitoringDuration", 0);
+        if (isMilitaryTimeFormat) {
+            dashboardClock.setNumericFormat(NumericFormat.hour_24);
+        } else {
+            dashboardClock.setNumericFormat(NumericFormat.hour_12);
+        }
         //_______________________________________________________________________________________
 
 

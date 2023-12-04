@@ -100,10 +100,9 @@
         android:id="@+id/militaryTimeButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginBottom="30dp"
+        android:layout_marginBottom="32dp"
         app:layout_constraintBottom_toTopOf="@+id/activityMonitorMenu"
-        app:layout_constraintStart_toStartOf="@+id/activityMonitorMenu" />
+        app:layout_constraintStart_toStartOf="@+id/doNotDisturbButton" />
 
     <Spinner
         android:id="@+id/activityMonitorMenu"
@@ -172,14 +171,15 @@
 
     <NumberPicker
         android:id="@+id/minuteNumberPicker"
-        android:layout_width="0dp"
-        android:layout_height="258dp"
+        android:layout_width="48dp"
+        android:layout_height="126dp"
         android:layout_marginTop="271dp"
         android:layout_marginBottom="272dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/minutes"
         app:layout_constraintStart_toEndOf="@+id/activityDuration"
-        app:layout_constraintTop_toBottomOf="@+id/titleSettings" />
+        app:layout_constraintTop_toBottomOf="@+id/titleSettings"
+        app:layout_constraintVertical_bias="0.0" />
 
     <TextView
         android:id="@+id/defaultSettings"

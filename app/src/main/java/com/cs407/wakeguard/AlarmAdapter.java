@@ -106,13 +106,10 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
                         // Notifying the DashboardActivity to update the upcoming alarms text
                         if (context instanceof DashboardActivity){
                             ((DashboardActivity) context).updateUpcomingAlarmText();
-                            if (isChecked)
-                                ((DashboardActivity) context).scheduleAlarm(alarm);
-                            else
-                                ((DashboardActivity) context).cancelAlarm(alarm.getId());
+                            ((DashboardActivity) context).rescheduleAllAlarms();
                         }
                     }
-                    ((DashboardActivity) context).rescheduleAllAlarms();
+
                 }
             });
 

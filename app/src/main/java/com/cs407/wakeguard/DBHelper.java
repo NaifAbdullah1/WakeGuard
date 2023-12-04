@@ -357,7 +357,7 @@ public class DBHelper extends SQLiteOpenHelper {
         if (cursor != null) {
             cursor.close();
         }
-        return null; // or a default value
+        return -1; // or a default value
 
     }
 
@@ -438,5 +438,51 @@ public class DBHelper extends SQLiteOpenHelper {
         db.close();
     }
 
+    public int[] getAllRequestCodes() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        String selectQuery = "SELECT requestCode FROM requestCodes";
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        ArrayList<Integer> requestCodeList = new ArrayList<>();
+
+        if (cursor.moveToFirst()) {
+            int requestCodeIndex = cursor.getColumnIndex("requestCode");
+
+            if (requestCodeIndex != -1) {
+                do {
+                    // Fetching the requestCode from the cursor as an integer
+                    int requestCode = cursor.getInt(requestCodeIndex);
+                    requestCodeList.add(requestCode);
+                } while (cursor.moveToNext()); // Move to the next row
+            }
+        }
+
+        cursor.close(); // Close the cursor
+        db.close(); // Close the database
+
+        // Convert the ArrayList<Integer> to an int array
+        int[] requestCodesArray = new int[requestCodeList.size()];
+        for (int i = 0; i < requestCodeList.size(); i++) {
+            requestCodesArray[i] = requestCodeList.get(i);
+        }
+
+        return requestCodesArray;
+    }
+
+    public void deleteRequestCodeByRequestCode(int reqCode){
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        // Defining the query's WHERE clause (the row to delete)
+        String whereClause = "requestCode=?";
+
+        // Defining the WHERE arguments (values to bind to the WHERE clause, what goes in the spot of the ? mark)
+        String [] whereArgs = new String[]{String.valueOf(reqCode)};
+
+        // Performing the DELETE operation
+        int deletedRows = db.delete("requestCodes", whereClause, whereArgs);
+
+        //Closing DB connection.
+        db.close();
+    }
 
 }

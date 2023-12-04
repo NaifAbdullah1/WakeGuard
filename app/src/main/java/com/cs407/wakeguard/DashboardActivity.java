@@ -172,8 +172,8 @@ public class DashboardActivity extends AppCompatActivity {
         parentLayout.setOnTouchListener(new View.OnTouchListener(){
             @Override
             public boolean onTouch(View v, MotionEvent event){
-                dbHelper.printAllRequestCodes();
-                dbHelper.printAllAlarms();
+                dbHelper.printAllRequestCodes(); // For debugging
+                dbHelper.printAllAlarms(); // For debugging
                 if(isSelectionModeActive()){
                     exitSelectionMode();
                     return true; // consuming the touch event
@@ -265,16 +265,18 @@ public class DashboardActivity extends AppCompatActivity {
      * are set to go off at the specified time.
      */
     public void rescheduleAllAlarms(){
-        dbHelper.deleteAllRequestCodes();
-        for (AlarmCard alarm: alarmList) {
-            /*We schedule and then cancel all alarm to refresh the list of request codes. There
-            * could've been a better way. But I'm exhausted!!*/
-            scheduleAlarm(alarm);
-            cancelAlarm(alarm.getId());
-
-            if (alarm.isActive())
-                scheduleAlarm(alarm); // Getting a fresh copy
+        //dbHelper.deleteAllRequestCodes();
+        int [] reqs = dbHelper.getAllRequestCodes();
+        for (int req: reqs){
+            cancelAlarmByRequestCode(req);
+            dbHelper.deleteRequestCodeByRequestCode(req);
         }
+
+        for (AlarmCard alarm: alarmList) {
+            if (alarm.isActive())
+                scheduleAlarm(alarm);
+        }
+        dbHelper.printAllRequestCodes();
     }
 
     public void scheduleAlarm(AlarmCard alarmCard){
@@ -376,12 +378,15 @@ public class DashboardActivity extends AppCompatActivity {
     public void cancelAlarm(int alarmId){
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent (this, AlarmReceiver.class);
+        System.out.println("Cancelling: ------------------------");
 
         AlarmCard alarmToCancel = dbHelper.getAlarmById(alarmId);
         if (alarmToCancel != null && alarmToCancel.getRepeatingDays().equals("")){ // Canceling a non-repeating alarm
             // Cancelling non-repeating alarm
             String alarmIdentifier = alarmToCancel.getTitle()+alarmToCancel.getTime()+alarmToCancel.getFormattedTime();
+            System.out.println("GENERATED KEY: " + alarmIdentifier);
             int nonRepeatingAlarmRequestCode = dbHelper.getRequestCode(alarmIdentifier);
+            System.out.println("REQ CODE WE GOT: " + nonRepeatingAlarmRequestCode);
             // Deleting the request code from the DB
             dbHelper.deleteRequestCode(alarmIdentifier);
             PendingIntent nonRepeatingIntent = PendingIntent.getBroadcast(this,
@@ -408,6 +413,14 @@ public class DashboardActivity extends AppCompatActivity {
                 }
             }
         }
+    }
+
+    public void cancelAlarmByRequestCode(int reqCode){
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent (this, AlarmReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this,
+                reqCode, intent, PendingIntent.FLAG_IMMUTABLE);
+        alarmManager.cancel(pendingIntent);
     }
 
     private Calendar getNextAlarmTime(String time, int dayOfWeek) {
@@ -678,7 +691,17 @@ public class DashboardActivity extends AppCompatActivity {
         settingsButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
-                // TODO: Use intents to go to the settings screen.
+                SharedPreferences sharedPref = getSharedPreferences("com.cs407.wakeguard",
+                        Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPref.edit();
+                sharedPref.edit().putBoolean("isLowPowerMode", isLowPowerMode).apply();
+                sharedPref.edit().putBoolean("isDoNotDisturb", isDoNotDisturb).apply();
+                sharedPref.edit().putBoolean("isMilitaryTimeFormat", isMilitaryTimeFormat).apply();
+                sharedPref.edit().putInt("activityMonitoringDuration", activityMonitoringDuration).apply();
+                sharedPref.edit().putInt("activityThresholdMonitoringLevel", activityThresholdMonitoringLevel).apply();
+
+                Intent settingsIntent = new Intent(DashboardActivity.this, SettingsActivity.class);
+                startActivity(settingsIntent);
             }
         });
 
@@ -714,11 +737,8 @@ public class DashboardActivity extends AppCompatActivity {
         while (alaramIterator.hasNext()){
             AlarmCard alarmToDelete = alaramIterator.next();
             if (alarmToDelete.isSelected()){
-                // We must un-schedule the alarm so it doesn't ring even after it's been removed
                 alarmToDelete.setActive(false);
-                dbHelper.toggleAlarm(alarmToDelete.getId(), alarmToDelete.isActive());
-                cancelAlarm(alarmToDelete.getId());
-
+                dbHelper.toggleAlarm(alarmToDelete.getId(), false);
                 // Deleting the row from the recycler view
                 alaramIterator.remove();
                 numOfDeletedAlarms++;
@@ -731,6 +751,8 @@ public class DashboardActivity extends AppCompatActivity {
         /* Notifying the RecyclerView adapter of the change in the List
         of created alarms to refresh This updates the UI */
         adapter.notifyDataSetChanged();
+
+        rescheduleAllAlarms();
 
         // Displaying a toast message to let user know that deletion was successful.
         if (numOfDeletedAlarms == 1){
@@ -756,6 +778,7 @@ public class DashboardActivity extends AppCompatActivity {
             dbHelper.toggleAlarm(currentAlarm.getId(), false);
         }
         adapter.notifyDataSetChanged();
+        rescheduleAllAlarms();
     }
 
     /**

@@ -395,13 +395,16 @@ public class AlarmEditorActivity extends AppCompatActivity {
 
         //Making sure the user has entered an alarm title
         if (title == null || title.equals("")){
-            Toast.makeText(getApplicationContext(), "Please enter a title for the alarm", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "Please enter a title for the alarm",
+                    Toast.LENGTH_SHORT).show();
             return;
         }
 
         // Alarm title shouldn't be too long for the alarm card to display
-        if (title.length() > 35){
-            Toast.makeText(getApplicationContext(), "Alarm title shouldn't be longer than 30 characters", Toast.LENGTH_SHORT).show();
+        if (title.length() > 30){
+            Toast.makeText(getApplicationContext(),
+                    "Alarm title shouldn't be longer than 30 characters",
+                    Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -410,7 +413,7 @@ public class AlarmEditorActivity extends AppCompatActivity {
             if (alarmId != -1){
                 alarmCard.setId(alarmId);
                 dbHelper.updateAlarm(alarmCard);
-            }else{
+            }else{ // Error While editing the alarm
                 Toast.makeText(getApplicationContext(), "ERROR, an alarm with a -1 id detected",
                         Toast.LENGTH_SHORT).show();
             }
@@ -422,7 +425,6 @@ public class AlarmEditorActivity extends AppCompatActivity {
 
         // Switching back to the Dashboard Activity. onResume() will update alarm cards container
         finish();
-
     }
 
     public void discardChanges(View v) {

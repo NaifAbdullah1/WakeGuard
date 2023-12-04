@@ -8,7 +8,7 @@
     tools:context=".AlarmAlertActivity">
 
     <TextView
-        android:id="@+id/TimeText"
+        android:id="@+id/timeText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="7:30 AM"
@@ -18,16 +18,18 @@
         android:textAlignment="center" />
 
     <ImageView
-        android:id="@+id/WakeGuardLogo"
+        android:id="@+id/wakeGuardLogo"
         android:layout_width="125dp"
         android:layout_height="125dp"
         android:layout_gravity="center_vertical|center_horizontal"
         android:src="@mipmap/ic_launcher"
         android:contentDescription="WakeGuard Logo"
-        android:layout_marginTop="50dp"/>
+        android:background="@drawable/image_rounded_edge"
+        android:padding="2dp"
+        android:layout_marginTop="50dp" />
 
     <TextView
-        android:id="@+id/WakeGuardStatus"
+        android:id="@+id/wakeGuardStatus"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="WakeGuard Enabled"
@@ -37,7 +39,16 @@
         android:layout_marginTop="25dp"/>
 
     <TextView
-        android:id="@+id/AlarmTitle"
+        android:id="@+id/alarmTitleNoWakeGuard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Class"
+        android:textSize="35sp"
+        android:visibility="gone"
+        android:textAlignment="center"/>
+
+    <TextView
+        android:id="@+id/alarmTitleWithWakeGuard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Class"
@@ -46,7 +57,7 @@
         android:layout_marginTop="160dp" />
 
     <Button
-        android:id="@+id/StopAlarmButton"
+        android:id="@+id/stopAlarmButton"
         android:layout_width="100dp"
         android:layout_height="wrap_content"
         android:text="Stop"

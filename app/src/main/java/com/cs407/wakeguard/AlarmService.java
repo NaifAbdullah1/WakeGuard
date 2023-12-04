@@ -1,13 +1,19 @@
 package com.cs407.wakeguard;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 
 import android.util.Log;
+
+import androidx.core.app.NotificationCompat;
 
 
 /**
@@ -15,6 +21,9 @@ import android.util.Log;
  */
 public class AlarmService extends Service {
     private Vibrator vibrator;
+    private static final int NOTIFICATION_ID = 1;
+    private static final String CHANNEL_ID = "alarm_service_channel";
+
 
     @Override
     public void onCreate(){
@@ -38,7 +47,11 @@ public class AlarmService extends Service {
      */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId){
-        Log.d("AlarmService", "Service started - Vibrating");
+        // Create Notification, it's required by Android to notify user of background services.
+        Notification alarmNotification = createNotification();
+        Log.d("DEBUG", "RINGING");
+        // Start service in the foreground
+        startForeground(NOTIFICATION_ID, alarmNotification);
 
         // Example vibration pattern: Vibrate for 500 milliseconds, pause for 1000 milliseconds, then repeat.
         long[] pattern = {0, 500, 1000};
@@ -53,9 +66,26 @@ public class AlarmService extends Service {
         return START_NOT_STICKY;
     }
 
+    private Notification createNotification(){
+        // Creating a notification channel for Android O and newer
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+            String channelId = "alarm_service_channel";
+            String channelName = "Alarm Service Channel";
+            NotificationChannel channel = new NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_HIGH);
+            NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            manager.createNotificationChannel(channel);
+        }
+
+        // Build and return the notification
+        return new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("Alarm Active")
+                .setContentText("Your alarm is ringing.")
+                .setSmallIcon(R.mipmap.ic_launcher_round)
+                .build();
+    }
+
     @Override
     public void onDestroy() {
-        Log.d("AlarmService", "Service destroyed - Vibration stopped");
         super.onDestroy();
         vibrator.cancel(); // Stop vibration when service is destroyed
     }

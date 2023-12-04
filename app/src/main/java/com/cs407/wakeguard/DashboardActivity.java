@@ -172,8 +172,8 @@ public class DashboardActivity extends AppCompatActivity {
         parentLayout.setOnTouchListener(new View.OnTouchListener(){
             @Override
             public boolean onTouch(View v, MotionEvent event){
-                dbHelper.printAllRequestCodes();
-                dbHelper.printAllAlarms();
+                dbHelper.printAllRequestCodes(); // For debugging
+                dbHelper.printAllAlarms(); // For debugging
                 if(isSelectionModeActive()){
                     exitSelectionMode();
                     return true; // consuming the touch event
@@ -265,16 +265,18 @@ public class DashboardActivity extends AppCompatActivity {
      * are set to go off at the specified time.
      */
     public void rescheduleAllAlarms(){
-        dbHelper.deleteAllRequestCodes();
-        for (AlarmCard alarm: alarmList) {
-            /*We schedule and then cancel all alarm to refresh the list of request codes. There
-            * could've been a better way. But I'm exhausted!!*/
-            scheduleAlarm(alarm);
-            cancelAlarm(alarm.getId());
-
-            if (alarm.isActive())
-                scheduleAlarm(alarm); // Getting a fresh copy
+        //dbHelper.deleteAllRequestCodes();
+        int [] reqs = dbHelper.getAllRequestCodes();
+        for (int req: reqs){
+            cancelAlarmByRequestCode(req);
+            dbHelper.deleteRequestCodeByRequestCode(req);
         }
+
+        for (AlarmCard alarm: alarmList) {
+            if (alarm.isActive())
+                scheduleAlarm(alarm);
+        }
+        dbHelper.printAllRequestCodes();
     }
 
     public void scheduleAlarm(AlarmCard alarmCard){
@@ -329,7 +331,7 @@ public class DashboardActivity extends AppCompatActivity {
 
         for (String day : days) {
             int dayOfWeek = convertDayStringToCalendarDay(day);
-            Calendar nextAlarmTime = getNextAlarmTime(alarmCard.getTime(), dayOfWeek);
+            Calendar nextAlarmTime = getNextAlarmTime(alarmCard.getTime(), alarmCard.getRepeatingDays(),dayOfWeek);
 
             for (int weekOffset = 0; weekOffset < WEEKS_TO_SCHEDULE_AHEAD; weekOffset++){
                 Calendar alarmTime = (Calendar) nextAlarmTime.clone();
@@ -376,12 +378,15 @@ public class DashboardActivity extends AppCompatActivity {
     public void cancelAlarm(int alarmId){
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent (this, AlarmReceiver.class);
+        System.out.println("Cancelling: ------------------------");
 
         AlarmCard alarmToCancel = dbHelper.getAlarmById(alarmId);
         if (alarmToCancel != null && alarmToCancel.getRepeatingDays().equals("")){ // Canceling a non-repeating alarm
             // Cancelling non-repeating alarm
             String alarmIdentifier = alarmToCancel.getTitle()+alarmToCancel.getTime()+alarmToCancel.getFormattedTime();
+            System.out.println("GENERATED KEY: " + alarmIdentifier);
             int nonRepeatingAlarmRequestCode = dbHelper.getRequestCode(alarmIdentifier);
+            System.out.println("REQ CODE WE GOT: " + nonRepeatingAlarmRequestCode);
             // Deleting the request code from the DB
             dbHelper.deleteRequestCode(alarmIdentifier);
             PendingIntent nonRepeatingIntent = PendingIntent.getBroadcast(this,
@@ -410,33 +415,48 @@ public class DashboardActivity extends AppCompatActivity {
         }
     }
 
-    private Calendar getNextAlarmTime(String time, int dayOfWeek) {
+    public void cancelAlarmByRequestCode(int reqCode){
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent (this, AlarmReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this,
+                reqCode, intent, PendingIntent.FLAG_IMMUTABLE);
+        alarmManager.cancel(pendingIntent);
+    }
+
+    private Calendar getNextAlarmTime(String time, String repeatingDays, int dayOfWeek) {
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
-        Calendar nextAlarm = Calendar.getInstance();
         Calendar now = Calendar.getInstance();
 
         try {
+            // Parse the alarm time
             Date alarmTime = timeFormat.parse(time);
+            Calendar nextAlarm = Calendar.getInstance();
             nextAlarm.setTime(alarmTime);
 
+            // Set the day of the week for repeating alarms
+            if (!repeatingDays.trim().isEmpty()) {
+                nextAlarm.set(Calendar.DAY_OF_WEEK, dayOfWeek);
+            }
             // Set initial date to today
             nextAlarm.set(Calendar.YEAR, now.get(Calendar.YEAR));
             nextAlarm.set(Calendar.MONTH, now.get(Calendar.MONTH));
             nextAlarm.set(Calendar.DAY_OF_MONTH, now.get(Calendar.DAY_OF_MONTH));
 
-            // Set the day of the week
-            nextAlarm.set(Calendar.DAY_OF_WEEK, dayOfWeek);
-
-            // If the calculated alarm time is before the current time, set it for the next week
-            if (nextAlarm.before(now)) {
-                nextAlarm.add(Calendar.WEEK_OF_YEAR, 1);
+            // Adjust for the future time
+            while (!nextAlarm.after(now)) {
+                if (!repeatingDays.trim().isEmpty()) {
+                    // For repeating alarms, move to the next occurrence
+                    nextAlarm.add(Calendar.WEEK_OF_YEAR, 1);
+                } else {
+                    // For non-repeating alarms, move to the next day
+                    nextAlarm.add(Calendar.DAY_OF_YEAR, 1);
+                }
             }
+            return nextAlarm;
         } catch (ParseException e) {
             e.printStackTrace();
-            // Handle exception - maybe return null or set a default alarm time
+            return null; // or set a default alarm time
         }
-
-        return nextAlarm;
     }
 
     /**
@@ -678,7 +698,17 @@ public class DashboardActivity extends AppCompatActivity {
         settingsButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
-                // TODO: Use intents to go to the settings screen.
+                SharedPreferences sharedPref = getSharedPreferences("com.cs407.wakeguard",
+                        Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPref.edit();
+                sharedPref.edit().putBoolean("isLowPowerMode", isLowPowerMode).apply();
+                sharedPref.edit().putBoolean("isDoNotDisturb", isDoNotDisturb).apply();
+                sharedPref.edit().putBoolean("isMilitaryTimeFormat", isMilitaryTimeFormat).apply();
+                sharedPref.edit().putInt("activityMonitoringDuration", activityMonitoringDuration).apply();
+                sharedPref.edit().putInt("activityThresholdMonitoringLevel", activityThresholdMonitoringLevel).apply();
+
+                Intent settingsIntent = new Intent(DashboardActivity.this, SettingsActivity.class);
+                startActivity(settingsIntent);
             }
         });
 
@@ -714,11 +744,8 @@ public class DashboardActivity extends AppCompatActivity {
         while (alaramIterator.hasNext()){
             AlarmCard alarmToDelete = alaramIterator.next();
             if (alarmToDelete.isSelected()){
-                // We must un-schedule the alarm so it doesn't ring even after it's been removed
                 alarmToDelete.setActive(false);
-                dbHelper.toggleAlarm(alarmToDelete.getId(), alarmToDelete.isActive());
-                cancelAlarm(alarmToDelete.getId());
-
+                dbHelper.toggleAlarm(alarmToDelete.getId(), false);
                 // Deleting the row from the recycler view
                 alaramIterator.remove();
                 numOfDeletedAlarms++;
@@ -731,6 +758,8 @@ public class DashboardActivity extends AppCompatActivity {
         /* Notifying the RecyclerView adapter of the change in the List
         of created alarms to refresh This updates the UI */
         adapter.notifyDataSetChanged();
+
+        rescheduleAllAlarms();
 
         // Displaying a toast message to let user know that deletion was successful.
         if (numOfDeletedAlarms == 1){
@@ -756,6 +785,7 @@ public class DashboardActivity extends AppCompatActivity {
             dbHelper.toggleAlarm(currentAlarm.getId(), false);
         }
         adapter.notifyDataSetChanged();
+        rescheduleAllAlarms();
     }
 
     /**

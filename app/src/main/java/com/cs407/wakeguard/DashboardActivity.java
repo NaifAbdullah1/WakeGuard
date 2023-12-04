@@ -331,7 +331,7 @@ public class DashboardActivity extends AppCompatActivity {
 
         for (String day : days) {
             int dayOfWeek = convertDayStringToCalendarDay(day);
-            Calendar nextAlarmTime = getNextAlarmTime(alarmCard.getTime(), dayOfWeek);
+            Calendar nextAlarmTime = getNextAlarmTime(alarmCard.getTime(), alarmCard.getRepeatingDays(),dayOfWeek);
 
             for (int weekOffset = 0; weekOffset < WEEKS_TO_SCHEDULE_AHEAD; weekOffset++){
                 Calendar alarmTime = (Calendar) nextAlarmTime.clone();
@@ -423,33 +423,40 @@ public class DashboardActivity extends AppCompatActivity {
         alarmManager.cancel(pendingIntent);
     }
 
-    private Calendar getNextAlarmTime(String time, int dayOfWeek) {
+    private Calendar getNextAlarmTime(String time, String repeatingDays, int dayOfWeek) {
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
-        Calendar nextAlarm = Calendar.getInstance();
         Calendar now = Calendar.getInstance();
 
         try {
+            // Parse the alarm time
             Date alarmTime = timeFormat.parse(time);
+            Calendar nextAlarm = Calendar.getInstance();
             nextAlarm.setTime(alarmTime);
 
+            // Set the day of the week for repeating alarms
+            if (!repeatingDays.trim().isEmpty()) {
+                nextAlarm.set(Calendar.DAY_OF_WEEK, dayOfWeek);
+            }
             // Set initial date to today
             nextAlarm.set(Calendar.YEAR, now.get(Calendar.YEAR));
             nextAlarm.set(Calendar.MONTH, now.get(Calendar.MONTH));
             nextAlarm.set(Calendar.DAY_OF_MONTH, now.get(Calendar.DAY_OF_MONTH));
 
-            // Set the day of the week
-            nextAlarm.set(Calendar.DAY_OF_WEEK, dayOfWeek);
-
-            // If the calculated alarm time is before the current time, set it for the next week
-            if (nextAlarm.before(now)) {
-                nextAlarm.add(Calendar.WEEK_OF_YEAR, 1);
+            // Adjust for the future time
+            while (!nextAlarm.after(now)) {
+                if (!repeatingDays.trim().isEmpty()) {
+                    // For repeating alarms, move to the next occurrence
+                    nextAlarm.add(Calendar.WEEK_OF_YEAR, 1);
+                } else {
+                    // For non-repeating alarms, move to the next day
+                    nextAlarm.add(Calendar.DAY_OF_YEAR, 1);
+                }
             }
+            return nextAlarm;
         } catch (ParseException e) {
             e.printStackTrace();
-            // Handle exception - maybe return null or set a default alarm time
+            return null; // or set a default alarm time
         }
-
-        return nextAlarm;
     }
 
     /**

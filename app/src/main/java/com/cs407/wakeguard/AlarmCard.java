@@ -42,7 +42,6 @@ public class AlarmCard {
 
     private boolean isSelected = false; // When in selection mode, Is alarm selected for deletion?
 
-
     /**
      * We use this constructor for when we create new alarms (as opposed to retreiving them from db)
      * We don't include the ID of the alarm because the DB will give it an id (remember, the id is

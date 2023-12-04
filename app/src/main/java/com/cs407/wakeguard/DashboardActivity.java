@@ -1,7 +1,7 @@
 package com.cs407.wakeguard;
 
 import android.content.Context;
-import androidx.annotation.Nullable;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -11,24 +11,17 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.AppCompatImageButton;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.recyclerview.widget.DefaultItemAnimator;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.arbelkilani.clock.Clock;
 import com.arbelkilani.clock.enumeration.ClockType;
@@ -50,6 +43,22 @@ import java.util.concurrent.TimeUnit;
  * TODO: 1- We want the alarm cards to adjust the format of the time from the hh:mm a format to
  *  the 24 Hr format depending on the settings. We're waiting on team members to finish
  *  implementing the settings screen
+ *
+ *  TODO 5: When an alarm is deleted, it should be deactivated first, when it's deactivated, the pending intent should be canceled.
+ *
+ *  TODO: When an alarm is switched off, it doesn't get canceled, it still rings .
+ *  
+ *  TODO 4: In alarmAlertActivity, make sure PM/AM is working. Account for 24hr time too.
+ *
+ *  TODO 2: Find a way to make the countdown update every second.
+ *
+ *  TODO 3: In alarmAlertActivity, ensure that when wakeguard is disabled, space the elements out well
+ *
+ * TODO: Ensure alarms work after phone reboot too
+ *
+ *  TODO: Make the app refresh the shceduling every time the user opens the app. Or with a background script
+ *
+ *  TODO 6: After dismissing a non-repeating alarm, the alarm should be set inactive. Use DB operation to make the change. Consider editing the setters in AlarmCard
  *
  * AlarmService:
  *  This service will handle playing the alarm tone.
@@ -106,11 +115,15 @@ public class DashboardActivity extends AppCompatActivity {
     private int activityThresholdMonitoringLevel;
     private int activityMonitoringDuration;
 
+    private int WEEKS_TO_SCHEDULE_AHEAD = 2;
+
+    private static int requestCodeCreator = 1;
+
     private final Runnable alarmCountdownRunnable = new Runnable() {
         @Override
         public void run() {
             updateUpcomingAlarmText();
-            alarmCountdownHandler.postDelayed(this, 60000); // Update every minute
+            alarmCountdownHandler.postDelayed(this, 30000); // Update every 0.5 minute
         }
     };
 
@@ -121,6 +134,10 @@ public class DashboardActivity extends AppCompatActivity {
 
         // Must initialize DB everywhere were we do CRUD operations
         dbHelper = DBHelper.getInstance(this);
+
+        //dbHelper.deleteAllAlarms();
+        //dbHelper.deleteAllRequestCodes();
+        //requestCodeCreator = 1;
 
         // ############### VARIABLE INITIALIZATION GOES HERE #########################
         ConstraintLayout parentLayout = findViewById(R.id.parentLayout);
@@ -140,6 +157,7 @@ public class DashboardActivity extends AppCompatActivity {
 
         //Setting Configuration Variables
         SharedPreferences sharedPref = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
+        requestCodeCreator = sharedPref.getInt("nextRequestCode", 1);
         isLowPowerMode = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("isLowPowerMode", false);
         isDoNotDisturb = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("isDoNotDisturb", false);
         isMilitaryTimeFormat = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("isMilitaryTimeFormat", false);
@@ -154,7 +172,8 @@ public class DashboardActivity extends AppCompatActivity {
         parentLayout.setOnTouchListener(new View.OnTouchListener(){
             @Override
             public boolean onTouch(View v, MotionEvent event){
-                //dbHelper.printAllAlarms();
+                dbHelper.printAllRequestCodes(); // For debugging
+                dbHelper.printAllAlarms(); // For debugging
                 if(isSelectionModeActive()){
                     exitSelectionMode();
                     return true; // consuming the touch event
@@ -224,6 +243,8 @@ public class DashboardActivity extends AppCompatActivity {
         alarmList.addAll(dbHelper.getAllAlarms());
         adapter.notifyDataSetChanged(); // signaling the adapter to refresh
         alarmCountdownHandler.post(alarmCountdownRunnable); // Running the alarm countdown again.
+        // Scheduling all active alarms
+        rescheduleAllAlarms();
     }
 
     /**
@@ -237,6 +258,205 @@ public class DashboardActivity extends AppCompatActivity {
         paused (for example, user switching to another app). This minimizes the
         apps resource consumption in the background. */
         alarmCountdownHandler.removeCallbacks(alarmCountdownRunnable);
+    }
+
+    /**
+     * Re-schedules all alarms using AlarmManager. This function ensures that all alarms
+     * are set to go off at the specified time.
+     */
+    public void rescheduleAllAlarms(){
+        //dbHelper.deleteAllRequestCodes();
+        int [] reqs = dbHelper.getAllRequestCodes();
+        for (int req: reqs){
+            cancelAlarmByRequestCode(req);
+            dbHelper.deleteRequestCodeByRequestCode(req);
+        }
+
+        for (AlarmCard alarm: alarmList) {
+            if (alarm.isActive())
+                scheduleAlarm(alarm);
+        }
+        dbHelper.printAllRequestCodes();
+    }
+
+    public void scheduleAlarm(AlarmCard alarmCard){
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        // This intent is sent to AlarmReceiver.java with the alarm's ID as an extra
+        Intent alarmReceiverIntent = new Intent(this, AlarmReceiver.class);
+        alarmReceiverIntent.putExtra("alarmId", alarmCard.getId());
+
+        // Check if the alarm is repeating
+        if (!alarmCard.getRepeatingDays().equals("")) {
+            scheduleMultipleAlarm(alarmCard, alarmManager, alarmReceiverIntent);
+
+        } else {
+            long alarmTimeInEpoch = convertToTimestamp(alarmCard.getTime(), alarmCard.getRepeatingDays());
+            Calendar alarmTime = Calendar.getInstance();
+            alarmTime.setTimeInMillis(alarmTimeInEpoch);
+
+            // Generate a unique request code
+            int requestCode = generateRequestCode();
+            System.out.println("SAVING REQUEST CODE SINGLE ALARM");
+            dbHelper.addRequestCode(alarmCard.getTitle()+alarmCard.getTime()+alarmCard.getFormattedTime(), requestCode, "");
+
+            // Use the unique request code for the PendingIntent
+            PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this, requestCode,
+                    alarmReceiverIntent, PendingIntent.FLAG_IMMUTABLE);
+
+            // Set a single alarm
+            // Set a single, exact alarm
+
+            if (alarmManager != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    if (alarmManager.canScheduleExactAlarms()) {
+                        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
+                                alarmTime.getTimeInMillis(), alarmPendingIntent);
+                    } else {
+                        // Show a dialog or notification to inform the user they need to grant the permission
+                        // Redirect to the system settings for your app
+                        Intent permissionIntent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+                        startActivity(permissionIntent);
+                    }
+                } else {
+                    // For older versions, set the alarm without checking the permission
+                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarmTime.getTimeInMillis(), alarmPendingIntent);
+                }
+            }
+        }
+    }
+
+    private void scheduleMultipleAlarm(AlarmCard alarmCard, AlarmManager alarmManager,
+                                        Intent alarmReceiverIntent) {
+        String[] days = alarmCard.getRepeatingDays().split(","); // Assuming this returns days like "Mo,Tu,We"
+
+        for (String day : days) {
+            int dayOfWeek = convertDayStringToCalendarDay(day);
+            Calendar nextAlarmTime = getNextAlarmTime(alarmCard.getTime(), alarmCard.getRepeatingDays(),dayOfWeek);
+
+            for (int weekOffset = 0; weekOffset < WEEKS_TO_SCHEDULE_AHEAD; weekOffset++){
+                Calendar alarmTime = (Calendar) nextAlarmTime.clone();
+                alarmTime.add(Calendar.WEEK_OF_YEAR, weekOffset);
+
+                int requestCode = generateRequestCode();
+                dbHelper.addRequestCode(alarmCard.getTitle()+alarmCard.getTime()+alarmCard.getFormattedTime(), requestCode, day);
+
+                PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this, requestCode,
+                        alarmReceiverIntent, PendingIntent.FLAG_IMMUTABLE);
+
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
+                        alarmTime.getTimeInMillis(), alarmPendingIntent);
+            }
+        }
+    }
+
+    private synchronized int generateRequestCode(){
+        int reqCode = requestCodeCreator++;
+        saveRequestCode(requestCodeCreator); // saving it to SharedPreference for persistence.
+        return reqCode;
+    }
+
+    /**
+     * Every time you create and activate an alarm, we need a "request code" that goes along with
+     * that alarm to help Android distinguish between alarms. It's like an alarm id.
+     * We use the static variable "requestCodeCreator" to make request codes when needed. But since
+     * it's a static variable, it will reset when restarting the app. Therefore, we need to save it
+     * in SharedPreferences so that it doesn't reset. This makes it persistent.
+     * @param requestCode
+     */
+    private void saveRequestCode(int requestCode){
+        SharedPreferences sharedPreferences = getSharedPreferences("com.cs407.wakeguard",
+                Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putInt("nextRequestCode", requestCodeCreator);
+        editor.apply();
+    }
+
+    /**
+     * Cancels an alarm such that it won't go off anymore.
+     * @param alarmId
+     */
+    public void cancelAlarm(int alarmId){
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent (this, AlarmReceiver.class);
+        System.out.println("Cancelling: ------------------------");
+
+        AlarmCard alarmToCancel = dbHelper.getAlarmById(alarmId);
+        if (alarmToCancel != null && alarmToCancel.getRepeatingDays().equals("")){ // Canceling a non-repeating alarm
+            // Cancelling non-repeating alarm
+            String alarmIdentifier = alarmToCancel.getTitle()+alarmToCancel.getTime()+alarmToCancel.getFormattedTime();
+            System.out.println("GENERATED KEY: " + alarmIdentifier);
+            int nonRepeatingAlarmRequestCode = dbHelper.getRequestCode(alarmIdentifier);
+            System.out.println("REQ CODE WE GOT: " + nonRepeatingAlarmRequestCode);
+            // Deleting the request code from the DB
+            dbHelper.deleteRequestCode(alarmIdentifier);
+            PendingIntent nonRepeatingIntent = PendingIntent.getBroadcast(this,
+                    nonRepeatingAlarmRequestCode, intent, PendingIntent.FLAG_IMMUTABLE);
+            alarmManager.cancel(nonRepeatingIntent);
+        }else { // Canceling a repeating alarm
+            if (alarmToCancel == null){ // Unexpected error
+                System.out.println("ERROR: ALARM NOT FOUND");
+            }else{ // No errors encountered, deleting all instances of the repeating alarm.
+                // Canceling the alarm if it's a repeated one
+                for (int dayOfWeek = Calendar.SUNDAY; dayOfWeek <= Calendar.SATURDAY; dayOfWeek++){
+                    for (int weekOffset = 0; weekOffset < WEEKS_TO_SCHEDULE_AHEAD; weekOffset++){
+                        String alarmIdentifier = alarmToCancel.getTitle()+alarmToCancel.getTime()+alarmToCancel.getFormattedTime()+getDayString(dayOfWeek);
+                        Object requestCode = dbHelper.getRequestCode(alarmIdentifier);
+                        if (requestCode == null)
+                            continue;
+                        else{
+                            dbHelper.deleteRequestCode(alarmIdentifier);
+                            PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this,
+                                    (int)requestCode, intent, PendingIntent.FLAG_IMMUTABLE);
+                            alarmManager.cancel(alarmPendingIntent);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public void cancelAlarmByRequestCode(int reqCode){
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent (this, AlarmReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this,
+                reqCode, intent, PendingIntent.FLAG_IMMUTABLE);
+        alarmManager.cancel(pendingIntent);
+    }
+
+    private Calendar getNextAlarmTime(String time, String repeatingDays, int dayOfWeek) {
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+        Calendar now = Calendar.getInstance();
+
+        try {
+            // Parse the alarm time
+            Date alarmTime = timeFormat.parse(time);
+            Calendar nextAlarm = Calendar.getInstance();
+            nextAlarm.setTime(alarmTime);
+
+            // Set the day of the week for repeating alarms
+            if (!repeatingDays.trim().isEmpty()) {
+                nextAlarm.set(Calendar.DAY_OF_WEEK, dayOfWeek);
+            }
+            // Set initial date to today
+            nextAlarm.set(Calendar.YEAR, now.get(Calendar.YEAR));
+            nextAlarm.set(Calendar.MONTH, now.get(Calendar.MONTH));
+            nextAlarm.set(Calendar.DAY_OF_MONTH, now.get(Calendar.DAY_OF_MONTH));
+
+            // Adjust for the future time
+            while (!nextAlarm.after(now)) {
+                if (!repeatingDays.trim().isEmpty()) {
+                    // For repeating alarms, move to the next occurrence
+                    nextAlarm.add(Calendar.WEEK_OF_YEAR, 1);
+                } else {
+                    // For non-repeating alarms, move to the next day
+                    nextAlarm.add(Calendar.DAY_OF_YEAR, 1);
+                }
+            }
+            return nextAlarm;
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return null; // or set a default alarm time
+        }
     }
 
     /**
@@ -317,7 +537,6 @@ public class DashboardActivity extends AppCompatActivity {
      */
     private long convertToTimestamp(String time, String repeatingDays) {
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
-        SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         Calendar now = Calendar.getInstance();
 
         try {
@@ -407,6 +626,27 @@ public class DashboardActivity extends AppCompatActivity {
         }
     }
 
+    private int convertDayStringToCalendarDay(String day) {
+        switch (day.trim()) {
+            case "Su":
+                return Calendar.SUNDAY;
+            case "Mo":
+                return Calendar.MONDAY;
+            case "Tu":
+                return Calendar.TUESDAY;
+            case "We":
+                return Calendar.WEDNESDAY;
+            case "Th":
+                return Calendar.THURSDAY;
+            case "Fr":
+                return Calendar.FRIDAY;
+            case "Sa":
+                return Calendar.SATURDAY;
+            default:
+                return -1; // Invalid day
+        }
+    }
+
     /**
      * Entering selection mode. When in selection mode, the Setting icon will turn into the trash
      * icon and the "+" button will turn into the "Silence All alarms" button. Checkboxes will
@@ -458,7 +698,17 @@ public class DashboardActivity extends AppCompatActivity {
         settingsButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
-                // TODO: Use intents to go to the settings screen.
+                SharedPreferences sharedPref = getSharedPreferences("com.cs407.wakeguard",
+                        Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPref.edit();
+                sharedPref.edit().putBoolean("isLowPowerMode", isLowPowerMode).apply();
+                sharedPref.edit().putBoolean("isDoNotDisturb", isDoNotDisturb).apply();
+                sharedPref.edit().putBoolean("isMilitaryTimeFormat", isMilitaryTimeFormat).apply();
+                sharedPref.edit().putInt("activityMonitoringDuration", activityMonitoringDuration).apply();
+                sharedPref.edit().putInt("activityThresholdMonitoringLevel", activityThresholdMonitoringLevel).apply();
+
+                Intent settingsIntent = new Intent(DashboardActivity.this, SettingsActivity.class);
+                startActivity(settingsIntent);
             }
         });
 
@@ -471,11 +721,6 @@ public class DashboardActivity extends AppCompatActivity {
                 startActivity(addNewAlarmIntent);
             }
         });
-
-
-        Intent serviceIntent = new Intent(this, AlarmService.class);
-        startService(serviceIntent); // Directly start the service without setting an alarm
-
 
         // To ensure that none of the alarm's checkboxes remain checked after exiting selection mode
         deselectAllAlarms();
@@ -499,6 +744,8 @@ public class DashboardActivity extends AppCompatActivity {
         while (alaramIterator.hasNext()){
             AlarmCard alarmToDelete = alaramIterator.next();
             if (alarmToDelete.isSelected()){
+                alarmToDelete.setActive(false);
+                dbHelper.toggleAlarm(alarmToDelete.getId(), false);
                 // Deleting the row from the recycler view
                 alaramIterator.remove();
                 numOfDeletedAlarms++;
@@ -512,6 +759,8 @@ public class DashboardActivity extends AppCompatActivity {
         of created alarms to refresh This updates the UI */
         adapter.notifyDataSetChanged();
 
+        rescheduleAllAlarms();
+
         // Displaying a toast message to let user know that deletion was successful.
         if (numOfDeletedAlarms == 1){
             Toast.makeText(getApplicationContext(), "Alarm Deleted",
@@ -520,7 +769,7 @@ public class DashboardActivity extends AppCompatActivity {
             Toast.makeText(getApplicationContext(), numOfDeletedAlarms + " Alarms Deleted",
                     Toast.LENGTH_SHORT).show();
         }
-
+        updateUpcomingAlarmText();
     }
 
     /**
@@ -533,8 +782,10 @@ public class DashboardActivity extends AppCompatActivity {
         while (alaramIterator.hasNext()){
             AlarmCard currentAlarm = alaramIterator.next();
             currentAlarm.setActive(false);
+            dbHelper.toggleAlarm(currentAlarm.getId(), false);
         }
         adapter.notifyDataSetChanged();
+        rescheduleAllAlarms();
     }
 
     /**

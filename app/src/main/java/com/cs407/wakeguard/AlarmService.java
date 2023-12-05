@@ -18,6 +18,9 @@ import androidx.core.app.NotificationCompat;
 
 /**
  * Handles the logic to play an alarm tone or show a notification, vibrate, etc...
+ * This service will handle playing the alarm tone.
+ * It can also manage other tasks like vibration or flashing the screen.
+ * If you're playing media or sounds, make sure to handle audio focus appropriately.
  */
 public class AlarmService extends Service {
     private Vibrator vibrator;
@@ -49,7 +52,6 @@ public class AlarmService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId){
         // Create Notification, it's required by Android to notify user of background services.
         Notification alarmNotification = createNotification();
-        Log.d("DEBUG", "RINGING");
         // Start service in the foreground
         startForeground(NOTIFICATION_ID, alarmNotification);
 

@@ -43,10 +43,6 @@ import java.util.concurrent.TimeUnit;
  * TODO: 1- We want the alarm cards to adjust the format of the time from the hh:mm a format to
  *  the 24 Hr format depending on the settings. We're waiting on team members to finish
  *  implementing the settings screen
- *
- *  TODO 5: When an alarm is deleted, it should be deactivated first, when it's deactivated, the pending intent should be canceled.
- *
- *  TODO: When an alarm is switched off, it doesn't get canceled, it still rings .
  *  
  *  TODO 4: In alarmAlertActivity, make sure PM/AM is working. Account for 24hr time too.
  *
@@ -56,25 +52,6 @@ import java.util.concurrent.TimeUnit;
  *
  * TODO: Ensure alarms work after phone reboot too
  *
- *  TODO: Make the app refresh the shceduling every time the user opens the app. Or with a background script
- *
- *  TODO 6: After dismissing a non-repeating alarm, the alarm should be set inactive. Use DB operation to make the change. Consider editing the setters in AlarmCard
- *
- * AlarmService:
- *  This service will handle playing the alarm tone.
- *  It can also manage other tasks like vibration or flashing the screen.
- *  If you're playing media or sounds, make sure to handle audio focus appropriately.
- *
- * AlarmAlertActivity:
- *  This activity will be brought to the foreground when the alarm goes off.
- *  Here, you can provide options to dismiss or snooze the alarm.
- *  Ensure that the activity handles cases where the user might have already dismissed the alarm through another means (e.g., a notification).
- *
- * Optional: Wake Locks:
- *  Depending on your app's requirements and target Android versions, you might need to handle wake locks to ensure that your service continues to run even if the device goes to sleep.
- *  From Android 8.0 (API level 26), you should use startForegroundService() instead of startService() if the service will perform long-running operations in the background.
- *
- * We might also need to register the AlarmService by adding the following to the manifest.xml: <service android:name=".AlarmService" />
  */
 public class DashboardActivity extends AppCompatActivity {
 

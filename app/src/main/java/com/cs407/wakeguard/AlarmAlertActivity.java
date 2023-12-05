@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -16,6 +17,9 @@ import org.w3c.dom.Text;
 
 import java.util.Calendar;
 
+/**
+ * This activity will be brought to the foreground when the alarm goes off.
+ */
 public class AlarmAlertActivity extends AppCompatActivity {
 
     private TextView timeText;
@@ -30,6 +34,17 @@ public class AlarmAlertActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_alarm_alert);
+
+        // Set window flags to show the activity over the lock screen and wake up the screen
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
+                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
+                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
+                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+        setContentView(R.layout.activity_alarm_alert);
+
+
 
         dbHelper = DBHelper.getInstance(this);
         timeText = findViewById(R.id.timeText);
@@ -96,6 +111,11 @@ public class AlarmAlertActivity extends AppCompatActivity {
                 }else{
                     System.out.println("ERROR @ AlarmAlertActivity");
                 }
+            }
+
+            // Releasing wake lock
+            if (AlarmReceiver.wakeLock != null && AlarmReceiver.wakeLock.isHeld()){
+                AlarmReceiver.wakeLock.release();
             }
 
         finish();

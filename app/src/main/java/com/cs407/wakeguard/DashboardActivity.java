@@ -357,50 +357,6 @@ public class DashboardActivity extends AppCompatActivity {
         editor.apply();
     }
 
-    /**
-     * Cancels an alarm such that it won't go off anymore.
-     * @param alarmId
-     */
-    public void cancelAlarm(int alarmId){
-        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        Intent intent = new Intent (this, AlarmReceiver.class);
-        System.out.println("Cancelling: ------------------------");
-
-        AlarmCard alarmToCancel = dbHelper.getAlarmById(alarmId);
-        if (alarmToCancel != null && alarmToCancel.getRepeatingDays().equals("")){ // Canceling a non-repeating alarm
-            // Cancelling non-repeating alarm
-            String alarmIdentifier = alarmToCancel.getTitle()+alarmToCancel.getTime()+alarmToCancel.getFormattedTime();
-            System.out.println("GENERATED KEY: " + alarmIdentifier);
-            int nonRepeatingAlarmRequestCode = dbHelper.getRequestCode(alarmIdentifier);
-            System.out.println("REQ CODE WE GOT: " + nonRepeatingAlarmRequestCode);
-            // Deleting the request code from the DB
-            dbHelper.deleteRequestCode(alarmIdentifier);
-            PendingIntent nonRepeatingIntent = PendingIntent.getBroadcast(this,
-                    nonRepeatingAlarmRequestCode, intent, PendingIntent.FLAG_IMMUTABLE);
-            alarmManager.cancel(nonRepeatingIntent);
-        }else { // Canceling a repeating alarm
-            if (alarmToCancel == null){ // Unexpected error
-                System.out.println("ERROR: ALARM NOT FOUND");
-            }else{ // No errors encountered, deleting all instances of the repeating alarm.
-                // Canceling the alarm if it's a repeated one
-                for (int dayOfWeek = Calendar.SUNDAY; dayOfWeek <= Calendar.SATURDAY; dayOfWeek++){
-                    for (int weekOffset = 0; weekOffset < WEEKS_TO_SCHEDULE_AHEAD; weekOffset++){
-                        String alarmIdentifier = alarmToCancel.getTitle()+alarmToCancel.getTime()+alarmToCancel.getFormattedTime()+getDayString(dayOfWeek);
-                        Object requestCode = dbHelper.getRequestCode(alarmIdentifier);
-                        if (requestCode == null)
-                            continue;
-                        else{
-                            dbHelper.deleteRequestCode(alarmIdentifier);
-                            PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this,
-                                    (int)requestCode, intent, PendingIntent.FLAG_IMMUTABLE);
-                            alarmManager.cancel(alarmPendingIntent);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     public void cancelAlarmByRequestCode(int reqCode){
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent (this, AlarmReceiver.class);
@@ -414,34 +370,33 @@ public class DashboardActivity extends AppCompatActivity {
         Calendar now = Calendar.getInstance();
 
         try {
-            // Parse the alarm time
             Date alarmTime = timeFormat.parse(time);
             Calendar nextAlarm = Calendar.getInstance();
             nextAlarm.setTime(alarmTime);
+            nextAlarm.set(Calendar.SECOND, 0);
+            nextAlarm.set(Calendar.MILLISECOND, 0);
 
-            // Set the day of the week for repeating alarms
-            if (!repeatingDays.trim().isEmpty()) {
-                nextAlarm.set(Calendar.DAY_OF_WEEK, dayOfWeek);
-            }
             // Set initial date to today
             nextAlarm.set(Calendar.YEAR, now.get(Calendar.YEAR));
             nextAlarm.set(Calendar.MONTH, now.get(Calendar.MONTH));
             nextAlarm.set(Calendar.DAY_OF_MONTH, now.get(Calendar.DAY_OF_MONTH));
 
-            // Adjust for the future time
-            while (!nextAlarm.after(now)) {
-                if (!repeatingDays.trim().isEmpty()) {
-                    // For repeating alarms, move to the next occurrence
-                    nextAlarm.add(Calendar.WEEK_OF_YEAR, 1);
-                } else {
-                    // For non-repeating alarms, move to the next day
-                    nextAlarm.add(Calendar.DAY_OF_YEAR, 1);
+            if (!repeatingDays.trim().isEmpty()) {
+                // For repeating alarms, find the next valid day
+                nextAlarm.set(Calendar.DAY_OF_WEEK, dayOfWeek);
+                while (nextAlarm.before(now) || !repeatingDays.contains(getDayString(nextAlarm.get(Calendar.DAY_OF_WEEK)))) {
+                    nextAlarm.add(Calendar.DAY_OF_YEAR, 1); // Move to the next day
+                }
+            } else {
+                // For non-repeating alarms, simply set it for the next occurrence
+                if (nextAlarm.before(now)) {
+                    nextAlarm.add(Calendar.DAY_OF_YEAR, 1); // Move to the next day
                 }
             }
             return nextAlarm;
         } catch (ParseException e) {
             e.printStackTrace();
-            return null; // or set a default alarm time
+            return null; // Handle this appropriately
         }
     }
 

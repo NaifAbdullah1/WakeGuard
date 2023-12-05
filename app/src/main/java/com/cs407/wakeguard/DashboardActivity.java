@@ -122,7 +122,8 @@ public class DashboardActivity extends AppCompatActivity {
         settingsButton = findViewById(R.id.settingsButton);
         addAlarmButton = findViewById(R.id.addAlarmButton);
         recyclerView = findViewById(R.id.createdAlarmsRecycerView);
-        Clock dashboardClock = findViewById(R.id.dashboardClock);
+        Clock dashboardClock12 = findViewById(R.id.dashboardClock12);
+        Clock dashboardClock24 = findViewById(R.id.dashboardClock24);
 
         /*Layout managers help us define what gets displayed on the RecyclerView (which displays
          the alarm cards) and how to arrange the items. It also determines other functions
@@ -140,6 +141,12 @@ public class DashboardActivity extends AppCompatActivity {
         isMilitaryTimeFormat = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("isMilitaryTimeFormat", false);
         activityThresholdMonitoringLevel = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getInt("activityThresholdMonitoringLevel", 1);
         activityMonitoringDuration = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getInt("activityMonitoringDuration", 0);
+            // Set Clock Component
+        if(isMilitaryTimeFormat) {
+            findViewById(R.id.dashboardClock12).setVisibility(View.INVISIBLE);
+        } else {
+            findViewById(R.id.dashboardClock24).setVisibility(View.INVISIBLE);
+        }
         //_______________________________________________________________________________________
 
 
@@ -199,10 +206,12 @@ public class DashboardActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(layoutManager);
 
         // Setting the clock type to numeric (instead of analog)
-        dashboardClock.setClockType(ClockType.numeric);
+        dashboardClock12.setClockType(ClockType.numeric);
+        dashboardClock24.setClockType(ClockType.numeric);
         /*Removing padding all around the clock so that if there's
          * anything close to the clock, it would be clickable */
-        dashboardClock.setPadding(0, 0, 0, 0);
+        dashboardClock12.setPadding(0, 0, 0, 0);
+        dashboardClock24.setPadding(0, 0, 0, 0);
         //_______________________________________________________________________________________
     }
 

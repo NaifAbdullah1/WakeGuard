@@ -58,7 +58,7 @@
         android:id="@+id/lowbatterybutton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="38dp"
+        android:layout_marginBottom="24dp"
         app:layout_constraintBottom_toTopOf="@+id/doNotDisturbButton"
         app:layout_constraintStart_toStartOf="@+id/doNotDisturbButton" />
 

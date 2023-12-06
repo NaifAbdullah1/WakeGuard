@@ -45,10 +45,13 @@ import java.util.concurrent.TimeUnit;
  * TODO: 1- We want the alarm cards to adjust the format of the time from the hh:mm a format to
  *  the 24 Hr format depending on the settings. We're waiting on team members to finish
  *  implementing the settings screen
- *  
- *  TODO 4: In alarmAlertActivity, make sure PM/AM is working. Account for 24hr time too.
+ *
+ *  TODO: Integrate settings, start by ensuring persistance of settings items.
+ *  Once persistance is fixed, use the settings' values for the AlarmAlertActivity's timers
  *
  *  TODO 2: Find a way to make the countdown update every second.
+ *  
+ *  TODO 4: In alarmAlertActivity, make sure PM/AM is working. Account for 24hr time too.
  *
  *  TODO 3: In alarmAlertActivity, ensure that when wakeguard is disabled, space the elements out well
  *
@@ -93,7 +96,6 @@ public class DashboardActivity extends AppCompatActivity {
     private boolean isLowPowerMode;
     private boolean isDoNotDisturb;
     private boolean isMilitaryTimeFormat;
-    private boolean showDisableMotionMonitoringButton;
     private int activityThresholdMonitoringLevel;
     private int activityMonitoringDuration;
 
@@ -142,12 +144,11 @@ public class DashboardActivity extends AppCompatActivity {
         sharedPref = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit(); // Use this editor for editing in the onCreate()
         requestCodeCreator = sharedPref.getInt("nextRequestCode", 1);
-        isLowPowerMode = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("isLowPowerMode", false);
-        isDoNotDisturb = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("isDoNotDisturb", false);
-        isMilitaryTimeFormat = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("isMilitaryTimeFormat", false);
-        activityThresholdMonitoringLevel = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getInt("activityThresholdMonitoringLevel", 1);
-        activityMonitoringDuration = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getInt("activityMonitoringDuration", 0);
-        showDisableMotionMonitoringButton = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("showDisableMotionMonitoringButton", false);
+        isLowPowerMode = sharedPref.getBoolean("isLowPowerMode", false);
+        isDoNotDisturb = sharedPref.getBoolean("isDoNotDisturb", false);
+        isMilitaryTimeFormat = sharedPref.getBoolean("isMilitaryTimeFormat", false);
+        activityThresholdMonitoringLevel = sharedPref.getInt("activityThresholdMonitoringLevel", 1);
+        activityMonitoringDuration = sharedPref.getInt("activityMonitoringDuration", 0);
 
             // Set Clock Component
         if(isMilitaryTimeFormat) {
@@ -186,13 +187,6 @@ public class DashboardActivity extends AppCompatActivity {
         settingsButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
-
-                sharedPref.edit().putBoolean("isLowPowerMode", isLowPowerMode).apply();
-                sharedPref.edit().putBoolean("isDoNotDisturb", isDoNotDisturb).apply();
-                sharedPref.edit().putBoolean("isMilitaryTimeFormat", isMilitaryTimeFormat).apply();
-                sharedPref.edit().putInt("activityMonitoringDuration", activityMonitoringDuration).apply();
-                sharedPref.edit().putInt("activityThresholdMonitoringLevel", activityThresholdMonitoringLevel).apply();
-
                 Intent settingsIntent = new Intent(DashboardActivity.this, SettingsActivity.class);
                 startActivity(settingsIntent);
             }

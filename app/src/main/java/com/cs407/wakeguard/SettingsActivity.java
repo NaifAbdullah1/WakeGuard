@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -23,6 +24,7 @@ public class SettingsActivity extends AppCompatActivity {
     private boolean isMilitaryTimeFormat;
     private int activityThresholdMonitoringLevel;
     private int activityMonitoringDuration;
+    private SharedPreferences sharedPref;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,94 +32,100 @@ public class SettingsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_settings);
 
         //Assign Variables
-        isLowPowerMode = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("isLowPowerMode", false);
-        isDoNotDisturb = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("isDoNotDisturb", false);
-        isMilitaryTimeFormat = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("isMilitaryTimeFormat", false);
-        activityThresholdMonitoringLevel = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getInt("activityThresholdMonitoringLevel", 0);
-        activityMonitoringDuration = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getInt("activityMonitoringDuration", 0);
-
+        sharedPref = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
+        isLowPowerMode = sharedPref.getBoolean("isLowPowerMode", false);
+        isDoNotDisturb = sharedPref.getBoolean("isDoNotDisturb", false);
+        isMilitaryTimeFormat = sharedPref.getBoolean("isMilitaryTimeFormat", false);
+        activityThresholdMonitoringLevel = sharedPref.getInt("activityThresholdMonitoringLevel", 0);
+        activityMonitoringDuration = sharedPref.getInt("activityMonitoringDuration", 0);
+        ImageButton infoLowBattery = findViewById(R.id.lowBatteryInfo);
         Switch isLowPowerModeSwitch = findViewById(R.id.lowbatterybutton);
         Switch isDoNotDisturbSwitch = findViewById(R.id.doNotDisturbButton);
         Switch isMilitaryTimeFormatSwitch = findViewById(R.id.militaryTimeButton);
-        NumberPicker activity_duration = findViewById(R.id.minuteNumberPicker);
-        activity_duration.setMinValue(0);
-        activity_duration.setMaxValue(59);
-        Button reset = findViewById(R.id.resetButton);
-
-
-        //Activity Monitor Threshold Menu
+        ImageButton infoDoNotDisturb = findViewById(R.id.doNotDistubInfo);
+        ImageButton backButtonSettings = findViewById(R.id.backSettings);
+        NumberPicker activityMonitoringDurationNumberPicker = findViewById(R.id.minuteNumberPicker);
         Spinner activityMonitorThreshold=findViewById(R.id.activityMonitorMenu);
+        Button reset = findViewById(R.id.resetButton);
         ArrayAdapter<CharSequence>adapter=ArrayAdapter.createFromResource(this, R.array.monitorThresholds, android.R.layout.simple_spinner_item);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_item);
-        activityMonitorThreshold.setAdapter(adapter);
-
-        //Initialize Values
-        isLowPowerModeSwitch.setChecked(isLowPowerMode);
-        isDoNotDisturbSwitch.setChecked(isDoNotDisturb);
-        isMilitaryTimeFormatSwitch.setChecked(isMilitaryTimeFormat);
-        activity_duration.setValue(activityMonitoringDuration);
-        activityMonitorThreshold.setSelection(activityThresholdMonitoringLevel);
-
         //Infomation Popup Builder
         AlertDialog.Builder builder = new AlertDialog.Builder(SettingsActivity.this);
 
+        // Settings for variables
+        activityMonitoringDurationNumberPicker.setMinValue(1);
+        activityMonitoringDurationNumberPicker.setMaxValue(15);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_item);
+        activityMonitorThreshold.setAdapter(adapter);
+        isLowPowerModeSwitch.setChecked(isLowPowerMode);
+        isDoNotDisturbSwitch.setChecked(isDoNotDisturb);
+        isMilitaryTimeFormatSwitch.setChecked(isMilitaryTimeFormat);
+        activityMonitoringDurationNumberPicker.setValue(activityMonitoringDuration);
+        activityMonitorThreshold.setSelection(activityThresholdMonitoringLevel);
+
 
         // LISTENERS HERE
-        activity_duration.setOnValueChangedListener(new NumberPicker.OnValueChangeListener() {
-            @Override
-            public void onValueChange(NumberPicker picker, int oldVal, int newVal) {
-                System.out.println("num changed " + newVal);
-            }
-        });
         reset.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 isLowPowerMode = false;
                 isDoNotDisturb = false;
                 isMilitaryTimeFormat = false;
-                activityThresholdMonitoringLevel = 1;
-                activityMonitoringDuration = 0;
+                activityThresholdMonitoringLevel = 1; // 2 = low, 1=medium, 0 = high
+                activityMonitoringDuration = 5;
                 isLowPowerModeSwitch.setChecked(isLowPowerMode);
                 isDoNotDisturbSwitch.setChecked(isDoNotDisturb);
                 isMilitaryTimeFormatSwitch.setChecked(isMilitaryTimeFormat);
                 activityMonitorThreshold.setSelection(activityThresholdMonitoringLevel);
+                // Persisting the changes
+                SharedPreferences.Editor editor = sharedPref.edit();
+                editor.putBoolean("isLowPowerMode", isLowPowerMode);
+                editor.putBoolean("isDoNotDisturb", isDoNotDisturb);
+                editor.putBoolean("isMilitaryTimeFormat", isMilitaryTimeFormat);
+                editor.putInt("activityThresholdMonitoringLevel", activityThresholdMonitoringLevel);
+                editor.putInt("activityMonitoringDuration", activityMonitoringDuration);
+                editor.apply();
+
             }
         });
         isLowPowerModeSwitch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 isLowPowerMode = !isLowPowerMode;
+                System.out.println("Low power clicked, new val: " + isLowPowerMode);
+                sharedPref.edit().putBoolean("isLowPowerMode", isLowPowerMode).apply();
             }
         });
         isDoNotDisturbSwitch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 isDoNotDisturb = !isDoNotDisturb;
+                System.out.println("dnd new val: " + isDoNotDisturb);
+                sharedPref.edit().putBoolean("isDoNotDisturb", isDoNotDisturb).apply();
             }
         });
         isMilitaryTimeFormatSwitch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 isMilitaryTimeFormat = !isMilitaryTimeFormat;
+                System.out.println("isMilitaryTimeFormat, new val: " + isMilitaryTimeFormat);
+                sharedPref.edit().putBoolean("isMilitaryTimeFormat", isMilitaryTimeFormat).apply();
             }
         });
-
-        ImageButton backSettings = findViewById(R.id.backSettings);
-        backSettings.setOnClickListener(new View.OnClickListener(){
+        backButtonSettings.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
-                Intent backDashboard = new Intent(SettingsActivity.this, DashboardActivity.class);
-                SharedPreferences sharedPref = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
-                sharedPref.edit().putBoolean("isLowPowerMode", isLowPowerMode).apply();
-                sharedPref.edit().putBoolean("isDoNotDisturb", isDoNotDisturb).apply();
-                sharedPref.edit().putBoolean("isMilitaryTimeFormat", isMilitaryTimeFormat).apply();
-                sharedPref.edit().putInt("activityMonitoringDuration", activityMonitoringDuration).apply();
-                sharedPref.edit().putInt("activityThresholdMonitoringLevel", activityThresholdMonitoringLevel).apply();
-                startActivity(backDashboard);
+                /*
+                SharedPreferences.Editor editor = sharedPref.edit();
+                editor.putBoolean("isLowPowerMode", isLowPowerMode);
+                editor.putBoolean("isDoNotDisturb", isDoNotDisturb);
+                editor.putBoolean("isMilitaryTimeFormat", isMilitaryTimeFormat);
+                editor.putInt("activityThresholdMonitoringLevel", activityThresholdMonitoringLevel);
+                editor.putInt("activityMonitoringDuration", activityMonitoringDuration);
+                editor.apply();
+                */
+                finish();
             }
         });
-
-        ImageButton infoDoNotDisturb = findViewById(R.id.doNotDistubInfo);
         infoDoNotDisturb.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
@@ -128,7 +136,6 @@ public class SettingsActivity extends AppCompatActivity {
                 dnd_info.show();
             }
         });
-        ImageButton infoLowBattery = findViewById(R.id.lowBatteryInfo);
         infoLowBattery.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
@@ -139,5 +146,27 @@ public class SettingsActivity extends AppCompatActivity {
                 low_battery_info.show();
             }
         });
+        activityMonitorThreshold.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                activityThresholdMonitoringLevel = position;
+                System.out.println("Activity monitor threshold new val: " + activityThresholdMonitoringLevel);
+                sharedPref.edit().putInt("activityThresholdMonitoringLevel", activityThresholdMonitoringLevel).apply();
+                System.out.println("testing: " + sharedPref.getInt("activityThresholdMonitoringLevel", 69));
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // Do nothing
+            }
+        });
+        activityMonitoringDurationNumberPicker.setOnValueChangedListener(new NumberPicker.OnValueChangeListener(){
+            @Override
+            public void onValueChange(NumberPicker picker, int oldVal, int newVal){
+                activityMonitoringDuration = newVal;
+                System.out.println("activityMonitoringDurationNumberPicker new val: " + activityMonitoringDuration);
+                sharedPref.edit().putInt("activityMonitoringDuration", activityMonitoringDuration).apply();
+            }
+        });
+
     }
 }

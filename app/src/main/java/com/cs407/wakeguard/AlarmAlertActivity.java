@@ -15,7 +15,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
-import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
@@ -40,10 +39,8 @@ public class AlarmAlertActivity extends AppCompatActivity {
     private Sensor accelerometer;
     // The value of this variable comes from SharedPreference
     private boolean isMotionMonitoringActive;
-
-    // TODO: This value should come from the Settings, from the sharedPreference
-    private static final double MOTION_THRESHOLD = 13.5; // Example threshold
-    private static final long TIMER_A_MONITORING_DURATION = 1 * 60 * 1000; // in milliseconds
+    private static double motionThreshold; // The threshold value for the motion sensor to exceed to reset timer B
+    private static final long TIMER_A_MONITORING_DURATION = 30 * 60 * 1000; // in milliseconds
     private static final long TIMER_B_FREQUENCY = 20 * 1000; // 1 min
     /*
     * From experimenting:
@@ -115,7 +112,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
             double accelerationMagnitude = Math.sqrt(x * x + y * y + z * z);
 
             // Determining if the magnitude is big enough to disable the motion monitoring
-            if (accelerationMagnitude > MOTION_THRESHOLD){
+            if (accelerationMagnitude > motionThreshold){
                 // reset timer
                 System.out.println("Motion Detected: " + accelerationMagnitude);
                 lastMotionTime = System.currentTimeMillis();
@@ -158,6 +155,9 @@ public class AlarmAlertActivity extends AppCompatActivity {
         sharedPref = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
         isMotionMonitoringActive = sharedPref.getBoolean("isMotionMonitoringActive", false);
         showDisableMotionMonitoringButton = sharedPref.getBoolean("showDisableMotionMonitoringButton", false);
+        motionThreshold = sharedPref.getInt("activityMonitoringDuration", 0);
+        System.out.println("threshols value: " + motionThreshold);
+        System.out.println("Monitor Level: " + sharedPref.getInt("activityThresholdMonitoringLevel", -1));
 
         int alarmId = getIntent().getIntExtra("alarmId", -1);
         if (alarmId != -1){ // Making sure alarmId is valid before fetching from DB

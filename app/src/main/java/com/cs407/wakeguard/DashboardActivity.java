@@ -263,7 +263,9 @@ public class DashboardActivity extends AppCompatActivity {
         alarmCountdownHandler.post(alarmCountdownRunnable); // Running the alarm countdown again.
         // Scheduling all active alarms
         rescheduleAllAlarms();
-        setDisableMotionMonitoringButtonVisibility();
+        //setDisableMotionMonitoringButtonVisibility();
+        sharedPref.registerOnSharedPreferenceChangeListener(sharedPrefListener);
+
     }
 
     /**
@@ -277,6 +279,7 @@ public class DashboardActivity extends AppCompatActivity {
         paused (for example, user switching to another app). This minimizes the
         apps resource consumption in the background. */
         alarmCountdownHandler.removeCallbacks(alarmCountdownRunnable);
+        sharedPref.unregisterOnSharedPreferenceChangeListener(sharedPrefListener);
     }
 
     /**

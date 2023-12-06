@@ -98,8 +98,6 @@ public class DashboardActivity extends AppCompatActivity {
     private int activityMonitoringDuration;
 
     private SharedPreferences sharedPref;
-    //Listen for changes in key "showDisableMotionMonitoringButton" to make Disable motion monitoring btn disappear.
-    private SharedPreferences.OnSharedPreferenceChangeListener sharedPrefListener;
 
     private int WEEKS_TO_SCHEDULE_AHEAD = 2;
 
@@ -120,10 +118,6 @@ public class DashboardActivity extends AppCompatActivity {
 
         // Must initialize DB everywhere were we do CRUD operations
         dbHelper = DBHelper.getInstance(this);
-
-        //dbHelper.deleteAllAlarms();
-        //dbHelper.deleteAllRequestCodes();
-        //requestCodeCreator = 1;
 
         // ############### VARIABLE INITIALIZATION GOES HERE #########################
         ConstraintLayout parentLayout = findViewById(R.id.parentLayout);
@@ -213,15 +207,6 @@ public class DashboardActivity extends AppCompatActivity {
             }
         });
 
-        // It's not making the button disappear on its own.
-        sharedPrefListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
-            @Override
-            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, @Nullable String key) {
-                boolean buttonVisibility = sharedPreferences.getBoolean(key, false);
-                disableMotionMonitoringButton.setVisibility(buttonVisibility ? View.VISIBLE : View.GONE);
-            }
-        };
-
         //_______________________________________________________________________________________
 
 
@@ -263,8 +248,7 @@ public class DashboardActivity extends AppCompatActivity {
         alarmCountdownHandler.post(alarmCountdownRunnable); // Running the alarm countdown again.
         // Scheduling all active alarms
         rescheduleAllAlarms();
-        //setDisableMotionMonitoringButtonVisibility();
-        sharedPref.registerOnSharedPreferenceChangeListener(sharedPrefListener);
+        setDisableMotionMonitoringButtonVisibility();
 
     }
 
@@ -279,7 +263,6 @@ public class DashboardActivity extends AppCompatActivity {
         paused (for example, user switching to another app). This minimizes the
         apps resource consumption in the background. */
         alarmCountdownHandler.removeCallbacks(alarmCountdownRunnable);
-        sharedPref.unregisterOnSharedPreferenceChangeListener(sharedPrefListener);
     }
 
     /**
@@ -288,8 +271,8 @@ public class DashboardActivity extends AppCompatActivity {
      */
     public void rescheduleAllAlarms(){
         //dbHelper.deleteAllRequestCodes();
-        int [] reqs = dbHelper.getAllRequestCodes();
-        for (int req: reqs){
+        int [] reqCodes = dbHelper.getAllRequestCodes();
+        for (int req: reqCodes){
             cancelAlarmByRequestCode(req);
             dbHelper.deleteRequestCodeByRequestCode(req);
         }
@@ -322,9 +305,6 @@ public class DashboardActivity extends AppCompatActivity {
             // Use the unique request code for the PendingIntent
             PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this, requestCode,
                     alarmReceiverIntent, PendingIntent.FLAG_IMMUTABLE);
-
-            // Set a single alarm
-            // Set a single, exact alarm
 
             if (alarmManager != null) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {

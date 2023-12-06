@@ -40,17 +40,20 @@ public class AlarmAlertActivity extends AppCompatActivity {
     // The value of this variable comes from SharedPreference
     private boolean isMotionMonitoringActive;
     private static double motionThreshold; // The threshold value for the motion sensor to exceed to reset timer B
-    private static final long TIMER_A_MONITORING_DURATION = 30 * 60 * 1000; // in milliseconds
-    private static final long TIMER_B_FREQUENCY = 20 * 1000; // 1 min
     /*
-    * From experimenting:
-    * STATIONARY: 9.9
-    * LOW: 9.95 // Turning and tossing in bed
-    * MEDIUM: 10.35 // holding the phone while the person is stationary
-    * HIGH: 13.5 // Walking
-    * */
+     * From experimenting:
+     * STATIONARY: 9.9
+     * 0: HIGH: 13.5 // Walking
+     * 1: MEDIUM: 10.35 // holding the phone while the person is stationary
+     * 2: LOW: 9.95 // Turning and tossing in bed
+     * */
+    private static final double [] THRESHOLD_LEVELS = {13.5, 10.35, 9.95};
+    private static long monitoringDuration; // in milliseconds
+    private static long timeUntilReactivatingAlarm;
     private long lastMotionTime;
     private SharedPreferences sharedPref;
+    private SharedPreferences.OnSharedPreferenceChangeListener preferenceChangeListener;
+
     private Handler timer_B_Handler = new Handler();
 
     // Timer B (the [activity monitor duration] (1 mins) minutes timer)
@@ -62,15 +65,15 @@ public class AlarmAlertActivity extends AppCompatActivity {
             showDisableMotionMonitoringButton = sharedPref.getBoolean("showDisableMotionMonitoringButton", false);
             if (showDisableMotionMonitoringButton == false){ // if user stopped the alarm.
                 stopMotionMonitoring();
-            }else if ((currentTime - lastMotionTime) >= TIMER_B_FREQUENCY){ // Checking if [activity monitor duration] minutes have passed since last motion
+            }else if ((currentTime - lastMotionTime) >= timeUntilReactivatingAlarm){ // Checking if [activity monitor duration] minutes have passed since last motion
                 // For now, we'll just do 1 minute
-                System.out.printf("User is sleeping after dismissing alarm. No motion for more than %d seconds. Triggering alarm again.\n", TIMER_B_FREQUENCY/1000);
+                System.out.printf("User is sleeping after dismissing alarm. No motion for more than %d seconds. Triggering alarm again.\n", timeUntilReactivatingAlarm /1000);
                 // Trigger alarm again
                 triggerAlarmAgain();
                 resetMotionTimers();
             }else {
                 // Schedule the next check
-                timer_B_Handler.postDelayed(this, TIMER_B_FREQUENCY);
+                timer_B_Handler.postDelayed(this, timeUntilReactivatingAlarm);
             }
         }
     };
@@ -81,7 +84,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
         @Override
         public void run() {
             // Stop motion monitoring if 30 minutes have passed without it being rest by the resetMotionTimers()
-            System.out.printf("%d seconds passed with constant motion, user is awake, stopping motion monitoring.\n", TIMER_A_MONITORING_DURATION/1000);
+            System.out.printf("%d seconds passed with constant motion, user is awake, stopping motion monitoring.\n", monitoringDuration /1000);
             stopMotionMonitoring();
         }
     };
@@ -155,13 +158,46 @@ public class AlarmAlertActivity extends AppCompatActivity {
         sharedPref = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
         isMotionMonitoringActive = sharedPref.getBoolean("isMotionMonitoringActive", false);
         showDisableMotionMonitoringButton = sharedPref.getBoolean("showDisableMotionMonitoringButton", false);
-        motionThreshold = sharedPref.getInt("activityMonitoringDuration", 0);
-        System.out.println("threshols value: " + motionThreshold);
-        System.out.println("Monitor Level: " + sharedPref.getInt("activityThresholdMonitoringLevel", -1));
+        motionThreshold = THRESHOLD_LEVELS[sharedPref.getInt("activityThresholdMonitoringLevel", 0)];
+        monitoringDuration = sharedPref.getInt("activityMonitoringDuration", 1) * 60 * 1000;
+        timeUntilReactivatingAlarm = sharedPref.getInt("timeUntilReactivateAlarm", 1) * 60 * 1000;
+
+        //monitoringDuration = sharedPref.getInt("activityMonitoringDuration", 1) * 60 * 1000;
+        //timeUntilReactivatingAlarm = sharedPref.getInt("timeUntilReactivateAlarm", 1) * 60 * 1000;
+        // Initialize and register SharedPreferences listener
+        initSharedPreferencesListener();
 
         int alarmId = getIntent().getIntExtra("alarmId", -1);
         if (alarmId != -1){ // Making sure alarmId is valid before fetching from DB
             loadAlarmDetails(alarmId);
+        }
+    }
+
+    private void initSharedPreferencesListener() {
+        preferenceChangeListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+            @Override
+            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+                System.out.println("listening");
+                if ("showDisableMotionMonitoringButton".equals(key)) {
+                    System.out.println("passed");
+                    boolean newValue = sharedPreferences.getBoolean(key, false);
+                    System.out.println("val: " + newValue);
+                    if (newValue == false){
+                        stopMotionMonitoring();
+                    }
+                }
+            }
+        };
+
+        sharedPref.registerOnSharedPreferenceChangeListener(preferenceChangeListener);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Unregister SharedPreferences listener to prevent memory leaks
+        if (sharedPref != null && preferenceChangeListener != null) {
+            sharedPref.unregisterOnSharedPreferenceChangeListener(preferenceChangeListener);
         }
     }
 
@@ -199,6 +235,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
                 dbHelper.toggleAlarm(triggeredAlarm.getId(), false);
             }else { // If alarm is indeed repeating, we're going to remove the request code of the alarm that just went off
                 // If alarm is repeating, get the specific request code for this instance and delete it
+                /*
                 String todayDayString = getTodayDayString();
                 String alarmIdentifier = triggeredAlarm.getTitle() + triggeredAlarm.getTime() + triggeredAlarm.getFormattedTime() + todayDayString;
                 int requestCode = dbHelper.getRequestCode(alarmIdentifier);
@@ -209,6 +246,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
                 }else{
                     System.out.println("ERROR @ AlarmAlertActivity");
                 }
+                */
             }
 
             // Releasing wake lock
@@ -216,7 +254,6 @@ public class AlarmAlertActivity extends AppCompatActivity {
                 AlarmReceiver.wakeLock.release();
             }
 
-        System.out.println("MOTION MONITORING?: " + isMotionMonitoringActive);
             if (triggeredAlarm.isMotionMonitoringOn() && isMotionMonitoringActive == false){
                 System.out.println("STARTING MOTION MONITORING");
                 startMotionMonitoring();
@@ -286,16 +323,16 @@ public class AlarmAlertActivity extends AppCompatActivity {
         setIsMotionMonitoringActive(true);
         sensorManager.registerListener(sensorEventListener, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
         lastMotionTime = System.currentTimeMillis(); // Reset last motion time for Timer B
-        timer_B_Handler.postDelayed(timer_B_Runnable, TIMER_B_FREQUENCY); // Start Timer B
-        timer_A_Handler.postDelayed(timer_A_Runnable, TIMER_A_MONITORING_DURATION); // Start Timer A
+        timer_B_Handler.postDelayed(timer_B_Runnable, timeUntilReactivatingAlarm); // Start Timer B
+        timer_A_Handler.postDelayed(timer_A_Runnable, monitoringDuration); // Start Timer A
     }
 
     private void resetMotionTimers() {
         lastMotionTime = System.currentTimeMillis(); // Reset last motion time for Timer B
         timer_B_Handler.removeCallbacks(timer_B_Runnable);
         timer_A_Handler.removeCallbacks(timer_A_Runnable);
-        timer_B_Handler.postDelayed(timer_B_Runnable, TIMER_B_FREQUENCY); // Restart Timer B
-        timer_A_Handler.postDelayed(timer_A_Runnable, TIMER_A_MONITORING_DURATION); // Restart Timer A
+        timer_B_Handler.postDelayed(timer_B_Runnable, timeUntilReactivatingAlarm); // Restart Timer B
+        timer_A_Handler.postDelayed(timer_A_Runnable, monitoringDuration); // Restart Timer A
     }
 
     private void stopMotionMonitoring() {

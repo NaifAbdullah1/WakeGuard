@@ -218,7 +218,7 @@ public class AlarmCard {
             return newFormat.format(date);
         }catch(Exception e){
             e.printStackTrace();
-            Log.i("D", "ERROR OCCURRED WHILE CONVERTING TIME ######");
+            System.out.println("ERROR OCCURRED WHILE CONVERTING TIME ######");
             return this.time; // Fallback to the original time in case of an error
         }
     }

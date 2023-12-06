@@ -2,6 +2,7 @@ package com.cs407.wakeguard;
 
 import android.content.Context;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -20,6 +21,7 @@ import android.provider.Settings;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -76,6 +78,8 @@ public class DashboardActivity extends AppCompatActivity {
     // The button that looks like a "+" sign
     private AppCompatImageButton addAlarmButton;
 
+    private Button disableMotionMonitoringButton;
+
     // To do CRUD operations on alarms.
     private DBHelper dbHelper;
 
@@ -89,12 +93,17 @@ public class DashboardActivity extends AppCompatActivity {
     private boolean isLowPowerMode;
     private boolean isDoNotDisturb;
     private boolean isMilitaryTimeFormat;
+    private boolean showDisableMotionMonitoringButton;
     private int activityThresholdMonitoringLevel;
     private int activityMonitoringDuration;
 
+    private SharedPreferences sharedPref;
+    //Listen for changes in key "showDisableMotionMonitoringButton" to make Disable motion monitoring btn disappear.
+    private SharedPreferences.OnSharedPreferenceChangeListener sharedPrefListener;
+
     private int WEEKS_TO_SCHEDULE_AHEAD = 2;
 
-    private static int requestCodeCreator = 1;
+    public static int requestCodeCreator = 1;
 
     private final Runnable alarmCountdownRunnable = new Runnable() {
         @Override
@@ -122,6 +131,8 @@ public class DashboardActivity extends AppCompatActivity {
         settingsButton = findViewById(R.id.settingsButton);
         addAlarmButton = findViewById(R.id.addAlarmButton);
         recyclerView = findViewById(R.id.createdAlarmsRecycerView);
+        disableMotionMonitoringButton = findViewById(R.id.disableMotionMonitoringButton);
+
         Clock dashboardClock12 = findViewById(R.id.dashboardClock12);
         Clock dashboardClock24 = findViewById(R.id.dashboardClock24);
 
@@ -134,13 +145,16 @@ public class DashboardActivity extends AppCompatActivity {
         adapter.notifyDataSetChanged();
 
         //Setting Configuration Variables
-        SharedPreferences sharedPref = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
+        sharedPref = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit(); // Use this editor for editing in the onCreate()
         requestCodeCreator = sharedPref.getInt("nextRequestCode", 1);
         isLowPowerMode = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("isLowPowerMode", false);
         isDoNotDisturb = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("isDoNotDisturb", false);
         isMilitaryTimeFormat = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("isMilitaryTimeFormat", false);
         activityThresholdMonitoringLevel = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getInt("activityThresholdMonitoringLevel", 1);
         activityMonitoringDuration = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getInt("activityMonitoringDuration", 0);
+        showDisableMotionMonitoringButton = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("showDisableMotionMonitoringButton", false);
+
             // Set Clock Component
         if(isMilitaryTimeFormat) {
             findViewById(R.id.dashboardClock12).setVisibility(View.INVISIBLE);
@@ -190,6 +204,24 @@ public class DashboardActivity extends AppCompatActivity {
             }
         });
 
+        disableMotionMonitoringButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                editor.putBoolean("showDisableMotionMonitoringButton", false); // false = stop monitoring & hide btn
+                editor.apply();
+                disableMotionMonitoringButton.setVisibility(View.GONE);
+            }
+        });
+
+        // It's not making the button disappear on its own.
+        sharedPrefListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+            @Override
+            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, @Nullable String key) {
+                boolean buttonVisibility = sharedPreferences.getBoolean(key, false);
+                disableMotionMonitoringButton.setVisibility(buttonVisibility ? View.VISIBLE : View.GONE);
+            }
+        };
+
         //_______________________________________________________________________________________
 
 
@@ -231,6 +263,7 @@ public class DashboardActivity extends AppCompatActivity {
         alarmCountdownHandler.post(alarmCountdownRunnable); // Running the alarm countdown again.
         // Scheduling all active alarms
         rescheduleAllAlarms();
+        setDisableMotionMonitoringButtonVisibility();
     }
 
     /**
@@ -262,7 +295,6 @@ public class DashboardActivity extends AppCompatActivity {
             if (alarm.isActive())
                 scheduleAlarm(alarm);
         }
-        dbHelper.printAllRequestCodes();
     }
 
     public void scheduleAlarm(AlarmCard alarmCard){
@@ -282,7 +314,6 @@ public class DashboardActivity extends AppCompatActivity {
 
             // Generate a unique request code
             int requestCode = generateRequestCode();
-            System.out.println("SAVING REQUEST CODE SINGLE ALARM");
             dbHelper.addRequestCode(alarmCard.getTitle()+alarmCard.getTime()+alarmCard.getFormattedTime(), requestCode, "");
 
             // Use the unique request code for the PendingIntent
@@ -738,4 +769,12 @@ public class DashboardActivity extends AppCompatActivity {
         }
     }
 
+    public void setDisableMotionMonitoringButtonVisibility(){
+        boolean makeVisibile = sharedPref.getBoolean("showDisableMotionMonitoringButton", false);
+        if (makeVisibile){
+            disableMotionMonitoringButton.setVisibility(View.VISIBLE);
+        }else{
+            disableMotionMonitoringButton.setVisibility(View.GONE);
+        }
+    }
 }

@@ -35,11 +35,6 @@ public class SettingsActivity extends AppCompatActivity {
         isMilitaryTimeFormat = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("isMilitaryTimeFormat", false);
         activityThresholdMonitoringLevel = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getInt("activityThresholdMonitoringLevel", 0);
         activityMonitoringDuration = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getInt("activityMonitoringDuration", 0);
-        Log.i("isLowPowerMode", "" + isLowPowerMode);
-        Log.i("isDoNotDisturb", "" + isDoNotDisturb);
-        Log.i("isMilitaryTimeFormat", "" + isMilitaryTimeFormat);
-        Log.i("activityThresholdMonitoringLevel", "" + activityThresholdMonitoringLevel);
-        Log.i("activityMonitoringDuration", "" + activityMonitoringDuration);
 
         Switch isLowPowerModeSwitch = findViewById(R.id.lowbatterybutton);
         Switch isDoNotDisturbSwitch = findViewById(R.id.doNotDisturbButton);
@@ -71,7 +66,7 @@ public class SettingsActivity extends AppCompatActivity {
         activity_duration.setOnValueChangedListener(new NumberPicker.OnValueChangeListener() {
             @Override
             public void onValueChange(NumberPicker picker, int oldVal, int newVal) {
-                Log.i("num changed", "" + newVal);
+                System.out.println("num changed " + newVal);
             }
         });
         reset.setOnClickListener(new View.OnClickListener() {

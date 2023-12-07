@@ -7,7 +7,7 @@ Pending tasks:
 UPDATE 12/7: Just made a Pull Request, the alarm is 90% done. 
 The alarm works great, the only remaining items are as follows: 
 
-Items that I will work on: 
+## Items that I will work on: 
 
 ☐ Implement the alarm ring tone. We can either do just some default tone, or we can access he phone's list of ringtones
 
@@ -17,7 +17,7 @@ Items that I will work on:
 
 
 
-Other items that are remaining:
+## Other items that are remaining:
 
 ☐ Low battery alarm switch implementation
 

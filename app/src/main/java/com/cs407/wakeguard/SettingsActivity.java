@@ -50,7 +50,7 @@ public class SettingsActivity extends AppCompatActivity {
         NumberPicker timeUntilReactivateAlarmNumberPicker = findViewById(R.id.wakeCheckIntervalNumberPicker);
         Spinner activityMonitorThreshold=findViewById(R.id.activityMonitorMenu);
         Button reset = findViewById(R.id.resetButton);
-        ArrayAdapter<CharSequence>adapter=ArrayAdapter.createFromResource(this, R.array.monitorThresholds, android.R.layout.simple_spinner_item);
+        ArrayAdapter<CharSequence>adapter=ArrayAdapter.createFromResource(this, R.array.monitorThresholds, android.R.layout.simple_spinner_dropdown_item);
         //Infomation Popup Builder
         AlertDialog.Builder builder = new AlertDialog.Builder(SettingsActivity.this);
 
@@ -59,7 +59,7 @@ public class SettingsActivity extends AppCompatActivity {
         activityMonitoringDurationNumberPicker.setMaxValue(60);
         timeUntilReactivateAlarmNumberPicker.setMinValue(1);
         timeUntilReactivateAlarmNumberPicker.setMaxValue(60);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         activityMonitorThreshold.setAdapter(adapter);
         isLowPowerModeSwitch.setChecked(isLowPowerMode);
         isDoNotDisturbSwitch.setChecked(isDoNotDisturb);

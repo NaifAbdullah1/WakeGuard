@@ -15,6 +15,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
+import android.util.TypedValue;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
@@ -92,7 +93,6 @@ public class AlarmAlertActivity extends AppCompatActivity {
     private void triggerAlarmAgain(){
         // Checking if we still have the triggered alarm saved first
         if (triggeredAlarm != null){
-            System.out.println("Alarm is now appearing.");
 
             // Rescheduling alarm to a past date so that it goes off right away
             scheduleAlarm(triggeredAlarm);
@@ -162,34 +162,43 @@ public class AlarmAlertActivity extends AppCompatActivity {
         monitoringDuration = sharedPref.getInt("activityMonitoringDuration", 1) * 60 * 1000;
         timeUntilReactivatingAlarm = sharedPref.getInt("timeUntilReactivateAlarm", 1) * 60 * 1000;
 
-        //monitoringDuration = sharedPref.getInt("activityMonitoringDuration", 1) * 60 * 1000;
-        //timeUntilReactivatingAlarm = sharedPref.getInt("timeUntilReactivateAlarm", 1) * 60 * 1000;
-        // Initialize and register SharedPreferences listener
-        initSharedPreferencesListener();
+        //monitoringDuration =  1 * 60 * 1000;
+        //timeUntilReactivatingAlarm = 10 * 1000;
 
         int alarmId = getIntent().getIntExtra("alarmId", -1);
         if (alarmId != -1){ // Making sure alarmId is valid before fetching from DB
             loadAlarmDetails(alarmId);
+        }else{
+            System.out.println("ERROR @ AlarmAlertActivity. Alarm not found");
         }
+
+        updateLayoutBasedOnMotionMonitoring();
     }
 
-    private void initSharedPreferencesListener() {
-        preferenceChangeListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
-            @Override
-            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-                System.out.println("listening");
-                if ("showDisableMotionMonitoringButton".equals(key)) {
-                    System.out.println("passed");
-                    boolean newValue = sharedPreferences.getBoolean(key, false);
-                    System.out.println("val: " + newValue);
-                    if (newValue == false){
-                        stopMotionMonitoring();
-                    }
-                }
-            }
-        };
+    private void updateLayoutBasedOnMotionMonitoring(){
+        // Assuming you have a method or a variable to check if motion monitoring is active
+        boolean isMotionMonitoringEnabled = triggeredAlarm.isMotionMonitoringOn();
 
-        sharedPref.registerOnSharedPreferenceChangeListener(preferenceChangeListener);
+        // Get references to your views
+        ImageView wakeGuardLogo = findViewById(R.id.wakeGuardLogo);
+        TextView wakeGuardStatus = findViewById(R.id.wakeGuardStatus);
+        TextView alarmTitleWithWakeGuard = findViewById(R.id.alarmTitleWithWakeGuard);
+        TextView alarmTitleNoWakeGuard = findViewById(R.id.alarmTitleNoWakeGuard);
+
+        if (isMotionMonitoringEnabled) {
+            // If motion monitoring is enabled, show the logo and status, use smaller text for the title
+            wakeGuardLogo.setVisibility(View.VISIBLE);
+            wakeGuardStatus.setVisibility(View.VISIBLE);
+            alarmTitleWithWakeGuard.setVisibility(View.VISIBLE);
+            alarmTitleNoWakeGuard.setVisibility(View.GONE);
+        } else {
+            // If motion monitoring is not enabled, hide the logo and status, center and enlarge the title
+            wakeGuardLogo.setVisibility(View.GONE);
+            wakeGuardStatus.setVisibility(View.GONE);
+            alarmTitleWithWakeGuard.setVisibility(View.GONE);
+            alarmTitleNoWakeGuard.setVisibility(View.VISIBLE);
+            alarmTitleNoWakeGuard.setTextSize(TypedValue.COMPLEX_UNIT_SP, 35); // Example size, adjust as needed
+        }
     }
 
     @Override
@@ -204,7 +213,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
     public void loadAlarmDetails(int alarmId){
         triggeredAlarm = dbHelper.getAlarmById(alarmId);
         if (triggeredAlarm != null){
-            timeText.setText(triggeredAlarm.getFormattedTime());
+            timeText.setText(sharedPref.getBoolean("isMilitaryTimeFormat", false) ? triggeredAlarm.getTime() : triggeredAlarm.get12HrTime() );
             alarmTitleWithWakeGuard.setText(triggeredAlarm.getTitle());
             alarmTitleNoWakeGuard.setText(triggeredAlarm.getTitle());
             if (triggeredAlarm.isMotionMonitoringOn()){
@@ -255,9 +264,8 @@ public class AlarmAlertActivity extends AppCompatActivity {
             }
 
             if (triggeredAlarm.isMotionMonitoringOn() && isMotionMonitoringActive == false){
-                System.out.println("STARTING MOTION MONITORING");
                 startMotionMonitoring();
-            }else if (!showDisableMotionMonitoringButton){ // We may need to compute the value by querying the shared prefs here.
+            }else if (!showDisableMotionMonitoringButton){
                 stopMotionMonitoring();
             }
 
@@ -320,6 +328,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
     }
 
     private void startMotionMonitoring() {
+        System.out.println("STARTING MOTION MONITORING");
         setIsMotionMonitoringActive(true);
         sensorManager.registerListener(sensorEventListener, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
         lastMotionTime = System.currentTimeMillis(); // Reset last motion time for Timer B
@@ -364,7 +373,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
 
         // Generate a unique request code
         int requestCode = generateRequestCode();
-        dbHelper.addRequestCode(alarmCard.getTitle()+alarmCard.getTime()+alarmCard.getFormattedTime()+"ALERT", requestCode, "");
+        dbHelper.addRequestCode(alarmCard.getTitle()+alarmCard.getTime()+alarmCard.get12HrTime()+"ALERT", requestCode, "");
 
         // Use the unique request code for the PendingIntent
         PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this, requestCode,

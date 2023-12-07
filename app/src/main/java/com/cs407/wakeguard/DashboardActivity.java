@@ -2,7 +2,6 @@ package com.cs407.wakeguard;
 
 import android.content.Context;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -18,7 +17,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
@@ -42,18 +40,10 @@ import java.util.concurrent.TimeUnit;
  * Dashboard's clock: https://github.com/arbelkilani/Clock-view
  *
  * NATHAN'S Notes:
- * TODO: 1- We want the alarm cards to adjust the format of the time from the hh:mm a format to
- *  the 24 Hr format depending on the settings. We're waiting on team members to finish
- *  implementing the settings screen
- *
- *  TODO 2: Find a way to make the countdown update every second.
- *  
- *  TODO 4: In alarmAlertActivity, make sure PM/AM is working. Account for 24hr time too.
  *
  *  TODO 3: In alarmAlertActivity, ensure that when wakeguard is disabled, space the elements out well
  *
  * TODO: Ensure alarms work after phone reboot too
- *
  */
 public class DashboardActivity extends AppCompatActivity {
 
@@ -102,7 +92,7 @@ public class DashboardActivity extends AppCompatActivity {
         @Override
         public void run() {
             updateUpcomingAlarmText();
-            alarmCountdownHandler.postDelayed(this, 30000); // Update every 0.5 minute
+            alarmCountdownHandler.postDelayed(this, 10000); // Update every 10 sec
         }
     };
 
@@ -284,7 +274,7 @@ public class DashboardActivity extends AppCompatActivity {
 
             // Generate a unique request code
             int requestCode = generateRequestCode();
-            dbHelper.addRequestCode(alarmCard.getTitle()+alarmCard.getTime()+alarmCard.getFormattedTime(), requestCode, "");
+            dbHelper.addRequestCode(alarmCard.getTitle()+alarmCard.getTime()+alarmCard.get12HrTime(), requestCode, "");
 
             // Use the unique request code for the PendingIntent
             PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this, requestCode,
@@ -322,7 +312,7 @@ public class DashboardActivity extends AppCompatActivity {
                 alarmTime.add(Calendar.WEEK_OF_YEAR, weekOffset);
 
                 int requestCode = generateRequestCode();
-                dbHelper.addRequestCode(alarmCard.getTitle()+alarmCard.getTime()+alarmCard.getFormattedTime(), requestCode, day);
+                dbHelper.addRequestCode(alarmCard.getTitle()+alarmCard.getTime()+alarmCard.get12HrTime(), requestCode, day);
 
                 PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this, requestCode,
                         alarmReceiverIntent, PendingIntent.FLAG_IMMUTABLE);
@@ -434,7 +424,7 @@ public class DashboardActivity extends AppCompatActivity {
         StringBuilder sb = new StringBuilder();
         if (days > 0) sb.append(days + " Days, ");
         if (hours > 0) sb.append(hours + " Hours, ");
-        sb.append(minutes + " Minutes");
+        if (minutes > 0) sb.append(minutes + (minutes == 1 ? " Minute" : " Minutes")); else sb.append("less than a minute");
         return sb.toString();
     }
 

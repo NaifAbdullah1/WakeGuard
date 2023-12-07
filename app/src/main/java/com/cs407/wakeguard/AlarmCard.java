@@ -1,7 +1,5 @@
 package com.cs407.wakeguard;
 
-import android.util.Log;
-
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -210,7 +208,7 @@ public class AlarmCard {
      *
      * @return alarm's time in the format HH:mm a,
      */
-    public String getFormattedTime(){
+    public String get12HrTime(){
         try{
             SimpleDateFormat originalFormat = new SimpleDateFormat("HH:mm");// For parsing the time
             Date date = originalFormat.parse(this.time);

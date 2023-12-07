@@ -75,7 +75,7 @@ public class AlarmEditorActivity extends AppCompatActivity {
 
         // Get 24-hour mode from SharedPreferences. Use it below to set time picker 24 hour mode
         SharedPreferences sp = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
-        Boolean mode24Hr = sp.getBoolean("24hourMode", false);
+        Boolean mode24Hr = sp.getBoolean("isMilitaryTimeFormat", false);
 
         // Initialize components with little setup
         vibrationSwitch = (SwitchCompat) findViewById(R.id.vibrationSwitch);
@@ -423,6 +423,7 @@ public class AlarmEditorActivity extends AppCompatActivity {
             dbHelper.addAlarm(alarmCard);
         }
 
+        Toast.makeText(getApplicationContext(), "Alarm Saved", Toast.LENGTH_SHORT).show();
         // Switching back to the Dashboard Activity. onResume() will update alarm cards container
         finish();
     }

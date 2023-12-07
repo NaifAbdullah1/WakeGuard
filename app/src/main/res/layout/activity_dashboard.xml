@@ -82,4 +82,15 @@
         app:layout_constraintEnd_toStartOf="@+id/addAlarmButton"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/dashboardClock12" />
+
+    <Button
+        android:id="@+id/disableMotionMonitoringButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Disable Motion Monitoring"
+        app:layout_constraintStart_toEndOf="@+id/settingsButton"
+        app:layout_constraintEnd_toStartOf="@+id/addAlarmButton"
+        app:layout_constraintTop_toTopOf="@+id/settingsButton"
+        app:layout_constraintBottom_toBottomOf="@+id/settingsButton" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

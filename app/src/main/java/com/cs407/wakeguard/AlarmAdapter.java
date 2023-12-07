@@ -2,6 +2,7 @@ package com.cs407.wakeguard;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,10 +41,6 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
         this.context = context;
     }
 
-    public void setAlarms(List<AlarmCard> alarmList) {
-        this.alarmList = alarmList;
-    }
-
     @Override
     public AlarmViewHolder onCreateViewHolder(ViewGroup parent, int viewType){
         View itemView = LayoutInflater.from(parent.getContext())
@@ -54,7 +51,9 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.AlarmViewHol
     @Override
     public void onBindViewHolder(AlarmViewHolder holder, int position) {
         AlarmCard alarm = alarmList.get(position);
-        holder.alarmTimeTextView.setText(alarm.getFormattedTime());
+        SharedPreferences sharedPref = context.getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
+        boolean militaryTimeOn = sharedPref.getBoolean("isMilitaryTimeFormat", false);
+        holder.alarmTimeTextView.setText(militaryTimeOn ? alarm.getTime() : alarm.get12HrTime());
         holder.alarmTitleTextView.setText(alarm.getTitle());
         holder.alarmSwitchActive.setChecked(alarm.isActive());
         holder.alarmCheckBox.setVisibility(isSelectionMode ? View.VISIBLE : View.GONE);

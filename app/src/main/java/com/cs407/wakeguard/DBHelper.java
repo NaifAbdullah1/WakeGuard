@@ -283,7 +283,7 @@ public class DBHelper extends SQLiteOpenHelper {
                     alarmList.add(alarmCard);
                 }while (cursor.moveToNext());
             }else{
-                Log.i("D", "ERROR: COLUMN WASN'T FOUND ###############");
+                System.out.println("ERROR: COLUMN WASN'T FOUND ###############");
             }
         }
         cursor.close();
@@ -396,13 +396,13 @@ public class DBHelper extends SQLiteOpenHelper {
                             cursor.getInt(isMotionMonitoringOnIndex) == 1 ? "Yes" : "No",
                             cursor.getInt(isActiveIndex) == 1 ? "Yes" : "No");
 
-                    Log.i("DBHelper", alarmData);
+                    System.out.println(alarmData);
                 } while (cursor.moveToNext());
             } else {
-                Log.i("DBHelper", "ERROR: COLUMN WASN'T FOUND");
+                System.out.println("ERROR: COLUMN WASN'T FOUND");
             }
         } else {
-            Log.i("DBHelper", "No alarms found in the database.");
+            System.out.println("No alarms found in the database.");
         }
         cursor.close();
         db.close();
@@ -426,13 +426,13 @@ public class DBHelper extends SQLiteOpenHelper {
                             cursor.getString(alarmIdentifierIndex),
                             cursor.getInt(requestCodeIndex));
 
-                    Log.i("DBHelper", requestCodeData);
+                    System.out.println(requestCodeData);
                 } while (cursor.moveToNext());
             } else {
-                Log.i("DBHelper", "ERROR: COLUMN WASN'T FOUND");
+                System.out.println("ERROR: COLUMN WASN'T FOUND");
             }
         } else {
-            Log.i("DBHelper", "No request codes found in the database.");
+            System.out.println("No request codes found in the database.");
         }
         cursor.close();
         db.close();

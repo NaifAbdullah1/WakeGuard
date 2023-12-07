@@ -1,7 +1,5 @@
 package com.cs407.wakeguard;
 
-import android.util.Log;
-
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -210,7 +208,7 @@ public class AlarmCard {
      *
      * @return alarm's time in the format HH:mm a,
      */
-    public String getFormattedTime(){
+    public String get12HrTime(){
         try{
             SimpleDateFormat originalFormat = new SimpleDateFormat("HH:mm");// For parsing the time
             Date date = originalFormat.parse(this.time);
@@ -218,7 +216,7 @@ public class AlarmCard {
             return newFormat.format(date);
         }catch(Exception e){
             e.printStackTrace();
-            Log.i("D", "ERROR OCCURRED WHILE CONVERTING TIME ######");
+            System.out.println("ERROR OCCURRED WHILE CONVERTING TIME ######");
             return this.time; // Fallback to the original time in case of an error
         }
     }

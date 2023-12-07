@@ -17,9 +17,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,17 +40,18 @@ import java.util.concurrent.TimeUnit;
  * Dashboard's clock: https://github.com/arbelkilani/Clock-view
  *
  * NATHAN'S Notes:
- * TODO: 1- We want the alarm cards to adjust the format of the time from the hh:mm a format to
- *  the 24 Hr format depending on the settings. We're waiting on team members to finish
- *  implementing the settings screen
- *  
- *  TODO 4: In alarmAlertActivity, make sure PM/AM is working. Account for 24hr time too.
  *
- *  TODO 2: Find a way to make the countdown update every second.
+ * TODO: Implement the alarm ring tone. We can either do just some default tone, or we can access he phone's list of ringtones
  *
- *  TODO 3: In alarmAlertActivity, ensure that when wakeguard is disabled, space the elements out well
+ * TODO: Implement the Vibration switch in alarm Editor, switching off vibration should not make the alarm vibrate the phone.
  *
- * TODO: Ensure alarms work after phone reboot too
+ * TODO: Deprecate the calendar icon in the AlarmEditorActivity. But keep the text to the left of it indicating when the alarm goes off. Center it though
+ *
+ * .......
+ * Pending:
+ * Low battery alarm switch implementation
+ * Follow Do Not Disturb implementation
+ * Notification Chime 1.5 mins before it goes off again
  *
  */
 public class DashboardActivity extends AppCompatActivity {
@@ -76,6 +77,8 @@ public class DashboardActivity extends AppCompatActivity {
     // The button that looks like a "+" sign
     private AppCompatImageButton addAlarmButton;
 
+    private Button disableMotionMonitoringButton;
+
     // To do CRUD operations on alarms.
     private DBHelper dbHelper;
 
@@ -86,21 +89,19 @@ public class DashboardActivity extends AppCompatActivity {
     private final Handler alarmCountdownHandler = new Handler();
 
     //Settings Configuration Variables
-    private boolean isLowPowerMode;
-    private boolean isDoNotDisturb;
     private boolean isMilitaryTimeFormat;
-    private int activityThresholdMonitoringLevel;
-    private int activityMonitoringDuration;
+
+    private SharedPreferences sharedPref;
 
     private int WEEKS_TO_SCHEDULE_AHEAD = 2;
 
-    private static int requestCodeCreator = 1;
+    public static int requestCodeCreator = 1;
 
     private final Runnable alarmCountdownRunnable = new Runnable() {
         @Override
         public void run() {
             updateUpcomingAlarmText();
-            alarmCountdownHandler.postDelayed(this, 30000); // Update every 0.5 minute
+            alarmCountdownHandler.postDelayed(this, 10000); // Update every 10 sec
         }
     };
 
@@ -112,16 +113,14 @@ public class DashboardActivity extends AppCompatActivity {
         // Must initialize DB everywhere were we do CRUD operations
         dbHelper = DBHelper.getInstance(this);
 
-        //dbHelper.deleteAllAlarms();
-        //dbHelper.deleteAllRequestCodes();
-        //requestCodeCreator = 1;
-
         // ############### VARIABLE INITIALIZATION GOES HERE #########################
         ConstraintLayout parentLayout = findViewById(R.id.parentLayout);
         upcomingAlarmsTextView = findViewById(R.id.upcomingAlarmsTextView);
         settingsButton = findViewById(R.id.settingsButton);
         addAlarmButton = findViewById(R.id.addAlarmButton);
         recyclerView = findViewById(R.id.createdAlarmsRecycerView);
+        disableMotionMonitoringButton = findViewById(R.id.disableMotionMonitoringButton);
+
         Clock dashboardClock12 = findViewById(R.id.dashboardClock12);
         Clock dashboardClock24 = findViewById(R.id.dashboardClock24);
 
@@ -134,19 +133,10 @@ public class DashboardActivity extends AppCompatActivity {
         adapter.notifyDataSetChanged();
 
         //Setting Configuration Variables
-        SharedPreferences sharedPref = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
+        sharedPref = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit(); // Use this editor for editing in the onCreate()
         requestCodeCreator = sharedPref.getInt("nextRequestCode", 1);
-        isLowPowerMode = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("isLowPowerMode", false);
-        isDoNotDisturb = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("isDoNotDisturb", false);
-        isMilitaryTimeFormat = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getBoolean("isMilitaryTimeFormat", false);
-        activityThresholdMonitoringLevel = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getInt("activityThresholdMonitoringLevel", 1);
-        activityMonitoringDuration = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE).getInt("activityMonitoringDuration", 0);
-            // Set Clock Component
-        if(isMilitaryTimeFormat) {
-            findViewById(R.id.dashboardClock12).setVisibility(View.INVISIBLE);
-        } else {
-            findViewById(R.id.dashboardClock24).setVisibility(View.INVISIBLE);
-        }
+
         //_______________________________________________________________________________________
 
 
@@ -178,15 +168,17 @@ public class DashboardActivity extends AppCompatActivity {
         settingsButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
-
-                sharedPref.edit().putBoolean("isLowPowerMode", isLowPowerMode).apply();
-                sharedPref.edit().putBoolean("isDoNotDisturb", isDoNotDisturb).apply();
-                sharedPref.edit().putBoolean("isMilitaryTimeFormat", isMilitaryTimeFormat).apply();
-                sharedPref.edit().putInt("activityMonitoringDuration", activityMonitoringDuration).apply();
-                sharedPref.edit().putInt("activityThresholdMonitoringLevel", activityThresholdMonitoringLevel).apply();
-
                 Intent settingsIntent = new Intent(DashboardActivity.this, SettingsActivity.class);
                 startActivity(settingsIntent);
+            }
+        });
+
+        disableMotionMonitoringButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                editor.putBoolean("showDisableMotionMonitoringButton", false); // false = stop monitoring & hide btn
+                editor.apply();
+                disableMotionMonitoringButton.setVisibility(View.GONE);
             }
         });
 
@@ -231,6 +223,16 @@ public class DashboardActivity extends AppCompatActivity {
         alarmCountdownHandler.post(alarmCountdownRunnable); // Running the alarm countdown again.
         // Scheduling all active alarms
         rescheduleAllAlarms();
+        setDisableMotionMonitoringButtonVisibility();
+        // Set Clock Component
+        if(sharedPref.getBoolean("isMilitaryTimeFormat", false)) {
+            findViewById(R.id.dashboardClock12).setVisibility(View.INVISIBLE);
+            findViewById(R.id.dashboardClock24).setVisibility(View.VISIBLE);
+        } else {
+            findViewById(R.id.dashboardClock12).setVisibility(View.VISIBLE);
+            findViewById(R.id.dashboardClock24).setVisibility(View.INVISIBLE);
+        }
+
     }
 
     /**
@@ -252,8 +254,8 @@ public class DashboardActivity extends AppCompatActivity {
      */
     public void rescheduleAllAlarms(){
         //dbHelper.deleteAllRequestCodes();
-        int [] reqs = dbHelper.getAllRequestCodes();
-        for (int req: reqs){
+        int [] reqCodes = dbHelper.getAllRequestCodes();
+        for (int req: reqCodes){
             cancelAlarmByRequestCode(req);
             dbHelper.deleteRequestCodeByRequestCode(req);
         }
@@ -262,7 +264,6 @@ public class DashboardActivity extends AppCompatActivity {
             if (alarm.isActive())
                 scheduleAlarm(alarm);
         }
-        dbHelper.printAllRequestCodes();
     }
 
     public void scheduleAlarm(AlarmCard alarmCard){
@@ -282,15 +283,11 @@ public class DashboardActivity extends AppCompatActivity {
 
             // Generate a unique request code
             int requestCode = generateRequestCode();
-            System.out.println("SAVING REQUEST CODE SINGLE ALARM");
-            dbHelper.addRequestCode(alarmCard.getTitle()+alarmCard.getTime()+alarmCard.getFormattedTime(), requestCode, "");
+            dbHelper.addRequestCode(alarmCard.getTitle()+alarmCard.getTime()+alarmCard.get12HrTime(), requestCode, "");
 
             // Use the unique request code for the PendingIntent
             PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this, requestCode,
                     alarmReceiverIntent, PendingIntent.FLAG_IMMUTABLE);
-
-            // Set a single alarm
-            // Set a single, exact alarm
 
             if (alarmManager != null) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -324,7 +321,7 @@ public class DashboardActivity extends AppCompatActivity {
                 alarmTime.add(Calendar.WEEK_OF_YEAR, weekOffset);
 
                 int requestCode = generateRequestCode();
-                dbHelper.addRequestCode(alarmCard.getTitle()+alarmCard.getTime()+alarmCard.getFormattedTime(), requestCode, day);
+                dbHelper.addRequestCode(alarmCard.getTitle()+alarmCard.getTime()+alarmCard.get12HrTime(), requestCode, day);
 
                 PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this, requestCode,
                         alarmReceiverIntent, PendingIntent.FLAG_IMMUTABLE);
@@ -436,7 +433,7 @@ public class DashboardActivity extends AppCompatActivity {
         StringBuilder sb = new StringBuilder();
         if (days > 0) sb.append(days + " Days, ");
         if (hours > 0) sb.append(hours + " Hours, ");
-        sb.append(minutes + " Minutes");
+        if (minutes > 0) sb.append(minutes + (minutes == 1 ? " Minute" : " Minutes")); else sb.append("less than a minute");
         return sb.toString();
     }
 
@@ -639,15 +636,6 @@ public class DashboardActivity extends AppCompatActivity {
         settingsButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
-                SharedPreferences sharedPref = getSharedPreferences("com.cs407.wakeguard",
-                        Context.MODE_PRIVATE);
-                SharedPreferences.Editor editor = sharedPref.edit();
-                sharedPref.edit().putBoolean("isLowPowerMode", isLowPowerMode).apply();
-                sharedPref.edit().putBoolean("isDoNotDisturb", isDoNotDisturb).apply();
-                sharedPref.edit().putBoolean("isMilitaryTimeFormat", isMilitaryTimeFormat).apply();
-                sharedPref.edit().putInt("activityMonitoringDuration", activityMonitoringDuration).apply();
-                sharedPref.edit().putInt("activityThresholdMonitoringLevel", activityThresholdMonitoringLevel).apply();
-
                 Intent settingsIntent = new Intent(DashboardActivity.this, SettingsActivity.class);
                 startActivity(settingsIntent);
             }
@@ -726,6 +714,7 @@ public class DashboardActivity extends AppCompatActivity {
             dbHelper.toggleAlarm(currentAlarm.getId(), false);
         }
         adapter.notifyDataSetChanged();
+        Toast.makeText(getApplicationContext(), "All alarms Silenced", Toast.LENGTH_SHORT).show();
         rescheduleAllAlarms();
     }
 
@@ -738,4 +727,12 @@ public class DashboardActivity extends AppCompatActivity {
         }
     }
 
+    public void setDisableMotionMonitoringButtonVisibility(){
+        boolean makeVisibile = sharedPref.getBoolean("showDisableMotionMonitoringButton", false);
+        if (makeVisibile){
+            disableMotionMonitoringButton.setVisibility(View.VISIBLE);
+        }else{
+            disableMotionMonitoringButton.setVisibility(View.GONE);
+        }
+    }
 }

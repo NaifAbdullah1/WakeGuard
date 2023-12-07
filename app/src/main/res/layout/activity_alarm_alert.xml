@@ -38,6 +38,12 @@
         android:textStyle="bold"
         android:layout_marginTop="25dp"/>
 
+    <View
+        android:id="@+id/topSpacer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
     <TextView
         android:id="@+id/alarmTitleNoWakeGuard"
         android:layout_width="match_parent"
@@ -58,10 +64,17 @@
 
     <Button
         android:id="@+id/stopAlarmButton"
-        android:layout_width="100dp"
-        android:layout_height="wrap_content"
+        android:layout_width="150dp"
+        android:layout_height="60dp"
         android:text="Stop"
-        android:layout_gravity="center_vertical|center_horizontal"
+        android:textSize="22dp"
+        android:layout_gravity="center"
         android:layout_marginTop="20dp"
         android:onClick="onStopClick"/>
+
+    <View
+        android:id="@+id/bottomSpacer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 </LinearLayout>

@@ -4,6 +4,16 @@
     <string name="low_battery_title">Low Power Mode</string>
     <string name="do_not_disturb_message">Alarms will follow the phones Do not Disturb setting, this may cause alarms not to go off.</string>
     <string name="do_not_disturb_title">Do Not Disturb</string>
+    <string name="activity_threshold_title">Activity Threshold</string>
+    <string name="activity_threshold_message">How aggressive the user\'s movement should be to
+        prevent the alarm from triggering. Below are examples of each level: \n\nHigh = Walking
+        \nMedium = Phone is held by hand but user is stationary.
+        \nLow = Phone is on bed and user is tossing and turning.
+    </string>
+    <string name="activity_monitor_duration_title">Activity Monitor Duration</string>
+    <string name="activity_monitor_duration_message">The overall length of the time in which the phone has to detect intermittent motion for it to determine if the user won\'t go back to sleep and thus disable motion monitoring</string>
+    <string name="no_motion_time_limit_title">No-motion Time Limit</string>
+    <string name="no_motion_time_limit_message">The length of time wherein if the phone does not pickup any user movement, the alarm will go off again.</string>
     <string-array name="monitorThresholds">
         <item>High</item>
         <item>Medium</item>

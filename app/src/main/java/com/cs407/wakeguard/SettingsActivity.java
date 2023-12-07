@@ -2,8 +2,10 @@ package com.cs407.wakeguard;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.media.Image;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -45,6 +47,9 @@ public class SettingsActivity extends AppCompatActivity {
         Switch isDoNotDisturbSwitch = findViewById(R.id.doNotDisturbButton);
         Switch isMilitaryTimeFormatSwitch = findViewById(R.id.militaryTimeButton);
         ImageButton infoDoNotDisturb = findViewById(R.id.doNotDistubInfo);
+        ImageButton infoActivityThreshold = findViewById(R.id.activityThresholdInfo);
+        ImageButton infoActivityMonitorDuration = findViewById(R.id.activityMonitorDurationInfo);
+        ImageButton infoNoMotionTimeLimit = findViewById(R.id.NoMotionTimeLimitInfo);
         ImageButton backButtonSettings = findViewById(R.id.backSettings);
         NumberPicker activityMonitoringDurationNumberPicker = findViewById(R.id.minuteNumberPicker);
         NumberPicker timeUntilReactivateAlarmNumberPicker = findViewById(R.id.wakeCheckIntervalNumberPicker);
@@ -122,11 +127,18 @@ public class SettingsActivity extends AppCompatActivity {
             @Override
             public void onClick(View v){
                 if (activityMonitoringDuration <= timeUntilReactivateAlarm){
-                    builder.setMessage(("The length of \"Activity Monitor Duration\" must be greater \n " +
+                    builder.setIcon(R.drawable.ic_warning)
+                            .setMessage(("The length of \"Activity Monitor Duration\" must be greater \n " +
                             "than the length of \"Time Until Re-activating Alarm\""))
-                            .setTitle("Adjust Values");
+                            .setTitle("Adjust Values")
+                            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    // User clicked OK button
+                                }
+                            });
 
                     AlertDialog valueError = builder.create();
+
                     valueError.show();
                 }else{
                     Toast.makeText(getApplicationContext(), "Settings Saved", Toast.LENGTH_SHORT).show();
@@ -143,6 +155,36 @@ public class SettingsActivity extends AppCompatActivity {
 
                 AlertDialog dnd_info = builder.create();
                 dnd_info.show();
+            }
+        });
+        infoActivityThreshold.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                builder.setMessage(R.string.activity_threshold_message)
+                        .setTitle(R.string.activity_threshold_title);
+
+                AlertDialog threshold_info = builder.create();
+                threshold_info.show();
+            }
+        });
+        infoActivityMonitorDuration.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                builder.setMessage(R.string.activity_monitor_duration_message)
+                        .setTitle(R.string.activity_monitor_duration_title);
+
+                AlertDialog activity_monitor_info = builder.create();
+                activity_monitor_info.show();
+            }
+        });
+        infoNoMotionTimeLimit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                builder.setMessage(R.string.no_motion_time_limit_message)
+                        .setTitle(R.string.no_motion_time_limit_title);
+
+                AlertDialog no_motion_time_limit_info = builder.create();
+                no_motion_time_limit_info.show();
             }
         });
         infoLowBattery.setOnClickListener(new View.OnClickListener(){

@@ -41,9 +41,6 @@ import java.util.concurrent.TimeUnit;
  *
  * NATHAN'S Notes:
  *
- *  TODO 3: In alarmAlertActivity, ensure that when wakeguard is disabled, space the elements out well
- *
- * TODO: Ensure alarms work after phone reboot too
  */
 public class DashboardActivity extends AppCompatActivity {
 

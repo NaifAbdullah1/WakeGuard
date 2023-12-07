@@ -175,31 +175,39 @@ public class AlarmAlertActivity extends AppCompatActivity {
         updateLayoutBasedOnMotionMonitoring();
     }
 
-    private void updateLayoutBasedOnMotionMonitoring(){
-        // Assuming you have a method or a variable to check if motion monitoring is active
+    private void updateLayoutBasedOnMotionMonitoring() {
         boolean isMotionMonitoringEnabled = triggeredAlarm.isMotionMonitoringOn();
 
-        // Get references to your views
+        // Get references to views
         ImageView wakeGuardLogo = findViewById(R.id.wakeGuardLogo);
         TextView wakeGuardStatus = findViewById(R.id.wakeGuardStatus);
         TextView alarmTitleWithWakeGuard = findViewById(R.id.alarmTitleWithWakeGuard);
         TextView alarmTitleNoWakeGuard = findViewById(R.id.alarmTitleNoWakeGuard);
+        View topSpacer = findViewById(R.id.topSpacer);
+        View bottomSpacer = findViewById(R.id.bottomSpacer);
 
         if (isMotionMonitoringEnabled) {
-            // If motion monitoring is enabled, show the logo and status, use smaller text for the title
+            // Motion monitoring enabled state
             wakeGuardLogo.setVisibility(View.VISIBLE);
             wakeGuardStatus.setVisibility(View.VISIBLE);
             alarmTitleWithWakeGuard.setVisibility(View.VISIBLE);
             alarmTitleNoWakeGuard.setVisibility(View.GONE);
+            topSpacer.setVisibility(View.GONE);
+            bottomSpacer.setVisibility(View.GONE);
         } else {
-            // If motion monitoring is not enabled, hide the logo and status, center and enlarge the title
+            // Motion monitoring disabled state
             wakeGuardLogo.setVisibility(View.GONE);
             wakeGuardStatus.setVisibility(View.GONE);
             alarmTitleWithWakeGuard.setVisibility(View.GONE);
             alarmTitleNoWakeGuard.setVisibility(View.VISIBLE);
-            alarmTitleNoWakeGuard.setTextSize(TypedValue.COMPLEX_UNIT_SP, 35); // Example size, adjust as needed
+            alarmTitleNoWakeGuard.setTextSize(TypedValue.COMPLEX_UNIT_SP, 35);
+            topSpacer.setVisibility(View.VISIBLE);
+            bottomSpacer.setVisibility(View.VISIBLE);
         }
     }
+
+
+
 
     @Override
     protected void onDestroy() {

@@ -423,6 +423,7 @@ public class AlarmEditorActivity extends AppCompatActivity {
             dbHelper.addAlarm(alarmCard);
         }
 
+        Toast.makeText(getApplicationContext(), "Alarm Saved", Toast.LENGTH_SHORT).show();
         // Switching back to the Dashboard Activity. onResume() will update alarm cards container
         finish();
     }

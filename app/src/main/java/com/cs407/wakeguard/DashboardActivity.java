@@ -41,6 +41,18 @@ import java.util.concurrent.TimeUnit;
  *
  * NATHAN'S Notes:
  *
+ * TODO: Implement the alarm ring tone. We can either do just some default tone, or we can access he phone's list of ringtones
+ *
+ * TODO: Implement the Vibration switch in alarm Editor, switching off vibration should not make the alarm vibrate the phone.
+ *
+ * TODO: Deprecate the calendar icon in the AlarmEditorActivity. But keep the text to the left of it indicating when the alarm goes off. Center it though
+ *
+ * .......
+ * Pending:
+ * Low battery alarm switch implementation
+ * Follow Do Not Disturb implementation
+ * Notification Chime 1.5 mins before it goes off again
+ *
  */
 public class DashboardActivity extends AppCompatActivity {
 
@@ -702,6 +714,7 @@ public class DashboardActivity extends AppCompatActivity {
             dbHelper.toggleAlarm(currentAlarm.getId(), false);
         }
         adapter.notifyDataSetChanged();
+        Toast.makeText(getApplicationContext(), "All alarms Silenced", Toast.LENGTH_SHORT).show();
         rescheduleAllAlarms();
     }
 

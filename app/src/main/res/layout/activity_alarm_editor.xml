@@ -30,10 +30,12 @@
 
             <TextView
                 android:id="@+id/dateText"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
-                android:gravity="start|center_vertical"
+                android:textAlignment="center"
+                android:textSize="18sp"
+                android:paddingBottom="15dp"
                 app:layout_constraintBottom_toBottomOf="@+id/datePickBtn"
                 app:layout_constraintEnd_toStartOf="@+id/datePickBtn"
                 app:layout_constraintStart_toStartOf="parent"
@@ -48,6 +50,7 @@
                 android:onClick="openDatePicker"
                 android:padding="5dp"
                 android:src="@drawable/ic_calendar"
+                android:visibility="gone"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/timePicker" />
 

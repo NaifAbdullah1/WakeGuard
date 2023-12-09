@@ -156,7 +156,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
         // Makes the WakeGuard logo in this activity rounded (to make it look smoother)
         wakeGuardLogo = findViewById(R.id.wakeGuardLogo);
         wakeGuardLogo.setClipToOutline(true);
-        stopButton.findViewById(R.id.stopAlarmButton);
+        stopButton = findViewById(R.id.stopAlarmButton);
 
         sharedPref = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
         isMotionMonitoringActive = sharedPref.getBoolean("isMotionMonitoringActive", false);

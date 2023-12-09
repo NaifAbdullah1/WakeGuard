@@ -31,7 +31,7 @@ public class AlarmReceiver extends BroadcastReceiver {
         SharedPreferences sharedPref = context.getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
         boolean isDoNotDisturb = sharedPref.getBoolean("isDoNotDisturb", false); // get Follow Do Not Disturb status
         AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE); // get system silent mode status
-        if (isDoNotDisturb && am.getRingerMode() == AudioManager.RINGER_MODE_SILENT) {
+        if (isDoNotDisturb && (am.getRingerMode() == AudioManager.RINGER_MODE_SILENT || am.getRingerMode() == AudioManager.RINGER_MODE_VIBRATE)) {
             return;
         }
 

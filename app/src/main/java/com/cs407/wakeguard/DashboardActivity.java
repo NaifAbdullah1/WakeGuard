@@ -1,5 +1,6 @@
 package com.cs407.wakeguard;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -12,7 +13,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -136,6 +139,10 @@ public class DashboardActivity extends AppCompatActivity {
         sharedPref = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit(); // Use this editor for editing in the onCreate()
         requestCodeCreator = sharedPref.getInt("nextRequestCode", 1);
+
+        // Start the BatteryLevelService
+        Intent batteryMonitorIntent = new Intent(this, BatteryLevelService.class);
+        startService(batteryMonitorIntent);
 
         //_______________________________________________________________________________________
 

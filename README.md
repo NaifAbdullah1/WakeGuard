@@ -13,8 +13,6 @@ The alarm works great, the only remaining items are as follows:
 
 ☐ Implement the Vibration switch in alarm Editor, switching off vibration should not make the alarm vibrate the phone.
 
-☐ Deprecate the calendar icon in the AlarmEditorActivity. But keep the text to the left of it indicating when the alarm goes off. Center it though
-
 
 
 ## Other items that are remaining:

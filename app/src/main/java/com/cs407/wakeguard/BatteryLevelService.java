@@ -24,9 +24,9 @@ public class BatteryLevelService extends Service {
                 int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
                 int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
                 float batteryPct = level * 100 / (float)scale;
-                if (batteryPct <= 69) {
+                if (batteryPct <= 10) {
                     // Schedule Alarm
-                    AlarmCard warningAlarm = new AlarmCard("WARNING!", "", "Battery Is Less Than 69%",
+                    AlarmCard warningAlarm = new AlarmCard("Low Battery!", "", "Battery Is Less Than 10%",
                             "Default", true, false, true);
                     scheduleAlarm(warningAlarm);
                 }
@@ -60,7 +60,7 @@ public class BatteryLevelService extends Service {
 
         // Generate a unique request code
         int requestCode = generateRequestCode();
-        dbHelper.addRequestCode(alarmCard.getTitle()+alarmCard.getTime()+alarmCard.get12HrTime()+"ALERT", requestCode, "");
+        dbHelper.addRequestCode("LOW BATTERY ALERT", requestCode, "");
 
         // Use the unique request code for the PendingIntent
         PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(this, requestCode,

@@ -18,6 +18,7 @@ import android.provider.Settings;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -32,6 +33,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
     private TextView wakeGuardStatus;
     private TextView alarmTitleNoWakeGuard;
     private TextView alarmTitleWithWakeGuard;
+    private Button stopButton;
     private AlarmCard triggeredAlarm;
     // If the user clicked the "Disable Motion Monitoring" Btn, this will be true.
     private boolean showDisableMotionMonitoringButton;
@@ -154,6 +156,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
         // Makes the WakeGuard logo in this activity rounded (to make it look smoother)
         wakeGuardLogo = findViewById(R.id.wakeGuardLogo);
         wakeGuardLogo.setClipToOutline(true);
+        stopButton.findViewById(R.id.stopAlarmButton);
 
         sharedPref = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
         isMotionMonitoringActive = sharedPref.getBoolean("isMotionMonitoringActive", false);
@@ -221,7 +224,12 @@ public class AlarmAlertActivity extends AppCompatActivity {
     public void loadAlarmDetails(int alarmId){
         triggeredAlarm = dbHelper.getAlarmById(alarmId);
         if (triggeredAlarm != null){
-            timeText.setText(sharedPref.getBoolean("isMilitaryTimeFormat", false) ? triggeredAlarm.getTime() : triggeredAlarm.get12HrTime() );
+            if (triggeredAlarm.getTime().equals("Low Battery!")) {
+                timeText.setText(triggeredAlarm.getTime());
+                stopButton.setText("Dismiss");
+            } else {
+                timeText.setText(sharedPref.getBoolean("isMilitaryTimeFormat", false) ? triggeredAlarm.getTime() : triggeredAlarm.get12HrTime());
+            }
             alarmTitleWithWakeGuard.setText(triggeredAlarm.getTitle());
             alarmTitleNoWakeGuard.setText(triggeredAlarm.getTitle());
             if (triggeredAlarm.isMotionMonitoringOn()){

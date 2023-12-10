@@ -55,12 +55,15 @@ public class AlarmService extends Service {
         // Start service in the foreground
         startForeground(NOTIFICATION_ID, alarmNotification);
 
-        // Example vibration pattern: Vibrate for 500 milliseconds, pause for 1000 milliseconds, then repeat.
-        long[] pattern = {0, 500, 1000};
+        boolean vibrationOn = intent.getBooleanExtra("vibrationOn", false);
 
-        // The -1 here means to vibrate once, as it represents the index to stop the pattern.
-        // To repeat indefinitely, you can pass '0' instead.
-        vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1));
+        if (vibrationOn) {
+            // Vibration pattern: 2 seconds on, 1 second off, repeat
+            long[] pattern = {0, 2000, 1000}; // Start immediately, vibrate for 2s, pause for 1s
+
+            // Repeat the pattern at index 1 (0 is the delay before starting)
+            vibrator.vibrate(VibrationEffect.createWaveform(pattern, 1));
+        }
 
         //TODO: Handle other alarm functionalities like playing a tone.
 

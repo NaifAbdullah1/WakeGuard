@@ -46,16 +46,10 @@ import java.util.concurrent.TimeUnit;
  *
  * TODO: Implement the alarm ring tone. We can either do just some default tone, or we can access he phone's list of ringtones
  *
- * TODO: Implement the Vibration switch in alarm Editor, switching off vibration should not make the alarm vibrate the phone.
- *
- * TODO: Deprecate the calendar icon in the AlarmEditorActivity. But keep the text to the left of it indicating when the alarm goes off. Center it though
- *
+ * TODO: Once james is done with alarm, we'll integrate it with our code.
  * .......
  * Pending:
- * Low battery alarm switch implementation
- * Follow Do Not Disturb implementation
  * Notification Chime 1.5 mins before it goes off again
- *
  */
 public class DashboardActivity extends AppCompatActivity {
 
@@ -278,6 +272,8 @@ public class DashboardActivity extends AppCompatActivity {
         // This intent is sent to AlarmReceiver.java with the alarm's ID as an extra
         Intent alarmReceiverIntent = new Intent(this, AlarmReceiver.class);
         alarmReceiverIntent.putExtra("alarmId", alarmCard.getId());
+        alarmReceiverIntent.putExtra("vibrationOn", alarmCard.isVibrationOn());
+
 
         // Check if the alarm is repeating
         if (!alarmCard.getRepeatingDays().equals("")) {

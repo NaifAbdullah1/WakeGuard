@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.VibrationEffect;
@@ -26,6 +27,7 @@ public class AlarmService extends Service {
     private Vibrator vibrator;
     private static final int NOTIFICATION_ID = 1;
     private static final String CHANNEL_ID = "alarm_service_channel";
+    private MediaPlayer mediaPlayer; // This is what plays the alarm tone
 
 
     @Override
@@ -55,14 +57,25 @@ public class AlarmService extends Service {
         // Start service in the foreground
         startForeground(NOTIFICATION_ID, alarmNotification);
 
-        // Example vibration pattern: Vibrate for 500 milliseconds, pause for 1000 milliseconds, then repeat.
-        long[] pattern = {0, 500, 1000};
+        boolean vibrationOn = intent.getBooleanExtra("vibrationOn", false);
 
-        // The -1 here means to vibrate once, as it represents the index to stop the pattern.
-        // To repeat indefinitely, you can pass '0' instead.
-        vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1));
+        if (vibrationOn) {
+            // Vibration pattern: 2 seconds on, 1 second off, repeat
+            long[] pattern = {0, 2000, 1000}; // Start immediately, vibrate for 2s, pause for 1s
 
-        //TODO: Handle other alarm functionalities like playing a tone.
+            // Repeat the pattern at index 1 (0 is the delay before starting)
+            vibrator.vibrate(VibrationEffect.createWaveform(pattern, 1));
+        }
+
+        String alarmToneName = intent.getStringExtra("alarmToneName");
+
+        if (alarmToneName.equals("Default")){
+            // Initializing media player and playing alarm sound
+            // Use intents to get the name of the sound file such that if it's "none", don't play the sound
+            mediaPlayer = MediaPlayer.create(this, R.raw.default_alarm_tone);
+            mediaPlayer.setLooping(true); // To loop the alarm tone sound instead of playing it once
+            mediaPlayer.start();
+        }
 
         // Return START_NOT_STICKY or START_REDELIVER_INTENT as needed
         return START_NOT_STICKY;
@@ -89,6 +102,10 @@ public class AlarmService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        if (mediaPlayer != null) {
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
         vibrator.cancel(); // Stop vibration when service is destroyed
     }
 

@@ -222,9 +222,6 @@ public class AlarmAlertActivity extends AppCompatActivity {
         }
     }
 
-
-
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -267,6 +264,9 @@ public class AlarmAlertActivity extends AppCompatActivity {
      */
     public void onStopClick(View view) {
         /*If the alarm is non-repeating, then toggle it off. Otherwise, just return to the dashboard. */
+        // Stop the AlarmService
+        Intent alarmServiceIntent = new Intent(this, AlarmService.class);
+        stopService(alarmServiceIntent);
             boolean isAlarmRepeating = !triggeredAlarm.getRepeatingDays().equals("");
             if (!isAlarmRepeating){ // If alarm is not repeating
                 triggeredAlarm.setActive(false);
@@ -392,11 +392,13 @@ public class AlarmAlertActivity extends AppCompatActivity {
     }
 
     //--- Copied from DashboardActivity.java
-    private void scheduleAlarm (AlarmCard alarmCard){
+    private void scheduleAlarm(AlarmCard alarmCard){
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         // This intent is sent to AlarmReceiver.java with the alarm's ID as an extra
         Intent alarmReceiverIntent = new Intent(this, AlarmReceiver.class);
         alarmReceiverIntent.putExtra("alarmId", alarmCard.getId());
+        alarmReceiverIntent.putExtra("vibrationOn", alarmCard.isVibrationOn());
+        alarmReceiverIntent.putExtra("alarmToneName", alarmCard.getAlarmTone());
 
         long immediateAlarmTime = System.currentTimeMillis();
 

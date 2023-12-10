@@ -46,13 +46,16 @@ public class AlarmReceiver extends BroadcastReceiver {
         // Receving the alarmReceiverIntent from DashboardActivity's scheduleAlarm() method
 
         int alarmId = intent.getIntExtra("alarmId", -1);
-
+        boolean vibrationOn = intent.getBooleanExtra("vibrationOn", false);
+        String alarmToneName = intent.getStringExtra("alarmToneName");
         // Taking the id from alarmReceiverIntent and putting it in alarmAlertActivityIntent
         alarmAlertActivityIntent.putExtra("alarmId", alarmId); // Passing alarm Id to AlarmAlertActivity
         context.startActivity(alarmAlertActivityIntent);
 
         // Starting the AlarmService to play the alarm tone
         Intent alarmServiceIntent = new Intent(context, AlarmService.class);
+        alarmServiceIntent.putExtra("vibrationOn", vibrationOn);
+        alarmServiceIntent.putExtra("alarmToneName", alarmToneName);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             context.startForegroundService(alarmServiceIntent);
         else

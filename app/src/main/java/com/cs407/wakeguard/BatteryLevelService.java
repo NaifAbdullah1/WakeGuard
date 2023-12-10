@@ -61,6 +61,8 @@ public class BatteryLevelService extends Service {
         // This intent is sent to AlarmReceiver.java with the alarm's ID as an extra
         Intent alarmReceiverIntent = new Intent(this, AlarmReceiver.class);
         alarmReceiverIntent.putExtra("alarmId", alarmCard.getId());
+        alarmReceiverIntent.putExtra("vibrationOn", alarmCard.isVibrationOn());
+        alarmReceiverIntent.putExtra("alarmToneName", alarmCard.getAlarmTone());
 
         long immediateAlarmTime = System.currentTimeMillis();
 

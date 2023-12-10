@@ -1,6 +1,5 @@
 package com.cs407.wakeguard;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,9 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -38,24 +35,19 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 
-
 /**
  * Dashboard's clock: https://github.com/arbelkilani/Clock-view
  *
  * NATHAN'S Notes:
  *
- * TODO: Implement the alarm ring tone. We can either do just some default tone, or we can access he phone's list of ringtones
+ * TODO: Once james is done with alarm, we'll integrate it with our code.
  *
- * TODO: Implement the Vibration switch in alarm Editor, switching off vibration should not make the alarm vibrate the phone.
+ * TODO: If time allows, implement the shared preference listener to quickly disable motion monitoring.
  *
- * TODO: Deprecate the calendar icon in the AlarmEditorActivity. But keep the text to the left of it indicating when the alarm goes off. Center it though
- *
+ * TODO: If time allows, investigate how to make the app run even after killing it.
  * .......
  * Pending:
- * Low battery alarm switch implementation
- * Follow Do Not Disturb implementation
  * Notification Chime 1.5 mins before it goes off again
- *
  */
 public class DashboardActivity extends AppCompatActivity {
 
@@ -278,6 +270,9 @@ public class DashboardActivity extends AppCompatActivity {
         // This intent is sent to AlarmReceiver.java with the alarm's ID as an extra
         Intent alarmReceiverIntent = new Intent(this, AlarmReceiver.class);
         alarmReceiverIntent.putExtra("alarmId", alarmCard.getId());
+        alarmReceiverIntent.putExtra("vibrationOn", alarmCard.isVibrationOn());
+        alarmReceiverIntent.putExtra("alarmToneName", alarmCard.getAlarmTone());
+
 
         // Check if the alarm is repeating
         if (!alarmCard.getRepeatingDays().equals("")) {

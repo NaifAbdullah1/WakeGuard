@@ -12,6 +12,7 @@ import android.icu.util.Calendar;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.DatePicker;
 import android.widget.EditText;
@@ -31,6 +32,7 @@ public class AlarmEditorActivity extends AppCompatActivity {
     SwitchCompat vibrationSwitch;
     // Switch for enabling/disabling motion monitoring
     SwitchCompat motionMonitoringSwitch;
+    private String alarmToneName;
     // EditText for alarm name
     EditText alarmNameText;
     TimePicker tPicker;
@@ -84,6 +86,7 @@ public class AlarmEditorActivity extends AppCompatActivity {
         motionMonitoringSwitch.setChecked(intent.getBooleanExtra("isMotionMonitoringOn", true));
         alarmNameText = (EditText) findViewById(R.id.alarmNameText);
         alarmNameText.setText(intent.getStringExtra("title"));
+        String alarmTone = intent.getStringExtra("alarmTone");
 
         // Set time picker to show 6am or the existing alarm's time
         tPicker = (TimePicker) findViewById(R.id.timePicker);
@@ -191,6 +194,29 @@ public class AlarmEditorActivity extends AppCompatActivity {
         // TODO Set initial tone to existing alarm's tone or the default
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         alarmToneSpinner.setAdapter(adapter);
+
+        // Set the spinner selection to the alarm tone from the intent
+        if (alarmTone != null && !alarmTone.isEmpty()) {
+            int spinnerPosition = adapter.getPosition(alarmTone);
+            if (spinnerPosition >= 0) {
+                alarmToneSpinner.setSelection(spinnerPosition);
+            }
+        }
+
+        alarmToneSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                // Get selected item
+                String selectedTone = parent.getItemAtPosition(position).toString();
+                // Set the alarmTone variable to the selected item
+                alarmToneName = selectedTone;
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // Optional: handle the scenario when nothing is selected
+            }
+        });
 
         // TODO Set listener for item clicked
 
@@ -382,7 +408,7 @@ public class AlarmEditorActivity extends AppCompatActivity {
         String time = tPicker.getHour() + ":" + tPicker.getMinute();
         String repeatingDays = convertRepeatingDaysArrayToString();
         String title = alarmNameText.getText().toString();
-        String alarmTone = "Default";
+        String alarmTone = alarmToneName;
         SwitchCompat vSwitch = findViewById(R.id.vibrationSwitch);
         boolean vibrationSwitch = vSwitch.isChecked();
         SwitchCompat mSwitch = findViewById(R.id.motionMonitorSwitch);

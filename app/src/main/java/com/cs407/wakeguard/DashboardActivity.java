@@ -1,6 +1,5 @@
 package com.cs407.wakeguard;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,9 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -38,15 +35,14 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 
-
 /**
  * Dashboard's clock: https://github.com/arbelkilani/Clock-view
  *
  * NATHAN'S Notes:
  *
- * TODO: Implement the alarm ring tone. We can either do just some default tone, or we can access he phone's list of ringtones
- *
  * TODO: Once james is done with alarm, we'll integrate it with our code.
+ *
+ * TODO: If time allows, implement the shared preference listener to quickly disable motion monitoring.
  * .......
  * Pending:
  * Notification Chime 1.5 mins before it goes off again
@@ -273,6 +269,7 @@ public class DashboardActivity extends AppCompatActivity {
         Intent alarmReceiverIntent = new Intent(this, AlarmReceiver.class);
         alarmReceiverIntent.putExtra("alarmId", alarmCard.getId());
         alarmReceiverIntent.putExtra("vibrationOn", alarmCard.isVibrationOn());
+        alarmReceiverIntent.putExtra("alarmToneName", alarmCard.getAlarmTone());
 
 
         // Check if the alarm is repeating

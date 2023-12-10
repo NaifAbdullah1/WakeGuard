@@ -222,9 +222,6 @@ public class AlarmAlertActivity extends AppCompatActivity {
         }
     }
 
-
-
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -401,6 +398,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
         Intent alarmReceiverIntent = new Intent(this, AlarmReceiver.class);
         alarmReceiverIntent.putExtra("alarmId", alarmCard.getId());
         alarmReceiverIntent.putExtra("vibrationOn", alarmCard.isVibrationOn());
+        alarmReceiverIntent.putExtra("alarmToneName", alarmCard.getAlarmTone());
 
         long immediateAlarmTime = System.currentTimeMillis();
 

@@ -45,6 +45,7 @@
         <receiver android:name=".AlarmReceiver"
             android:exported="true"/>
         <service android:name=".AlarmService"/>
+        <service android:name=".BatteryLevelService"/>
 
     </application>
 

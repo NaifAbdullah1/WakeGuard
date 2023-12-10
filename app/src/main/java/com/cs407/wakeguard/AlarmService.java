@@ -35,7 +35,7 @@ public class AlarmService extends Service {
     }
 
     /**
-     * This is where the vibration is triggered when this serviec is
+     * This is where the vibration is triggered when this service is
      * started by the AlarmReceiver.java
      *
      * @param intent The Intent supplied to {@link android.content.Context#startService},

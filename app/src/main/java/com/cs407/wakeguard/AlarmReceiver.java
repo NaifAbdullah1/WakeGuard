@@ -3,6 +3,8 @@ package com.cs407.wakeguard;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.media.AudioManager;
 import android.os.Build;
 import android.os.PowerManager;
 import android.util.Log;
@@ -24,6 +26,14 @@ public class AlarmReceiver extends BroadcastReceiver {
      */
     @Override
     public void onReceive(Context context, Intent intent){
+
+        // Check if Follow Do Not Disturb and system silent mode is active (If so, do NOT set off alarm)
+        SharedPreferences sharedPref = context.getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
+        boolean isDoNotDisturb = sharedPref.getBoolean("isDoNotDisturb", false); // get Follow Do Not Disturb status
+        AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE); // get system silent mode status
+        if (isDoNotDisturb && (am.getRingerMode() == AudioManager.RINGER_MODE_SILENT || am.getRingerMode() == AudioManager.RINGER_MODE_VIBRATE)) {
+            return;
+        }
 
         // Acquiring a wake lock to get the phone to wake up when alarm goes off
         PowerManager powerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);

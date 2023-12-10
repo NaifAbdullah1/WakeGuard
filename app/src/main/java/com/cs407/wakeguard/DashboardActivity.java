@@ -43,6 +43,8 @@ import java.util.concurrent.TimeUnit;
  * TODO: Once james is done with alarm, we'll integrate it with our code.
  *
  * TODO: If time allows, implement the shared preference listener to quickly disable motion monitoring.
+ *
+ * TODO: If time allows, investigate how to make the app run even after killing it.
  * .......
  * Pending:
  * Notification Chime 1.5 mins before it goes off again

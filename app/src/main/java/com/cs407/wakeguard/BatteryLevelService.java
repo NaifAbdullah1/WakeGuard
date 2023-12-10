@@ -15,21 +15,26 @@ import android.provider.Settings;
 
 public class BatteryLevelService extends Service {
     private BroadcastReceiver batteryLevelReceiver;
+    private int LOW_BATTERY_THRESHOLD = 10;
     private DBHelper dbHelper= DBHelper.getInstance(this);
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         batteryLevelReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
-                int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
-                float batteryPct = level * 100 / (float)scale;
-                if (batteryPct == 10) {
-                    // Schedule Alarm
-                    System.out.println(batteryPct);
-                    AlarmCard warningAlarm = new AlarmCard("Low Battery!", "", "Battery Is Less Than 10%",
-                            "Default", true, false, true);
-                    scheduleAlarm(warningAlarm);
+                SharedPreferences sharedPref = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
+                boolean isBatteryMonitoringOn = sharedPref.getBoolean("isLowPowerMode", false);
+                if (isBatteryMonitoringOn) {
+                    int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+                    int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+                    float batteryPct = level * 100 / (float) scale;
+                    if (batteryPct == LOW_BATTERY_THRESHOLD) {
+                        // Schedule Alarm
+                        System.out.println("Low Battery Detected at " + batteryPct + "%. Setting off warning alarm...");
+                        AlarmCard warningAlarm = new AlarmCard("Low Battery!", "", "Battery Is Less Than 10%",
+                                "Default", true, false, true);
+                        scheduleAlarm(warningAlarm);
+                    }
                 }
             }
         };

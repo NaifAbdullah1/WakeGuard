@@ -4,21 +4,14 @@
 Pending tasks: 
 
 
-UPDATE 12/7: Just made a Pull Request, the alarm is 90% done. 
+UPDATE 12/10: Almost there!
 The alarm works great, the only remaining items are as follows: 
 
 ## Items that I will work on: 
 
-☐ Implement the alarm ring tone. We can either do just some default tone, or we can access he phone's list of ringtones
-
-☐ Implement the Vibration switch in alarm Editor, switching off vibration should not make the alarm vibrate the phone.
-
+Done, finished everything I could. I could help anyone out with anything remining. 
 
 
 ## Other items that are remaining:
 
-☐ Low battery alarm switch implementation
-
-☐ Follow Do Not Disturb implementation
-
-☐ Notification Chime 1.5 mins before it goes off again
+☐ Notification Chime 1 mins before it goes off again. 

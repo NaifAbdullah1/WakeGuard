@@ -1,12 +1,24 @@
 package com.cs407.wakeguard;
 
-import androidx.appcompat.app.AppCompatActivity;
+import static com.cs407.wakeguard.AlarmService.CHANNEL_ID;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.core.app.RemoteInput;
+
+import android.Manifest;
 import android.app.AlarmManager;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -14,6 +26,7 @@ import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.TypedValue;
 import android.view.View;
@@ -21,6 +34,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.Calendar;
 
@@ -267,36 +281,39 @@ public class AlarmAlertActivity extends AppCompatActivity {
         // Stop the AlarmService
         Intent alarmServiceIntent = new Intent(this, AlarmService.class);
         stopService(alarmServiceIntent);
-            boolean isAlarmRepeating = !triggeredAlarm.getRepeatingDays().equals("");
-            if (!isAlarmRepeating){ // If alarm is not repeating
-                triggeredAlarm.setActive(false);
-                dbHelper.toggleAlarm(triggeredAlarm.getId(), false);
-            }else { // If alarm is indeed repeating, we're going to remove the request code of the alarm that just went off
-                // If alarm is repeating, get the specific request code for this instance and delete it
-                /*
-                String todayDayString = getTodayDayString();
-                String alarmIdentifier = triggeredAlarm.getTitle() + triggeredAlarm.getTime() + triggeredAlarm.getFormattedTime() + todayDayString;
-                int requestCode = dbHelper.getRequestCode(alarmIdentifier);
+        boolean isAlarmRepeating = !triggeredAlarm.getRepeatingDays().equals("");
+        if (!isAlarmRepeating) { // If alarm is not repeating
+            triggeredAlarm.setActive(false);
+            dbHelper.toggleAlarm(triggeredAlarm.getId(), false);
+        } else { // If alarm is indeed repeating, we're going to remove the request code of the alarm that just went off
+            // If alarm is repeating, get the specific request code for this instance and delete it
+            /*
+            String todayDayString = getTodayDayString();
+            String alarmIdentifier = triggeredAlarm.getTitle() + triggeredAlarm.getTime() + triggeredAlarm.getFormattedTime() + todayDayString;
+            int requestCode = dbHelper.getRequestCode(alarmIdentifier);
 
-                if (requestCode != -1) {
-                    cancelAlarmByRequestCode(requestCode);
-                    dbHelper.deleteRequestCodeByRequestCode(requestCode);
-                }else{
-                    System.out.println("ERROR @ AlarmAlertActivity");
-                }
-                */
+            if (requestCode != -1) {
+                cancelAlarmByRequestCode(requestCode);
+                dbHelper.deleteRequestCodeByRequestCode(requestCode);
+            }else{
+                System.out.println("ERROR @ AlarmAlertActivity");
             }
+            */
+        }
 
-            // Releasing wake lock
-            if (AlarmReceiver.wakeLock != null && AlarmReceiver.wakeLock.isHeld()){
-                AlarmReceiver.wakeLock.release();
-            }
+        // TODO (POTENTIALLY) JAMES create a pending notification for canceling the alarm 1 minute before it goes off again
 
-            if (triggeredAlarm.isMotionMonitoringOn() && isMotionMonitoringActive == false){
-                startMotionMonitoring();
-            }else if (!showDisableMotionMonitoringButton){
-                stopMotionMonitoring();
-            }
+
+        // Releasing wake lock
+        if (AlarmReceiver.wakeLock != null && AlarmReceiver.wakeLock.isHeld()) {
+            AlarmReceiver.wakeLock.release();
+        }
+
+        if (triggeredAlarm.isMotionMonitoringOn() && isMotionMonitoringActive == false) {
+            startMotionMonitoring();
+        } else if (!showDisableMotionMonitoringButton) {
+            stopMotionMonitoring();
+        }
 
         finish();
     }
@@ -356,7 +373,92 @@ public class AlarmAlertActivity extends AppCompatActivity {
         }
     }
 
+
+    public void createNotificationChannel() {
+        //String id = "channelID";
+        String channelName = "Alarm Service Channel";
+        //String name = "Daily Alerts";
+        String des = "Channel Description A Brief";
+        //int importance = NotificationManager.IMPORTANCE_DEFAULT;
+        NotificationChannel channel = new NotificationChannel(CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_HIGH);
+        // TODO NotificationChannel channel = new NotificationChannel(id, name, importance);
+        channel.setDescription(des);
+        NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        manager.createNotificationChannel(channel);
+    }
+
+
+
+    public void scheduleNotification(Calendar calendar) {
+        /*Intent intent = new Intent(getApplicationContext(), MyNotification.class);
+        intent.putExtra("titleExtra", "Dynamic Title");
+        intent.putExtra("textExtra", "Dynamic Text Body");
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 1, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);*/
+        Toast.makeText(getApplicationContext(), "Scheduled ", Toast.LENGTH_LONG).show();
+
+        Context context = getApplicationContext();
+        AlarmManager alarmMgr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
+        Intent intent1 = new Intent(context, AlarmNotificationReceiver.class);
+        intent1.putExtra("titleExtra", "Dynamic Title");
+        intent1.putExtra("textExtra", "Dynamic Text Body");
+        PendingIntent alarmIntent = PendingIntent.getBroadcast(context, 0, intent1, PendingIntent.FLAG_IMMUTABLE);
+
+        alarmMgr.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                SystemClock.elapsedRealtime() +
+                        5 * 1000, alarmIntent);
+
+        /*
+        //String channelId = "alarm_service_channel";
+        String channelName = "Alarm Service Channel"; // TODO Don't hardcode; put in strings.xml
+        String message = intent.getStringExtra("textExtra").toString();
+        String title = intent.getStringExtra("titleExtra").toString();
+        NotificationChannel channel = new NotificationChannel(CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_HIGH);
+        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        //manager.createNotificationChannel(channel);
+        Notification notification = new NotificationCompat.Builder(getApplicationContext(), CHANNEL_ID)
+                .setSmallIcon(R.mipmap.ic_launcher_round)
+                .setContentText(message)
+                .setContentTitle(title)
+                .build();
+        manager.notify(0, notification); // TODO Don't hardcode the notification ID
+         */
+    }
+
     private void startMotionMonitoring() {
+
+
+
+        // TODO START JAMES create a pending notification for canceling the alarm 1 minute before it goes off again
+
+
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Calendar calendar = Calendar.getInstance();
+            //10 is for how many seconds from now you want to schedule also you can create a custom instance of Callender to set on exact time
+            calendar.add(Calendar.SECOND, 10);
+            //function for Creating [Notification Channel][1]
+            createNotificationChannel();
+            //function for scheduling the notification
+            scheduleNotification(calendar);
+        }
+
+        /* TODO REMOVE
+        Intent intent = new Intent(this, SomeActivity.class);
+
+        // Creating a pending intent and wrapping our intent
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        try {
+            // Perform the operation associated with our pendingIntent
+            pendingIntent.send();
+        } catch (PendingIntent.CanceledException e) {
+            e.printStackTrace();
+        }
+        */
+
+        // TODO END JAMES create a pending notification for canceling the alarm 1 minute before it goes off again
+
         System.out.println("STARTING MOTION MONITORING");
         setIsMotionMonitoringActive(true);
         sensorManager.registerListener(sensorEventListener, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
@@ -374,6 +476,9 @@ public class AlarmAlertActivity extends AppCompatActivity {
     }
 
     private void stopMotionMonitoring() {
+
+        // TODO JAMES Remove the notification here
+
         System.out.println("Stopping motion detection");
         setIsMotionMonitoringActive(false);
         sensorManager.unregisterListener(sensorEventListener);

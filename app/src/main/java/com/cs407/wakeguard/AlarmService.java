@@ -26,7 +26,7 @@ import androidx.core.app.NotificationCompat;
 public class AlarmService extends Service {
     private Vibrator vibrator;
     private static final int NOTIFICATION_ID = 1;
-    private static final String CHANNEL_ID = "alarm_service_channel";
+    public static final String CHANNEL_ID = "alarm_service_channel";
     private MediaPlayer mediaPlayer; // This is what plays the alarm tone
 
 
@@ -84,9 +84,8 @@ public class AlarmService extends Service {
     private Notification createNotification(){
         // Creating a notification channel for Android O and newer
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
-            String channelId = "alarm_service_channel";
             String channelName = "Alarm Service Channel";
-            NotificationChannel channel = new NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_HIGH);
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_HIGH);
             NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             manager.createNotificationChannel(channel);
         }

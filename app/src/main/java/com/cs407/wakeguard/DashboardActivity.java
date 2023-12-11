@@ -2,9 +2,12 @@ package com.cs407.wakeguard;
 
 import android.content.Context;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -13,6 +16,7 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -100,10 +104,28 @@ public class DashboardActivity extends AppCompatActivity {
         }
     };
 
+    private final ActivityResultLauncher<String> requestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if(!isGranted) {
+                    Toast.makeText(this, "Please allow notifications", Toast.LENGTH_LONG).show();
+                }
+            });
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dashboard);
+
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            // Notification Permission not required till Android 13 (Tiramisu)
+            return;
+        }
+        if(ContextCompat.checkSelfPermission(
+                getApplicationContext(), android.Manifest.permission.POST_NOTIFICATIONS) !=
+                PackageManager.PERMISSION_GRANTED) {
+            // Permission not granted
+            requestPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS);
+        }
 
         // Must initialize DB everywhere were we do CRUD operations
         dbHelper = DBHelper.getInstance(this);

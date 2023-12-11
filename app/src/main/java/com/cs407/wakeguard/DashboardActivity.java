@@ -1,5 +1,7 @@
 package com.cs407.wakeguard;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -203,6 +205,16 @@ public class DashboardActivity extends AppCompatActivity {
          * anything close to the clock, it would be clickable */
         dashboardClock12.setPadding(0, 0, 0, 0);
         dashboardClock24.setPadding(0, 0, 0, 0);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "WakeGuardChannel";
+            String description = "Channel for WakeGuard App";
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel("wakeGuardChannelID", name, importance);
+            channel.setDescription(description);
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+
         //_______________________________________________________________________________________
     }
 

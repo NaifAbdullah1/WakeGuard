@@ -1,12 +1,16 @@
 package com.cs407.wakeguard;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -50,7 +54,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
      * 1: MEDIUM: 10.35 // holding the phone while the person is stationary
      * 2: LOW: 9.95 // Turning and tossing in bed
      * */
-    private static final double [] THRESHOLD_LEVELS = {13.5, 10.35, 9.95};
+    private static final double[] THRESHOLD_LEVELS = {13.5, 10.35, 9.95};
     private static long monitoringDuration; // in milliseconds
     private static long timeUntilReactivatingAlarm;
     private long lastMotionTime;
@@ -66,15 +70,15 @@ public class AlarmAlertActivity extends AppCompatActivity {
             //sharedPref = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
             long currentTime = System.currentTimeMillis();
             showDisableMotionMonitoringButton = sharedPref.getBoolean("showDisableMotionMonitoringButton", false);
-            if (showDisableMotionMonitoringButton == false){ // if user stopped the alarm.
+            if (showDisableMotionMonitoringButton == false) { // if user stopped the alarm.
                 stopMotionMonitoring();
-            }else if ((currentTime - lastMotionTime) >= timeUntilReactivatingAlarm){ // Checking if [activity monitor duration] minutes have passed since last motion
+            } else if ((currentTime - lastMotionTime) >= timeUntilReactivatingAlarm) { // Checking if [activity monitor duration] minutes have passed since last motion
                 // For now, we'll just do 1 minute
-                System.out.printf("User is sleeping after dismissing alarm. No motion for more than %d seconds. Triggering alarm again.\n", timeUntilReactivatingAlarm /1000);
+                System.out.printf("User is sleeping after dismissing alarm. No motion for more than %d seconds. Triggering alarm again.\n", timeUntilReactivatingAlarm / 1000);
                 // Trigger alarm again
                 triggerAlarmAgain();
                 resetMotionTimers();
-            }else {
+            } else {
                 // Schedule the next check
                 timer_B_Handler.postDelayed(this, timeUntilReactivatingAlarm);
             }
@@ -87,18 +91,18 @@ public class AlarmAlertActivity extends AppCompatActivity {
         @Override
         public void run() {
             // Stop motion monitoring if 30 minutes have passed without it being rest by the resetMotionTimers()
-            System.out.printf("%d seconds passed with constant motion, user is awake, stopping motion monitoring.\n", monitoringDuration /1000);
+            System.out.printf("%d seconds passed with constant motion, user is awake, stopping motion monitoring.\n", monitoringDuration / 1000);
             stopMotionMonitoring();
         }
     };
 
-    private void triggerAlarmAgain(){
+    private void triggerAlarmAgain() {
         // Checking if we still have the triggered alarm saved first
-        if (triggeredAlarm != null){
+        if (triggeredAlarm != null) {
 
             // Rescheduling alarm to a past date so that it goes off right away
             scheduleAlarm(triggeredAlarm);
-        }else{
+        } else {
             System.out.println("ERROR: Triggered alarm is not saved");
         }
         resetMotionTimers();
@@ -117,7 +121,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
             double accelerationMagnitude = Math.sqrt(x * x + y * y + z * z);
 
             // Determining if the magnitude is big enough to disable the motion monitoring
-            if (accelerationMagnitude > motionThreshold){
+            if (accelerationMagnitude > motionThreshold) {
                 // reset timer
                 System.out.println("Motion Detected: " + accelerationMagnitude);
                 lastMotionTime = System.currentTimeMillis();
@@ -169,9 +173,9 @@ public class AlarmAlertActivity extends AppCompatActivity {
         //timeUntilReactivatingAlarm = 10 * 1000;
 
         int alarmId = getIntent().getIntExtra("alarmId", -1);
-        if (alarmId != -1){ // Making sure alarmId is valid before fetching from DB
+        if (alarmId != -1) { // Making sure alarmId is valid before fetching from DB
             loadAlarmDetails(alarmId);
-        }else{
+        } else {
             System.out.println("ERROR @ AlarmAlertActivity. Alarm not found");
         }
 
@@ -231,9 +235,9 @@ public class AlarmAlertActivity extends AppCompatActivity {
         }
     }
 
-    public void loadAlarmDetails(int alarmId){
+    public void loadAlarmDetails(int alarmId) {
         triggeredAlarm = dbHelper.getAlarmById(alarmId);
-        if (triggeredAlarm != null){
+        if (triggeredAlarm != null) {
             if (triggeredAlarm.getTime().equals("Low Battery!")) {
                 timeText.setText(triggeredAlarm.getTime());
                 stopButton.setText("Dismiss");
@@ -242,17 +246,17 @@ public class AlarmAlertActivity extends AppCompatActivity {
             }
             alarmTitleWithWakeGuard.setText(triggeredAlarm.getTitle());
             alarmTitleNoWakeGuard.setText(triggeredAlarm.getTitle());
-            if (triggeredAlarm.isMotionMonitoringOn()){
+            if (triggeredAlarm.isMotionMonitoringOn()) {
                 wakeGuardLogo.setVisibility(View.VISIBLE);
                 wakeGuardStatus.setVisibility(View.VISIBLE);
                 alarmTitleWithWakeGuard.setVisibility(View.VISIBLE);
                 alarmTitleNoWakeGuard.setVisibility(View.GONE);
-            }else if (!triggeredAlarm.isMotionMonitoringOn()){
+            } else if (!triggeredAlarm.isMotionMonitoringOn()) {
                 wakeGuardLogo.setVisibility(View.GONE);
                 wakeGuardStatus.setVisibility(View.GONE);
                 alarmTitleWithWakeGuard.setVisibility(View.GONE);
                 alarmTitleNoWakeGuard.setVisibility(View.VISIBLE);
-            }else {
+            } else {
                 System.out.println("ERROR IN AlarmAlertActivity");
             }
         }
@@ -267,12 +271,12 @@ public class AlarmAlertActivity extends AppCompatActivity {
         // Stop the AlarmService
         Intent alarmServiceIntent = new Intent(this, AlarmService.class);
         stopService(alarmServiceIntent);
-            boolean isAlarmRepeating = !triggeredAlarm.getRepeatingDays().equals("");
-            if (!isAlarmRepeating){ // If alarm is not repeating
-                triggeredAlarm.setActive(false);
-                dbHelper.toggleAlarm(triggeredAlarm.getId(), false);
-            }else { // If alarm is indeed repeating, we're going to remove the request code of the alarm that just went off
-                // If alarm is repeating, get the specific request code for this instance and delete it
+        boolean isAlarmRepeating = !triggeredAlarm.getRepeatingDays().equals("");
+        if (!isAlarmRepeating) { // If alarm is not repeating
+            triggeredAlarm.setActive(false);
+            dbHelper.toggleAlarm(triggeredAlarm.getId(), false);
+        } else { // If alarm is indeed repeating, we're going to remove the request code of the alarm that just went off
+            // If alarm is repeating, get the specific request code for this instance and delete it
                 /*
                 String todayDayString = getTodayDayString();
                 String alarmIdentifier = triggeredAlarm.getTitle() + triggeredAlarm.getTime() + triggeredAlarm.getFormattedTime() + todayDayString;
@@ -285,25 +289,26 @@ public class AlarmAlertActivity extends AppCompatActivity {
                     System.out.println("ERROR @ AlarmAlertActivity");
                 }
                 */
-            }
+        }
 
-            // Releasing wake lock
-            if (AlarmReceiver.wakeLock != null && AlarmReceiver.wakeLock.isHeld()){
-                AlarmReceiver.wakeLock.release();
-            }
+        // Releasing wake lock
+        if (AlarmReceiver.wakeLock != null && AlarmReceiver.wakeLock.isHeld()) {
+            AlarmReceiver.wakeLock.release();
+        }
 
-            if (triggeredAlarm.isMotionMonitoringOn() && isMotionMonitoringActive == false){
-                startMotionMonitoring();
-            }else if (!showDisableMotionMonitoringButton){
-                stopMotionMonitoring();
-            }
+        if (triggeredAlarm.isMotionMonitoringOn() && isMotionMonitoringActive == false) {
+            startMotionMonitoring();
+            showMotionMonitoringNotification(); // Show the notification
+        } else if (!showDisableMotionMonitoringButton) {
+            stopMotionMonitoring();
+        }
 
         finish();
     }
 
-    public void cancelAlarmByRequestCode(int reqCode){
+    public void cancelAlarmByRequestCode(int reqCode) {
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        Intent intent = new Intent (this, AlarmReceiver.class);
+        Intent intent = new Intent(this, AlarmReceiver.class);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(this,
                 reqCode, intent, PendingIntent.FLAG_IMMUTABLE);
         alarmManager.cancel(pendingIntent);
@@ -347,11 +352,11 @@ public class AlarmAlertActivity extends AppCompatActivity {
      * @param intent The new intent that was started for the activity.
      */
     @Override
-    protected void onNewIntent(Intent intent){
+    protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
         int alarmId = intent.getIntExtra("alarmId", -1);
-        if (alarmId != -1){
+        if (alarmId != -1) {
             loadAlarmDetails(alarmId);
         }
     }
@@ -381,7 +386,8 @@ public class AlarmAlertActivity extends AppCompatActivity {
         timer_A_Handler.removeCallbacks((timer_A_Runnable)); // Stopping Timer A
     }
 
-    private void setIsMotionMonitoringActive(boolean activate){;
+    private void setIsMotionMonitoringActive(boolean activate) {
+        ;
         isMotionMonitoringActive = activate;
         showDisableMotionMonitoringButton = activate;
         SharedPreferences sharedPrefs = getSharedPreferences("com.cs407.wakeguard",
@@ -390,6 +396,32 @@ public class AlarmAlertActivity extends AppCompatActivity {
         editor.putBoolean("isMotionMonitoringActive", activate).apply();
         editor.putBoolean("showDisableMotionMonitoringButton", activate).apply();
     }
+
+    private void showMotionMonitoringNotification() {
+        Intent intent = new Intent(this, NotificationReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "wakeGuardChannelID")
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle("Motion Monitoring Active")
+                .setContentText("WakeGuard is currently monitoring your movement")
+                .addAction(R.drawable.ic_x, "Disable Motion Monitoring", pendingIntent)
+                .setPriority(NotificationCompat.PRIORITY_HIGH);
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        notificationManager.notify(1, builder.build());
+    }
+
 
     //--- Copied from DashboardActivity.java
     private void scheduleAlarm(AlarmCard alarmCard){

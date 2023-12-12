@@ -1,20 +1,15 @@
 package com.cs407.wakeguard;
 
-import static com.cs407.wakeguard.AlarmService.CHANNEL_ID;
+import static com.cs407.wakeguard.DashboardActivity.CHANNEL_ID;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-import androidx.core.app.RemoteInput;
 
 import android.Manifest;
 import android.app.AlarmManager;
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -26,7 +21,6 @@ import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.TypedValue;
 import android.view.View;
@@ -34,7 +28,6 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.Calendar;
 
@@ -69,100 +62,61 @@ public class AlarmAlertActivity extends AppCompatActivity {
     private static long timeUntilReactivatingAlarm;
     private static long timeUntilNotification;
     private long lastMotionTime;
-    private static int notificationId = 2;
+    private static final int NOTIFICATION_ID = 2;
     private SharedPreferences sharedPref;
     private SharedPreferences.OnSharedPreferenceChangeListener preferenceChangeListener;
 
 
     private Handler timer_notification_Handler = new Handler();
 
-    // Timer B (the [activity monitor duration] (1 mins) minutes timer)
+    // Notification timer for showing the "disable WakeGuard" notification
     private Runnable timer_notification_Runnable = new Runnable() {
         @Override
         public void run() {
-            //sharedPref = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
             long currentTime = System.currentTimeMillis();
             showDisableMotionMonitoringButton = sharedPref.getBoolean("showDisableMotionMonitoringButton", false);
-            if (showDisableMotionMonitoringButton && (currentTime - lastMotionTime) >= timeUntilNotification /* TODO Was timeUntilReactivatingAlarm */) { // Checking if [activity monitor duration] minutes have passed since last motion
+            if(showDisableMotionMonitoringButton && (currentTime - lastMotionTime) >= timeUntilNotification) { // Checking if [activity monitor duration - 1] minutes have passed since last motion
                 Context context = getApplicationContext();
 
-                Toast.makeText(context, "Notify now ", Toast.LENGTH_LONG).show(); // TODO REMOVE
-
-                // TODO Show notification here
-
-                if(ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.POST_NOTIFICATIONS)
+                // Check notification permissions
+                if(ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
                         != PackageManager.PERMISSION_GRANTED) {
                     return;
                 }
 
-                // TODO See createNotificationChannel() below
-
-                //String channelId = "alarm_service_channel";
-                String channelName = context.getString(R.string.channel_name); // TODO Don't hardcode; put in strings.xml
-                String message = "Foo message";
-                String title = "Foo title";
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    //NotificationChannel channel = new NotificationChannel(CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_HIGH);
-                    //NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                    //manager.createNotificationChannel(channel);
-
-
-                    //NotificationHelper.getInstance().appendNotificationItem("idc", "idc"); // TODO REMOVE
-                    NotificationHelper.getInstance().showNotification(getApplicationContext(), 2); // TODO was -1
-                    /* TODO REMOVE
-                    RemoteInput remoteInput = new RemoteInput.Builder("stop_alarm")
-                            .setLabel("Stop Alarm")
-                            .build();
-
-
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    // Set up an action to stop motion monitoring
                     Intent stopIntent = new Intent(context, AlarmNotificationReceiver.class);
-                    stopIntent.putExtra("id", notificationId);
-
+                    stopIntent.putExtra("id", NOTIFICATION_ID);
                     PendingIntent stopPendingIntent =
                             PendingIntent.getBroadcast(context,
-                                    notificationId,
+                                    NOTIFICATION_ID,
                                     stopIntent,
                                     PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
-
                     NotificationCompat.Action action =
-                            new NotificationCompat.Action.Builder(R.drawable.ic_delete, // TODO Update icon
-                                    "Stop Alarm", stopPendingIntent)
-                                    .addRemoteInput(remoteInput)
+                            new NotificationCompat.Action.Builder(R.drawable.ic_x,
+                                    context.getString(R.string.stop), stopPendingIntent)
                                     .build();
 
 
                     // TODO Create/Use custom notification layout here
 
-                    // TODO Use NotificationCompat.Builder builder
+                    // Build the notification
                     NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                             .setSmallIcon(R.mipmap.ic_launcher_round)
                             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE) // TODO Check this for a better visibility. I think this is key to being visible but not actionable on the lock screen
-                            .setContentText(message)
-                            .setContentTitle(title)
-                            //.addAction(R.drawable.ic_delete, "Stop Alarm",
-                            //        stopPendingIntent)
-                            //.setContentIntent(pendingIntent)
+                            .setContentText(context.getString(R.string.alarm_notification_message))
+                            .setContentTitle(context.getString(R.string.alarm_notification_title))
                             .addAction(action)
                             .setPriority(NotificationCompat.PRIORITY_DEFAULT); // TODO PRIORITY_HIGH ???
-                    // TODO Use builder.build() instead of notification
 
+                    // Show the notification
                     NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-                    notificationManager.notify(notificationId, builder.build());
-                    //manager.notify(notificationId, notification);
-                    notificationId++;*/
+                    notificationManager.notify(NOTIFICATION_ID, builder.build());
                 }
-
-                /*
-                // For now, we'll just do 1 minute
-                System.out.printf("User is sleeping after dismissing alarm. No motion for more than %d seconds. Triggering alarm again.\n", timeUntilReactivatingAlarm /1000);
-                // Trigger alarm again
-                triggerAlarmAgain();
-                resetMotionTimers();
-                 */
             } else {
-                Toast.makeText(getApplicationContext(), "Schedule next ", Toast.LENGTH_LONG).show(); // TODO REMOVE
                 /*
-                // Schedule the next check
+                // TODO Schedule the next check
                 timer_B_Handler.postDelayed(this, timeUntilReactivatingAlarm);
                  */
             }
@@ -416,9 +370,6 @@ public class AlarmAlertActivity extends AppCompatActivity {
             */
         }
 
-        // TODO (POTENTIALLY) JAMES create a pending notification for canceling the alarm 1 minute before it goes off again
-
-
         // Releasing wake lock
         if (AlarmReceiver.wakeLock != null && AlarmReceiver.wakeLock.isHeld()) {
             AlarmReceiver.wakeLock.release();
@@ -489,31 +440,11 @@ public class AlarmAlertActivity extends AppCompatActivity {
     }
 
     private void startMotionMonitoring() {
-
-
-
-        // TODO START JAMES create a pending notification for canceling the alarm 1 minute before it goes off again
-
-
-        /* TODO Had this uncommented
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Calendar calendar = Calendar.getInstance();
-            //10 is for how many seconds from now you want to schedule also you can create a custom instance of Callender to set on exact time
-            calendar.add(Calendar.SECOND, 10);
-            //function for Creating [Notification Channel][1]
-            createNotificationChannel();
-            //function for scheduling the notification
-            scheduleNotification(calendar);
-        }
-         */
-
-        // TODO END JAMES create a pending notification for canceling the alarm 1 minute before it goes off again
-
         System.out.println("STARTING MOTION MONITORING");
         setIsMotionMonitoringActive(true);
         sensorManager.registerListener(sensorEventListener, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
         lastMotionTime = System.currentTimeMillis(); // Reset last motion time for Timer B
-        timer_notification_Handler.postDelayed(timer_notification_Runnable, timeUntilNotification); // TODO Start notification timer
+        timer_notification_Handler.postDelayed(timer_notification_Runnable, timeUntilNotification); // Start notification timer
         timer_B_Handler.postDelayed(timer_B_Runnable, timeUntilReactivatingAlarm); // Start Timer B
         timer_A_Handler.postDelayed(timer_A_Runnable, monitoringDuration); // Start Timer A
         timer_C_Handler.postDelayed(timer_C_Runnable, CHECK_FREQUENCY);
@@ -521,10 +452,10 @@ public class AlarmAlertActivity extends AppCompatActivity {
 
     private void resetMotionTimers() {
         lastMotionTime = System.currentTimeMillis(); // Reset last motion time for Timer B
-        timer_notification_Handler.removeCallbacks(timer_notification_Runnable); // TODO
+        timer_notification_Handler.removeCallbacks(timer_notification_Runnable);
         timer_B_Handler.removeCallbacks(timer_B_Runnable);
         timer_A_Handler.removeCallbacks(timer_A_Runnable);
-        timer_notification_Handler.postDelayed(timer_notification_Runnable, timeUntilNotification); // TODO
+        timer_notification_Handler.postDelayed(timer_notification_Runnable, timeUntilNotification); // Restart notification timer
         timer_C_Handler.removeCallbacks(timer_C_Runnable);
         timer_B_Handler.postDelayed(timer_B_Runnable, timeUntilReactivatingAlarm); // Restart Timer B
         timer_A_Handler.postDelayed(timer_A_Runnable, monitoringDuration); // Restart Timer A
@@ -538,7 +469,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
         System.out.println("Stopping motion detection");
         setIsMotionMonitoringActive(false);
         sensorManager.unregisterListener(sensorEventListener);
-        timer_notification_Handler.removeCallbacks(timer_notification_Runnable); // TODO
+        timer_notification_Handler.removeCallbacks(timer_notification_Runnable); // Stopping notification timer
         timer_B_Handler.removeCallbacks(timer_B_Runnable); // Stopping periodic check (Timer B)
         timer_A_Handler.removeCallbacks((timer_A_Runnable)); // Stopping Timer A
         timer_C_Handler.removeCallbacks(timer_C_Runnable);

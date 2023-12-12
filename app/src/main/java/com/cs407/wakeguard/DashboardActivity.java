@@ -1,5 +1,7 @@
 package com.cs407.wakeguard;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -94,6 +96,8 @@ public class DashboardActivity extends AppCompatActivity {
 
     private int WEEKS_TO_SCHEDULE_AHEAD = 2;
 
+    public static final String CHANNEL_ID = "alarm_notification_channel";
+
     public static int requestCodeCreator = 1;
 
     private final Runnable alarmCountdownRunnable = new Runnable() {
@@ -126,7 +130,18 @@ public class DashboardActivity extends AppCompatActivity {
             // Permission not granted
             requestPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS);
         }
-        NotificationHelper.getInstance().createNotificationChannel(getApplicationContext());
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Context context = getApplicationContext();
+            CharSequence name = context.getString(R.string.channel_name);
+            String description = context.getString(R.string.channel_description);
+
+            int importance = NotificationManager.IMPORTANCE_HIGH;
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
+            channel.setDescription(description);
+
+            NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
 
         // Must initialize DB everywhere were we do CRUD operations
         dbHelper = DBHelper.getInstance(this);

@@ -22,4 +22,6 @@
     <string name="stop">Stop Alarm</string>
     <string name="channel_name">AlarmStopChannel</string>
     <string name="channel_description">Stop motion monitoring alarm</string>
+    <string name="alarm_notification_title">WakeGuard Enabled</string>
+    <string name="alarm_notification_message">Activity monitoring will go off in one minute. Press button to disable activity monitoring.</string>
 </resources>

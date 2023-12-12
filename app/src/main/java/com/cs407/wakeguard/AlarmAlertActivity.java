@@ -107,8 +107,8 @@ public class AlarmAlertActivity extends AppCompatActivity {
                     //manager.createNotificationChannel(channel);
 
 
-                    NotificationHelper.getInstance().appendNotificationItem("idc", "idc"); // TODO REMOVE
-                    NotificationHelper.getInstance().showNotification(getApplicationContext(), -1);
+                    //NotificationHelper.getInstance().appendNotificationItem("idc", "idc"); // TODO REMOVE
+                    NotificationHelper.getInstance().showNotification(getApplicationContext(), 2); // TODO was -1
                     /* TODO REMOVE
                     RemoteInput remoteInput = new RemoteInput.Builder("stop_alarm")
                             .setLabel("Stop Alarm")
@@ -143,7 +143,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
                             //        stopPendingIntent)
                             //.setContentIntent(pendingIntent)
                             .addAction(action)
-                            .setPriority(NotificationCompat.PRIORITY_DEFAULT); // TODO PRIORITY_HIGH ???;
+                            .setPriority(NotificationCompat.PRIORITY_DEFAULT); // TODO PRIORITY_HIGH ???
                     // TODO Use builder.build() instead of notification
 
                     NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);

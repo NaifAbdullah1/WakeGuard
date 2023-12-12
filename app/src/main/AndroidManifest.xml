@@ -25,6 +25,7 @@
         tools:targetApi="31">
         <activity
             android:name=".AlarmAlertActivity"
+            android:parentActivityName=".DashboardActivity"
             android:exported="true" />
         <activity
             android:name=".AlarmEditorActivity"

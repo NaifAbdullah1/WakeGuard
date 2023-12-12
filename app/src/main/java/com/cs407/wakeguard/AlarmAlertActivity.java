@@ -98,27 +98,66 @@ public class AlarmAlertActivity extends AppCompatActivity {
                                     context.getString(R.string.stop), stopPendingIntent)
                                     .build();
 
-
-                    // TODO Create/Use custom notification layout here
-
                     // Build the notification
                     NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                             .setSmallIcon(R.mipmap.ic_launcher_round)
                             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
-                            .setContentText(context.getString(R.string.alarm_notification_message))
+                            .setContentText(context.getString(R.string.alarm_notification_message, (timeUntilReactivatingAlarm - timeUntilNotification) / 1000))
                             .setContentTitle(context.getString(R.string.alarm_notification_title))
                             .addAction(action)
-                            .setPriority(NotificationCompat.PRIORITY_DEFAULT); // TODO PRIORITY_HIGH ???
+                            .setOnlyAlertOnce(true)
+                            .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
 
                     // Show the notification
                     NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
                     notificationManager.notify(NOTIFICATION_ID, builder.build());
+
+                    // Start a thread to update the time remaining progress bar
+                    new Thread(
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                if(ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+                                        != PackageManager.PERMISSION_GRANTED) {
+                                    return;
+                                }
+                                // Update the progress bar at regular intervals until the alarm
+                                // goes off
+                                int incr;
+                                int timeStep = 1000;
+                                long maxTime = timeUntilReactivatingAlarm - timeUntilNotification;
+                                for(incr = 0; incr <= maxTime; incr += timeStep) {
+                                    // Set the progress indicator
+                                    builder.setContentText(context.getString(R.string.alarm_notification_message, (timeUntilReactivatingAlarm - timeUntilNotification - incr) / 1000))
+                                           .setProgress((int)maxTime, incr, false);
+
+                                    // Display the progress bar for the first time.
+                                    notificationManager.notify(NOTIFICATION_ID, builder.build());
+                                    try {
+                                        // Update the bar every second
+                                        Thread.sleep(timeStep);
+                                        // Make sure the notification is still running
+                                        if(!sharedPref.getBoolean("showDisableMotionMonitoringButton", true)) {
+                                            notificationManager.cancel(NOTIFICATION_ID);
+                                            return;
+                                        }
+                                    } catch (InterruptedException e) {
+                                        System.out.println("sleep failure");
+                                    }
+                                }
+                                // When the loop is finished, update the notification text and
+                                // remove the progress bar
+                                builder.setContentText("Alarm will trigger now")
+                                       .setProgress(0,0,false);
+                                notificationManager.notify(NOTIFICATION_ID, builder.build());
+
+                                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+                                notificationManager.cancel(NOTIFICATION_ID);
+                            }
+                        }
+                    ).start();
                 }
-            } else {
-                /*
-                // TODO Schedule the next check
-                timer_B_Handler.postDelayed(this, timeUntilReactivatingAlarm);
-                 */
             }
         }
     };

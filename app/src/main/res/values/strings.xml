@@ -19,4 +19,7 @@
         <item>Medium</item>
         <item>Low</item>
     </string-array>
+    <string name="stop">Stop Alarm</string>
+    <string name="channel_name">AlarmStopChannel</string>
+    <string name="channel_description">Stop motion monitoring alarm</string>
 </resources>

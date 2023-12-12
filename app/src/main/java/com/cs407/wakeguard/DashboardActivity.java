@@ -126,6 +126,7 @@ public class DashboardActivity extends AppCompatActivity {
             // Permission not granted
             requestPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS);
         }
+        NotificationHelper.getInstance().createNotificationChannel(getApplicationContext());
 
         // Must initialize DB everywhere were we do CRUD operations
         dbHelper = DBHelper.getInstance(this);

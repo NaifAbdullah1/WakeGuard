@@ -69,7 +69,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
     private static long timeUntilReactivatingAlarm;
     private static long timeUntilNotification;
     private long lastMotionTime;
-    private static int notificationId = 0;
+    private static int notificationId = 2;
     private SharedPreferences sharedPref;
     private SharedPreferences.OnSharedPreferenceChangeListener preferenceChangeListener;
 
@@ -83,32 +83,73 @@ public class AlarmAlertActivity extends AppCompatActivity {
             //sharedPref = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
             long currentTime = System.currentTimeMillis();
             showDisableMotionMonitoringButton = sharedPref.getBoolean("showDisableMotionMonitoringButton", false);
-            if (!showDisableMotionMonitoringButton && (currentTime - lastMotionTime) >= timeUntilNotification /* TODO Was timeUntilReactivatingAlarm */) { // Checking if [activity monitor duration] minutes have passed since last motion
+            if (showDisableMotionMonitoringButton && (currentTime - lastMotionTime) >= timeUntilNotification /* TODO Was timeUntilReactivatingAlarm */) { // Checking if [activity monitor duration] minutes have passed since last motion
+                Context context = getApplicationContext();
 
-                Toast.makeText(getApplicationContext(), "Notify now ", Toast.LENGTH_LONG).show(); // TODO REMOVE
+                Toast.makeText(context, "Notify now ", Toast.LENGTH_LONG).show(); // TODO REMOVE
 
                 // TODO Show notification here
 
+                if(ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.POST_NOTIFICATIONS)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    return;
+                }
 
                 // TODO See createNotificationChannel() below
 
                 //String channelId = "alarm_service_channel";
-                String channelName = "Alarm Service Channel"; // TODO Don't hardcode; put in strings.xml
+                String channelName = context.getString(R.string.channel_name); // TODO Don't hardcode; put in strings.xml
                 String message = "Foo message";
                 String title = "Foo title";
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    NotificationChannel channel = new NotificationChannel(CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_HIGH);
-                    NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                    manager.createNotificationChannel(channel);
+                    //NotificationChannel channel = new NotificationChannel(CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_HIGH);
+                    //NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                    //manager.createNotificationChannel(channel);
+
+
+                    NotificationHelper.getInstance().appendNotificationItem("idc", "idc"); // TODO REMOVE
+                    NotificationHelper.getInstance().showNotification(getApplicationContext(), -1);
+                    /* TODO REMOVE
+                    RemoteInput remoteInput = new RemoteInput.Builder("stop_alarm")
+                            .setLabel("Stop Alarm")
+                            .build();
+
+
+                    Intent stopIntent = new Intent(context, AlarmNotificationReceiver.class);
+                    stopIntent.putExtra("id", notificationId);
+
+                    PendingIntent stopPendingIntent =
+                            PendingIntent.getBroadcast(context,
+                                    notificationId,
+                                    stopIntent,
+                                    PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+
+                    NotificationCompat.Action action =
+                            new NotificationCompat.Action.Builder(R.drawable.ic_delete, // TODO Update icon
+                                    "Stop Alarm", stopPendingIntent)
+                                    .addRemoteInput(remoteInput)
+                                    .build();
+
 
                     // TODO Create/Use custom notification layout here
-                    Notification notification = new NotificationCompat.Builder(getApplicationContext(), CHANNEL_ID)
+
+                    // TODO Use NotificationCompat.Builder builder
+                    NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                             .setSmallIcon(R.mipmap.ic_launcher_round)
+                            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE) // TODO Check this for a better visibility. I think this is key to being visible but not actionable on the lock screen
                             .setContentText(message)
                             .setContentTitle(title)
-                            .build();
-                    manager.notify(notificationId, notification);
-                    notificationId++;
+                            //.addAction(R.drawable.ic_delete, "Stop Alarm",
+                            //        stopPendingIntent)
+                            //.setContentIntent(pendingIntent)
+                            .addAction(action)
+                            .setPriority(NotificationCompat.PRIORITY_DEFAULT); // TODO PRIORITY_HIGH ???;
+                    // TODO Use builder.build() instead of notification
+
+                    NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+                    notificationManager.notify(notificationId, builder.build());
+                    //manager.notify(notificationId, notification);
+                    notificationId++;*/
                 }
 
                 /*
@@ -251,7 +292,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
         motionThreshold = THRESHOLD_LEVELS[sharedPref.getInt("activityThresholdMonitoringLevel", 0)];
         monitoringDuration = sharedPref.getInt("activityMonitoringDuration", 1) * 60 * 1000;
         timeUntilReactivatingAlarm = sharedPref.getInt("timeUntilReactivateAlarm", 1) * 60 * 1000;
-        timeUntilNotification = timeUntilReactivatingAlarm - 30 * 1000; // TODO For pre-alarm notification. Get actual time
+        timeUntilNotification = timeUntilReactivatingAlarm - 50 * 1000; // TODO For pre-alarm notification. Set to 1 minute prior. If the activity monitoring duration is 1 minute, do 30 seconds
 
         //monitoringDuration =  20 * 1000;
         //timeUntilReactivatingAlarm = 10 * 1000;
@@ -445,59 +486,6 @@ public class AlarmAlertActivity extends AppCompatActivity {
         if (alarmId != -1){
             loadAlarmDetails(alarmId);
         }
-    }
-
-
-    public void createNotificationChannel() {
-        //String id = "channelID";
-        String channelName = "Alarm Service Channel";
-        //String name = "Daily Alerts";
-        String des = "Channel Description A Brief";
-        //int importance = NotificationManager.IMPORTANCE_DEFAULT;
-        NotificationChannel channel = new NotificationChannel(CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_HIGH);
-        // TODO NotificationChannel channel = new NotificationChannel(id, name, importance);
-        channel.setDescription(des);
-        NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        manager.createNotificationChannel(channel);
-    }
-
-
-
-    public void scheduleNotification(Calendar calendar) {
-        /*Intent intent = new Intent(getApplicationContext(), MyNotification.class);
-        intent.putExtra("titleExtra", "Dynamic Title");
-        intent.putExtra("textExtra", "Dynamic Text Body");
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 1, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);*/
-        Toast.makeText(getApplicationContext(), "Scheduled ", Toast.LENGTH_LONG).show();
-
-        Context context = getApplicationContext();
-        AlarmManager alarmMgr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
-        Intent intent1 = new Intent(context, AlarmNotificationReceiver.class);
-        intent1.putExtra("titleExtra", "Dynamic Title");
-        intent1.putExtra("textExtra", "Dynamic Text Body");
-        PendingIntent alarmIntent = PendingIntent.getBroadcast(context, 0, intent1, PendingIntent.FLAG_IMMUTABLE);
-
-        alarmMgr.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                SystemClock.elapsedRealtime() +
-                        5 * 1000, alarmIntent);
-
-        /*
-        //String channelId = "alarm_service_channel";
-        String channelName = "Alarm Service Channel"; // TODO Don't hardcode; put in strings.xml
-        String message = intent.getStringExtra("textExtra").toString();
-        String title = intent.getStringExtra("titleExtra").toString();
-        NotificationChannel channel = new NotificationChannel(CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_HIGH);
-        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        //manager.createNotificationChannel(channel);
-        Notification notification = new NotificationCompat.Builder(getApplicationContext(), CHANNEL_ID)
-                .setSmallIcon(R.mipmap.ic_launcher_round)
-                .setContentText(message)
-                .setContentTitle(title)
-                .build();
-        manager.notify(0, notification); // TODO Don't hardcode the notification ID
-         */
     }
 
     private void startMotionMonitoring() {

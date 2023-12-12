@@ -435,7 +435,8 @@ public class DashboardActivity extends AppCompatActivity {
         StringBuilder sb = new StringBuilder();
         if (days > 0) sb.append(days + " Days, ");
         if (hours > 0) sb.append(hours + " Hours, ");
-        if (minutes > 0) sb.append(minutes + (minutes == 1 ? " Minute" : " Minutes")); else sb.append("less than a minute");
+        if (minutes > 0) sb.append(minutes + (minutes == 1 ? " Minute" : " Minutes"));
+        else if (minutes == 0) sb.append("less than a minute");
         return sb.toString();
     }
 

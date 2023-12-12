@@ -92,6 +92,21 @@ public class AlarmAlertActivity extends AppCompatActivity {
         }
     };
 
+    private Handler timer_C_Handler = new Handler();
+    /**
+     * This runnable is responsible for checking if the shared Pref value has changed
+     * It's basically a manual listener we implemented.
+     */
+    private Runnable timer_C_Runnable = new Runnable() {
+        @Override
+        public void run() {
+            if (sharedPref.getBoolean("showDisableMotionMonitoringButton", false) == false){
+                stopMotionMonitoring();
+            }
+        }
+    };
+    private static final long CHECK_FREQUENCY = 3 * 1000; // 3 seconds
+
     private void triggerAlarmAgain(){
         // Checking if we still have the triggered alarm saved first
         if (triggeredAlarm != null){
@@ -165,7 +180,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
         monitoringDuration = sharedPref.getInt("activityMonitoringDuration", 1) * 60 * 1000;
         timeUntilReactivatingAlarm = sharedPref.getInt("timeUntilReactivateAlarm", 1) * 60 * 1000;
 
-        //monitoringDuration =  1 * 60 * 1000;
+        //monitoringDuration =  20 * 1000;
         //timeUntilReactivatingAlarm = 10 * 1000;
 
         int alarmId = getIntent().getIntExtra("alarmId", -1);
@@ -363,14 +378,17 @@ public class AlarmAlertActivity extends AppCompatActivity {
         lastMotionTime = System.currentTimeMillis(); // Reset last motion time for Timer B
         timer_B_Handler.postDelayed(timer_B_Runnable, timeUntilReactivatingAlarm); // Start Timer B
         timer_A_Handler.postDelayed(timer_A_Runnable, monitoringDuration); // Start Timer A
+        timer_C_Handler.postDelayed(timer_C_Runnable, CHECK_FREQUENCY);
     }
 
     private void resetMotionTimers() {
         lastMotionTime = System.currentTimeMillis(); // Reset last motion time for Timer B
         timer_B_Handler.removeCallbacks(timer_B_Runnable);
         timer_A_Handler.removeCallbacks(timer_A_Runnable);
+        timer_C_Handler.removeCallbacks(timer_C_Runnable);
         timer_B_Handler.postDelayed(timer_B_Runnable, timeUntilReactivatingAlarm); // Restart Timer B
         timer_A_Handler.postDelayed(timer_A_Runnable, monitoringDuration); // Restart Timer A
+        timer_C_Handler.postDelayed(timer_C_Runnable, CHECK_FREQUENCY);
     }
 
     private void stopMotionMonitoring() {
@@ -379,6 +397,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
         sensorManager.unregisterListener(sensorEventListener);
         timer_B_Handler.removeCallbacks(timer_B_Runnable); // Stopping periodic check (Timer B)
         timer_A_Handler.removeCallbacks((timer_A_Runnable)); // Stopping Timer A
+        timer_C_Handler.removeCallbacks(timer_C_Runnable);
     }
 
     private void setIsMotionMonitoringActive(boolean activate){;

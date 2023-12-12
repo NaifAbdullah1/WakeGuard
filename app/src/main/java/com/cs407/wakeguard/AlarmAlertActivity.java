@@ -104,7 +104,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
                     // Build the notification
                     NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                             .setSmallIcon(R.mipmap.ic_launcher_round)
-                            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE) // TODO Check this for a better visibility. I think this is key to being visible but not actionable on the lock screen
+                            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
                             .setContentText(context.getString(R.string.alarm_notification_message))
                             .setContentTitle(context.getString(R.string.alarm_notification_title))
                             .addAction(action)
@@ -246,7 +246,14 @@ public class AlarmAlertActivity extends AppCompatActivity {
         motionThreshold = THRESHOLD_LEVELS[sharedPref.getInt("activityThresholdMonitoringLevel", 0)];
         monitoringDuration = sharedPref.getInt("activityMonitoringDuration", 1) * 60 * 1000;
         timeUntilReactivatingAlarm = sharedPref.getInt("timeUntilReactivateAlarm", 1) * 60 * 1000;
-        timeUntilNotification = timeUntilReactivatingAlarm - 50 * 1000; // TODO For pre-alarm notification. Set to 1 minute prior. If the activity monitoring duration is 1 minute, do 30 seconds
+        if(timeUntilReactivatingAlarm > 60000) {
+            // Set pre-alarm notification to appear 60 seconds before the activity monitoring alarm
+            timeUntilNotification = timeUntilReactivatingAlarm - 60 * 1000;
+        } else {
+            // Set pre-alarm notification to appear 30 seconds before the activity monitoring alarm
+            // if the alarm is set to go off in only 60 seconds
+            timeUntilNotification = timeUntilReactivatingAlarm - 30 * 1000;
+        }
 
         //monitoringDuration =  20 * 1000;
         //timeUntilReactivatingAlarm = 10 * 1000;
@@ -463,9 +470,6 @@ public class AlarmAlertActivity extends AppCompatActivity {
     }
 
     private void stopMotionMonitoring() {
-
-        // TODO JAMES Remove the notification here
-
         System.out.println("Stopping motion detection");
         setIsMotionMonitoringActive(false);
         sensorManager.unregisterListener(sensorEventListener);

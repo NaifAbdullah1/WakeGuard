@@ -96,26 +96,6 @@ public class DBHelper extends SQLiteOpenHelper {
         db.close();
     }
 
-    // Old
-    /*
-    public void addRequestCode(String alarmIdentifier, int requestCode, String day){
-        SQLiteDatabase db = this.getWritableDatabase();
-        System.out.println("IN DB, PREPPING TO INSERT REQ CODE");
-        ContentValues values = new ContentValues();
-
-        if (day.equals(""))
-            values.put("alarmIdentifier", alarmIdentifier);
-        else
-            values.put("alarmIdentifier", alarmIdentifier+day);
-
-        values.put("requestCode", requestCode);
-
-        db.insert("requestCodes", null, values);
-        db.close();
-    }
-
-    */
-
     public void addRequestCode(String alarmIdentifier, int requestCode, String day){
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = null;

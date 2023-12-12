@@ -10,7 +10,6 @@ import android.content.SharedPreferences;
 import android.icu.text.DateFormat;
 import android.icu.util.Calendar;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -187,11 +186,9 @@ public class AlarmEditorActivity extends AppCompatActivity {
         // Spinner for selecting the tone of the alarm
         Spinner alarmToneSpinner = (Spinner) findViewById(R.id.alarmToneSpinner);
         // Create an ArrayAdapter with the default alarm tones
-        String[] defaultAlarmTones = {"Default", "None"}; // TODO
+        String[] defaultAlarmTones = {"Default", "None"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, defaultAlarmTones); // TODO Use 'this' instead of getApplicationContext()?
-        // TODO Populate entries based off available alarm tone options
 
-        // TODO Set initial tone to existing alarm's tone or the default
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         alarmToneSpinner.setAdapter(adapter);
 
@@ -217,16 +214,6 @@ public class AlarmEditorActivity extends AppCompatActivity {
                 // Optional: handle the scenario when nothing is selected
             }
         });
-
-        // TODO Set listener for item clicked
-
-        // TODO Test alarm tone. Can use this to play tone when an item is selected
-        //Uri ringtoneUri  = RingtoneManager.getActualDefaultRingtoneUri(getApplicationContext(), RingtoneManager.TYPE_NOTIFICATION);
-        //MediaPlayer mp = MediaPlayer.create(getApplicationContext(), ringtoneUri);
-        //mp.start();
-        // TODO Ringtone version instead of MediaPlayer (Don't use this one, but maybe it'd be useful for notification and/or alarm)
-        //Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), ringtoneUri);
-        //r.play();
     }
 
     private String getRepeatingDaysString() {

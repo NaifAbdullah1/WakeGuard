@@ -169,7 +169,6 @@ public class AlarmAlertActivity extends AppCompatActivity {
     private Runnable timer_B_Runnable = new Runnable() {
         @Override
         public void run() {
-            //sharedPref = getSharedPreferences("com.cs407.wakeguard", Context.MODE_PRIVATE);
             long currentTime = System.currentTimeMillis();
             showDisableMotionMonitoringButton = sharedPref.getBoolean("showDisableMotionMonitoringButton", false);
             if (showDisableMotionMonitoringButton == false){ // if user stopped the alarm.
@@ -294,9 +293,6 @@ public class AlarmAlertActivity extends AppCompatActivity {
             timeUntilNotification = timeUntilReactivatingAlarm - 30 * 1000;
         }
 
-        //monitoringDuration =  20 * 1000;
-        //timeUntilReactivatingAlarm = 10 * 1000;
-
         int alarmId = getIntent().getIntExtra("alarmId", -1);
         if (alarmId != -1){ // Making sure alarmId is valid before fetching from DB
             loadAlarmDetails(alarmId);
@@ -400,20 +396,6 @@ public class AlarmAlertActivity extends AppCompatActivity {
         if (!isAlarmRepeating) { // If alarm is not repeating
             triggeredAlarm.setActive(false);
             dbHelper.toggleAlarm(triggeredAlarm.getId(), false);
-        } else { // If alarm is indeed repeating, we're going to remove the request code of the alarm that just went off
-            // If alarm is repeating, get the specific request code for this instance and delete it
-            /*
-            String todayDayString = getTodayDayString();
-            String alarmIdentifier = triggeredAlarm.getTitle() + triggeredAlarm.getTime() + triggeredAlarm.getFormattedTime() + todayDayString;
-            int requestCode = dbHelper.getRequestCode(alarmIdentifier);
-
-            if (requestCode != -1) {
-                cancelAlarmByRequestCode(requestCode);
-                dbHelper.deleteRequestCodeByRequestCode(requestCode);
-            }else{
-                System.out.println("ERROR @ AlarmAlertActivity");
-            }
-            */
         }
 
         // Releasing wake lock

@@ -102,7 +102,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
                     NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                             .setSmallIcon(R.mipmap.ic_launcher_round)
                             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
-                            .setContentText(context.getString(R.string.alarm_notification_message, (timeUntilReactivatingAlarm - timeUntilNotification) / 1000))
+                            .setContentText(context.getString(R.string.alarm_notification_message))
                             .setContentTitle(context.getString(R.string.alarm_notification_title))
                             .addAction(action)
                             .setOnlyAlertOnce(true)
@@ -113,6 +113,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
                     NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
                     notificationManager.notify(NOTIFICATION_ID, builder.build());
 
+                    /*
                     // Start a thread to update the time remaining progress bar
                     new Thread(
                         new Runnable() {
@@ -157,6 +158,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
                             }
                         }
                     ).start();
+                    */
                 }
             }
         }
@@ -282,8 +284,12 @@ public class AlarmAlertActivity extends AppCompatActivity {
         isMotionMonitoringActive = sharedPref.getBoolean("isMotionMonitoringActive", false);
         showDisableMotionMonitoringButton = sharedPref.getBoolean("showDisableMotionMonitoringButton", false);
         motionThreshold = THRESHOLD_LEVELS[sharedPref.getInt("activityThresholdMonitoringLevel", 0)];
-        monitoringDuration = sharedPref.getInt("activityMonitoringDuration", 1) * 60 * 1000;
-        timeUntilReactivatingAlarm = sharedPref.getInt("timeUntilReactivateAlarm", 1) * 60 * 1000;
+        //monitoringDuration = sharedPref.getInt("activityMonitoringDuration", 1) * 60 * 1000;
+        //timeUntilReactivatingAlarm = sharedPref.getInt("timeUntilReactivateAlarm", 1) * 60 * 1000;
+
+        monitoringDuration = 120 * 1000;
+        timeUntilReactivatingAlarm = 45 * 1000;
+
         if(timeUntilReactivatingAlarm > 60000) {
             // Set pre-alarm notification to appear 60 seconds before the activity monitoring alarm
             timeUntilNotification = timeUntilReactivatingAlarm - 60 * 1000;
@@ -483,11 +489,11 @@ public class AlarmAlertActivity extends AppCompatActivity {
         timer_notification_Handler.removeCallbacks(timer_notification_Runnable);
         timer_B_Handler.removeCallbacks(timer_B_Runnable);
         timer_A_Handler.removeCallbacks(timer_A_Runnable);
-        timer_notification_Handler.postDelayed(timer_notification_Runnable, timeUntilNotification); // Restart notification timer
         timer_C_Handler.removeCallbacks(timer_C_Runnable);
         timer_B_Handler.postDelayed(timer_B_Runnable, timeUntilReactivatingAlarm); // Restart Timer B
         timer_A_Handler.postDelayed(timer_A_Runnable, monitoringDuration); // Restart Timer A
         timer_C_Handler.postDelayed(timer_C_Runnable, CHECK_FREQUENCY);
+        timer_notification_Handler.postDelayed(timer_notification_Runnable, timeUntilNotification); // Restart notification timer
     }
 
     private void stopMotionMonitoring() {

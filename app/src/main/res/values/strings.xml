@@ -23,5 +23,5 @@
     <string name="channel_name">AlarmStopChannel</string>
     <string name="channel_description">Stop motion monitoring alarm</string>
     <string name="alarm_notification_title">Alarm will go off soon. No motion detected.</string>
-    <string name="alarm_notification_message">Activity monitoring will go off in %1$d second(s). Press button to disable activity monitoring.</string>
+    <string name="alarm_notification_message">Activity monitoring will go off soon. Press button to disable activity monitoring.</string>
 </resources>

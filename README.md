@@ -4,3 +4,9 @@ This alarm clock app for Android devices has a unique feature that helps ensure 
 
 Before the alarm rings a second time, the app sends a notification 30 seconds ahead. This notification informs the user that no movement has been detected and that the alarm will go off again soon. This feature is especially helpful for those who have a habit of falling back asleep after turning off their alarm. It's a simple yet effective way to make sure users are fully awake.
 
+
+## Developers
+- Nathan Abdullah
+- James Rolland Vollmer
+- Vincent James Ryskoski
+- Benjamin James Gagliardi

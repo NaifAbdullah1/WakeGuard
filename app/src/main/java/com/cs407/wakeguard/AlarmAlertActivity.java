@@ -57,7 +57,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
     private static final double[] THRESHOLD_LEVELS = {13.5, 10.35, 9.95};
     private static long monitoringDuration; // in milliseconds
     private static long timeUntilReactivatingAlarm;
-    private final static long CHECK_FREQUENCY = 3 * 1000;
+    private final static long CHECK_FREQUENCY = 5 * 1000;
     private long lastMotionTime;
     private SharedPreferences sharedPref;
 

@@ -75,43 +75,45 @@ public class AlarmAlertActivity extends AppCompatActivity {
         public void run() {
             long currentTime = System.currentTimeMillis();
             showDisableMotionMonitoringButton = sharedPref.getBoolean("showDisableMotionMonitoringButton", false);
-            if(showDisableMotionMonitoringButton && (currentTime - lastMotionTime) >= timeUntilNotification) { // Checking if [activity monitor duration - 1] minutes have passed since last motion
-                Context context = getApplicationContext();
+            if (showDisableMotionMonitoringButton) {
+                long timeLeftUntilAlarm = timeUntilReactivatingAlarm - (currentTime - lastMotionTime);
+                if (timeLeftUntilAlarm <= timeUntilNotification) { // Checking if [activity monitor duration - 1] minutes have passed since last motion
+                    Context context = getApplicationContext();
 
-                // Check notification permissions
-                if(ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
-                        != PackageManager.PERMISSION_GRANTED) {
-                    return;
-                }
+                    // Check notification permissions
+                    if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+                            != PackageManager.PERMISSION_GRANTED) {
+                        return;
+                    }
 
-                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    // Set up an action to stop motion monitoring
-                    Intent stopIntent = new Intent(context, AlarmNotificationReceiver.class);
-                    stopIntent.putExtra("id", NOTIFICATION_ID);
-                    PendingIntent stopPendingIntent =
-                            PendingIntent.getBroadcast(context,
-                                    NOTIFICATION_ID,
-                                    stopIntent,
-                                    PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
-                    NotificationCompat.Action action =
-                            new NotificationCompat.Action.Builder(R.drawable.ic_x,
-                                    context.getString(R.string.stop), stopPendingIntent)
-                                    .build();
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        // Set up an action to stop motion monitoring
+                        Intent stopIntent = new Intent(context, AlarmNotificationReceiver.class);
+                        stopIntent.putExtra("id", NOTIFICATION_ID);
+                        PendingIntent stopPendingIntent =
+                                PendingIntent.getBroadcast(context,
+                                        NOTIFICATION_ID,
+                                        stopIntent,
+                                        PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+                        NotificationCompat.Action action =
+                                new NotificationCompat.Action.Builder(R.drawable.ic_x,
+                                        context.getString(R.string.stop), stopPendingIntent)
+                                        .build();
 
-                    // Build the notification
-                    NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                            .setSmallIcon(R.mipmap.ic_launcher_round)
-                            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
-                            .setContentText(context.getString(R.string.alarm_notification_message))
-                            .setContentTitle(context.getString(R.string.alarm_notification_title))
-                            .addAction(action)
-                            .setOnlyAlertOnce(true)
-                            .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+                        // Build the notification
+                        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
+                                .setSmallIcon(R.mipmap.ic_launcher_round)
+                                .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+                                .setContentText(context.getString(R.string.alarm_notification_message))
+                                .setContentTitle(context.getString(R.string.alarm_notification_title))
+                                .addAction(action)
+                                .setOnlyAlertOnce(true)
+                                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 
 
-                    // Show the notification
-                    NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-                    notificationManager.notify(NOTIFICATION_ID, builder.build());
+                        // Show the notification
+                        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+                        notificationManager.notify(NOTIFICATION_ID, builder.build());
 
                     /*
                     // Start a thread to update the time remaining progress bar
@@ -159,11 +161,14 @@ public class AlarmAlertActivity extends AppCompatActivity {
                         }
                     ).start();
                     */
+                    }
+                }else{
+                    // Reschedule the runnable to check again after a short delay
+                    timer_notification_Handler.postDelayed(this, 5000); // Check every 5 seconds
                 }
             }
         }
     };
-
 
     private Handler timer_B_Handler = new Handler();
 
@@ -209,7 +214,10 @@ public class AlarmAlertActivity extends AppCompatActivity {
         public void run() {
             if (sharedPref.getBoolean("showDisableMotionMonitoringButton", false) == false){
                 stopMotionMonitoring();
+            }else{
+                timer_C_Handler.postDelayed(this, CHECK_FREQUENCY);
             }
+
         }
     };
     private static final long CHECK_FREQUENCY = 3 * 1000; // 3 seconds
@@ -287,9 +295,10 @@ public class AlarmAlertActivity extends AppCompatActivity {
         //monitoringDuration = sharedPref.getInt("activityMonitoringDuration", 1) * 60 * 1000;
         //timeUntilReactivatingAlarm = sharedPref.getInt("timeUntilReactivateAlarm", 1) * 60 * 1000;
 
-        monitoringDuration = 120 * 1000;
-        timeUntilReactivatingAlarm = 45 * 1000;
-
+        monitoringDuration = 60 * 1000; // prev 120
+        timeUntilReactivatingAlarm = 30 * 1000; // prev 45
+        timeUntilNotification = 15 * 1000;
+        /*
         if(timeUntilReactivatingAlarm > 60000) {
             // Set pre-alarm notification to appear 60 seconds before the activity monitoring alarm
             timeUntilNotification = timeUntilReactivatingAlarm - 60 * 1000;
@@ -298,6 +307,7 @@ public class AlarmAlertActivity extends AppCompatActivity {
             // if the alarm is set to go off in only 60 seconds
             timeUntilNotification = timeUntilReactivatingAlarm - 30 * 1000;
         }
+        */
 
         int alarmId = getIntent().getIntExtra("alarmId", -1);
         if (alarmId != -1){ // Making sure alarmId is valid before fetching from DB
@@ -478,10 +488,10 @@ public class AlarmAlertActivity extends AppCompatActivity {
         setIsMotionMonitoringActive(true);
         sensorManager.registerListener(sensorEventListener, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
         lastMotionTime = System.currentTimeMillis(); // Reset last motion time for Timer B
-        timer_notification_Handler.postDelayed(timer_notification_Runnable, timeUntilNotification); // Start notification timer
+        timer_notification_Handler.postDelayed(timer_notification_Runnable, 0); // Start notification timer
         timer_B_Handler.postDelayed(timer_B_Runnable, timeUntilReactivatingAlarm); // Start Timer B
         timer_A_Handler.postDelayed(timer_A_Runnable, monitoringDuration); // Start Timer A
-        timer_C_Handler.postDelayed(timer_C_Runnable, CHECK_FREQUENCY);
+        timer_C_Handler.postDelayed(timer_C_Runnable, 0);
     }
 
     private void resetMotionTimers() {
@@ -492,8 +502,8 @@ public class AlarmAlertActivity extends AppCompatActivity {
         timer_C_Handler.removeCallbacks(timer_C_Runnable);
         timer_B_Handler.postDelayed(timer_B_Runnable, timeUntilReactivatingAlarm); // Restart Timer B
         timer_A_Handler.postDelayed(timer_A_Runnable, monitoringDuration); // Restart Timer A
-        timer_C_Handler.postDelayed(timer_C_Runnable, CHECK_FREQUENCY);
-        timer_notification_Handler.postDelayed(timer_notification_Runnable, timeUntilNotification); // Restart notification timer
+        timer_C_Handler.postDelayed(timer_C_Runnable, 0);
+        timer_notification_Handler.postDelayed(timer_notification_Runnable, 0); // Restart notification timer
     }
 
     private void stopMotionMonitoring() {
